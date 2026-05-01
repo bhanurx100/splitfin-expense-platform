@@ -79,3 +79,54 @@
     background-image: linear-gradient(to bottom, #266e1f, #266e1f) !important; /* green-300 to green-200 */
   }
 }
+@layer utilities {
+   /* Page fade-in — apply to every page wrapper div */
+   .page-enter {
+     animation: pageFadeIn 0.25s ease-out both;
+   }
+
+   @keyframes pageFadeIn {
+     from {
+       opacity: 0;
+       transform: translateY(8px);
+     }
+     to {
+       opacity: 1;
+       transform: translateY(0);
+     }
+   }
+
+   /* Smooth momentum scrolling on iOS */
+   html {
+     scroll-behavior: smooth;
+     -webkit-overflow-scrolling: touch;
+   }
+}
+
+
+/* ── Page transition ─────────────────────────────────────────────────────── */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+.page-enter {
+  animation: pageEnter 0.3s ease-out both;
+}
+
+/* ── Card slide-up (stagger via style delay) ─────────────────────────────── */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+.slide-up {
+  animation: slideUp 0.35s ease-out both;
+}
+
+/* ── Scrollbar polish ────────────────────────────────────────────────────── */
+html { scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+
+/* ── iOS safe-area for BottomNav ─────────────────────────────────────────── */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 12px); }
