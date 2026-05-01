@@ -1,14 +1,14 @@
+// app/(dashboard)/layout.tsx
 import type { PropsWithChildren } from "react";
+import { AppShell } from "@/components/app/AppShell";
 
-import { Header } from "@/components/header";
-
-const DashboardLayout = ({ children }: PropsWithChildren) => {
-  return (
-    <>
-      <Header />
-      <main className="px-3 lg:px-14">{children}</main>
-    </>
-  );
-};
+// Layout is a bare shell — no global Header, no padding.
+// Every page owns its own header section.
+// AppShell provides: bg, BottomNav, FAB on mobile; DesktopNav on lg+.
+const DashboardLayout = ({ children }: PropsWithChildren) => (
+  <AppShell>
+    <main>{children}</main>
+  </AppShell>
+);
 
 export default DashboardLayout;
