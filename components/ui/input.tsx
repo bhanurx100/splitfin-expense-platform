@@ -6,22 +6,20 @@ import { cn } from "@/lib/utils";
  * Consistent fintech form input with proper focus states.
  */
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  /** Prepend an icon/element inside the left side */
-  prefix?: React.ReactNode;
-  /** Append an icon/element inside the right side */
-  suffix?: React.ReactNode;
-  /** Error state */
-  error?: boolean;
+leftIcon?: React.ReactNode;
+rightIcon?: React.ReactNode;
+error?: boolean;
 }
 
+
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, prefix, suffix, error, ...props }, ref) => {
-    if (prefix || suffix) {
+  ({ className, type, leftIcon, rightIcon, error, ...props }, ref) => {
+    if (leftIcon || rightIcon) {
       return (
         <div className="relative flex items-center">
-          {prefix && (
+          {leftIcon && (
             <div className="pointer-events-none absolute left-3 flex items-center text-slate-400">
-              {prefix}
+              {leftIcon}
             </div>
           )}
           <input
@@ -38,16 +36,16 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 : "border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgb(59,130,246,0.12)]",
               // Disabled
               "disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 disabled:border-slate-100",
-              // Padding with prefix/suffix
-              prefix ? "pl-9" : "pl-3.5",
-              suffix ? "pr-9" : "pr-3.5",
+              // Padding with leftIcon/rightIcon
+              leftIcon ? "pl-9" : "pl-3.5",
+              rightIcon ? "pr-9" : "pr-3.5",
               className
             )}
             {...props}
           />
-          {suffix && (
+          {rightIcon && (
             <div className="absolute right-3 flex items-center text-slate-400">
-              {suffix}
+              {rightIcon}
             </div>
           )}
         </div>
