@@ -7,9 +7,11 @@ type AppCardProps = {
   onClick?: () => void;
   /** stagger index for slide-up animation */
   index?: number;
+  /** Remove default padding */
+  noPadding?: boolean;
 };
 
-export function AppCard({ children, className, onClick, index }: AppCardProps) {
+export function AppCard({ children, className, onClick, index, noPadding }: AppCardProps) {
   const Tag = onClick ? "button" : "div";
   const delay = index !== undefined ? `${index * 0.07}s` : undefined;
 
@@ -18,8 +20,17 @@ export function AppCard({ children, className, onClick, index }: AppCardProps) {
       onClick={onClick}
       style={delay ? { animationDelay: delay } : undefined}
       className={cn(
-        "slide-up w-full rounded-2xl border border-gray-100 bg-white p-4 shadow-sm",
-        onClick && "text-left transition-all duration-200 hover:shadow-md active:scale-[0.985] cursor-pointer",
+        // Base — matches the design system card exactly
+        "slide-up w-full bg-white rounded-[18px] border border-slate-100 shadow-sm",
+        // Interactive state
+        onClick && [
+          "text-left cursor-pointer",
+          "transition-all duration-200",
+          "hover:shadow-md hover:border-slate-200",
+          "active:scale-[0.992]",
+        ],
+        // Padding
+        !noPadding && "p-5",
         className
       )}
     >
