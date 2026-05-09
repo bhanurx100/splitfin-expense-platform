@@ -1,5 +1,5 @@
 "use client";
-
+// components/data-table.tsx — Design System version
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -12,9 +12,8 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Trash } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, Trash2 } from "lucide-react";
 import * as React from "react";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,6 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useConfirm } from "@/hooks/use-confirm";
+import { cn } from "@/lib/utils";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -43,13 +43,11 @@ export function DataTable<TData, TValue>({
   disabled,
 }: DataTableProps<TData, TValue>) {
   const [ConfirmDialog, confirm] = useConfirm(
-    "Are you sure?",
-    "You are about to perform a bulk delete."
+    "Delete selected?",
+    "This will permanently delete the selected items. This action cannot be undone."
   );
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useReactTable({
@@ -62,65 +60,69 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     onColumnFiltersChange: setColumnFilters,
     onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      rowSelection,
-    },
+    state: { sorting, columnFilters, rowSelection },
   });
 
+  const selectedCount = table.getFilteredSelectedRowModel().rows.length;
+  const totalCount    = table.getFilteredRowModel().rows.length;
+
   return (
-    <div>
+    <div className="space-y-4">
       <ConfirmDialog />
 
-      <div className="flex items-center py-4">
-        <Input
-          placeholder={`Filter ${filterKey}...`}
-          value={(table.getColumn(filterKey)?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn(filterKey)?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
+      {/* Toolbar */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {/* Search */}
+        <div className="relative max-w-xs flex-1">
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+          <Input
+            placeholder={`Search by ${filterKey}…`}
+            value={(table.getColumn(filterKey)?.getFilterValue() as string) ?? ""}
+            onChange={(e) => table.getColumn(filterKey)?.setFilterValue(e.target.value)}
+            className="pl-9 h-9 text-[13px]"
+          />
+        </div>
 
-        {table.getFilteredSelectedRowModel().rows.length > 0 && (
+        {/* Bulk delete */}
+        {selectedCount > 0 && (
           <Button
             disabled={disabled}
             size="sm"
-            variant="outline"
-            className="ml-auto text-xs font-normal"
+            variant="destructive"
+            className="gap-2 text-xs"
             onClick={async () => {
               const ok = await confirm();
-
               if (ok) {
                 onDelete(table.getFilteredSelectedRowModel().rows);
                 table.resetRowSelection();
               }
             }}
           >
-            <Trash className="mr-2 size-4" />
-            Delete ({table.getFilteredSelectedRowModel().rows.length})
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete {selectedCount} selected
           </Button>
         )}
       </div>
 
-      <div className="rounded-md border">
+      {/* Table */}
+      <div className="overflow-hidden rounded-xl border border-slate-100">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
+              <TableRow
+                key={headerGroup.id}
+                className="border-b border-slate-100 bg-slate-50/80 hover:bg-slate-50/80"
+              >
+                {headerGroup.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    className="h-11 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
@@ -130,13 +132,18 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className={cn(
+                    "border-b border-slate-50 transition-colors",
+                    "hover:bg-slate-50/60",
+                    "data-[state=selected]:bg-blue-50/50"
+                  )}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+                    <TableCell
+                      key={cell.id}
+                      className="px-4 py-3.5 text-[13px] text-slate-700"
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -145,9 +152,9 @@ export function DataTable<TData, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
+                  className="h-32 text-center text-sm text-slate-400"
                 >
-                  No results.
+                  No results found.
                 </TableCell>
               </TableRow>
             )}
@@ -155,28 +162,36 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
 
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+      {/* Pagination */}
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-slate-400">
+          {selectedCount > 0
+            ? `${selectedCount} of ${totalCount} row${totalCount !== 1 ? "s" : ""} selected`
+            : `${totalCount} row${totalCount !== 1 ? "s" : ""} total`}
+        </p>
+        <div className="flex items-center gap-1.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+            className="h-8 w-8 p-0 rounded-lg"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <span className="min-w-[60px] text-center text-xs font-medium text-slate-600">
+            {table.getState().pagination.pageIndex + 1} / {table.getPageCount() || 1}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+            className="h-8 w-8 p-0 rounded-lg"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
         </div>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Next
-        </Button>
       </div>
     </div>
   );
