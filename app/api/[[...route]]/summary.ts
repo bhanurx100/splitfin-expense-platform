@@ -22,6 +22,7 @@ const app = new Hono().get(
   ),
   async (ctx) => {
     const auth = getAuth(ctx);
+    console.log("CURRENT LOGGED USER:", auth?.userId);
     const { from, to, accountId } = ctx.req.valid("query");
 
     if (!auth?.userId) {
