@@ -1,15 +1,12 @@
 "use client";
-
+// app/(dashboard)/accounts/page.tsx
 import { Loader2, Plus } from "lucide-react";
 import { motion } from "framer-motion";
-
 import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
-
 import { useBulkDeleteAccounts } from "@/features/accounts/api/use-bulk-delete-accounts";
 import { useGetAccounts } from "@/features/accounts/api/use-get-accounts";
 import { useNewAccount } from "@/features/accounts/hooks/use-new-account";
-
 import { AccountCard } from "@/components/dashboard/AccountCard";
 import { columns } from "./columns";
 
@@ -18,105 +15,73 @@ const AccountsPage = () => {
   const deleteAccounts = useBulkDeleteAccounts();
   const accountsQuery = useGetAccounts();
   const accounts = accountsQuery.data || [];
+  const isDisabled = accountsQuery.isLoading || deleteAccounts.isPending;
 
-  const isDisabled =
-    accountsQuery.isLoading || deleteAccounts.isPending;
-
-  // ───── LOADING ─────
   if (accountsQuery.isLoading) {
     return (
-      <div className="min-h-screen bg-[#0E1117] flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+      <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6 xl:px-10">
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0E1117] text-white">
+    <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6 xl:px-10">
+      {/* Header */}
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Accounts</h1>
+          <p className="mt-0.5 text-sm text-slate-500">Manage your financial accounts</p>
+        </div>
+        <Button onClick={newAccount.onOpen} className="rounded-xl">
+          <Plus className="mr-2 h-4 w-4" />
+          Add Account
+        </Button>
+      </div>
 
-      {/* ───── CONTENT ───── */}
-      <div className="mx-auto max-w-screen-2xl px-4 py-10 lg:px-14">
-
-        {/* ───── HEADER (CLEAN, NOT HEAVY) ───── */}
-        <div className="mb-10 flex items-center justify-between">
-
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Accounts
-            </h1>
-            <p className="text-sm text-gray-400">
-              Manage your financial ecosystem
-            </p>
-          </div>
-
-          <Button
-            onClick={newAccount.onOpen}
-            className="rounded-lg bg-white text-black hover:bg-gray-200 transition"
-          >
-            <Plus className="mr-2 h-4 w-4" />
+      {accounts.length === 0 ? (
+        <div className="flex flex-col items-center rounded-2xl border border-dashed border-slate-200 bg-white py-20 text-center">
+          <p className="text-slate-500">No accounts yet</p>
+          <Button onClick={newAccount.onOpen} className="mt-4 rounded-xl">
             Add Account
           </Button>
         </div>
+      ) : (
+        <>
+          {/* Account cards */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+          >
+            {accounts.map((acc, i) => (
+              <motion.div key={acc.id} whileHover={{ scale: 1.015 }} className="transition">
+                <AccountCard id={acc.id} name={acc.name} index={i} />
+              </motion.div>
+            ))}
+          </motion.div>
 
-        {/* ───── CARDS (PRIMARY FOCUS) ───── */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3"
-        >
-          {accounts.map((acc, i) => (
-            <motion.div
-              key={acc.id}
-              whileHover={{ scale: 1.02 }}
-              className="transition"
-            >
-              <AccountCard id={acc.id} name={acc.name} index={i} />
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* ───── TABLE SECTION (SECONDARY) ───── */}
-        {accounts.length > 0 && (
-          <div className="mt-12 rounded-2xl border border-white/10 bg-[#11151F] p-6">
-
-            <div className="mb-4">
-              <h2 className="text-sm font-medium text-gray-300">
-                All Accounts
-              </h2>
+          {/* Table */}
+          <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-slate-800">All Accounts</h2>
             </div>
-
-            {/* 🔥 FIX: remove ugly blue header */}
-            <div className="[&_*]:!bg-transparent [&_*]:!text-gray-300">
-              <DataTable
-                filterKey="name"
-                columns={columns}
-                data={accounts}
-                onDelete={(row) => {
-                  const ids = row.map((r) => r.original.id);
-                  deleteAccounts.mutate({ ids });
-                }}
-                disabled={isDisabled}
-              />
-            </div>
-
+            <DataTable
+              filterKey="name"
+              columns={columns}
+              data={accounts}
+              onDelete={(row) => {
+                const ids = row.map((r) => r.original.id);
+                deleteAccounts.mutate({ ids });
+              }}
+              disabled={isDisabled}
+            />
           </div>
-        )}
-
-        {/* ───── EMPTY STATE ───── */}
-        {accounts.length === 0 && (
-          <div className="mt-16 flex flex-col items-center text-center text-gray-400">
-            <p>No accounts yet</p>
-            <Button
-              onClick={newAccount.onOpen}
-              className="mt-4 bg-white text-black"
-            >
-              Add Account
-            </Button>
-          </div>
-        )}
-
-      </div>
+        </>
+      )}
     </div>
   );
 };
