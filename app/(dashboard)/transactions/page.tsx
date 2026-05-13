@@ -266,7 +266,7 @@ function DesktopTransactions({
 
   const handleBulkDelete = () => {
     if (!selected.size) return;
-    onBulkDelete([...selected]);
+    onBulkDelete(Array.from(selected));
     setSelected(new Set());
   };
 
