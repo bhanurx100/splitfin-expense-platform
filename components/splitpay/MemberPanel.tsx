@@ -1,22 +1,37 @@
-// components/splitpay/MemberPanel.tsx
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import { UserPlus, Trash2, Phone, AtSign } from "lucide-react";
+/**
+ * components/splitpay/MemberPanel.tsx
+ *
+ * Renders the member list for a group.
+ * Supports: Add, Edit, Remove members.
+ * Edit opens EditMemberSheet (pre-filled modal).
+ * Changes auto-propagate to all expenses via Zustand store.
+ */
+
+import { useState, useCallback, useRef } from "react";
+import { UserPlus, Trash2, Phone, AtSign, Pencil } from "lucide-react";
 import { useGroupStore } from "@/hooks/splitpay/useGroupStore";
-import type { Group } from "@/types/splitpay";
+import { EditMemberSheet } from "./EditMemberSheet";
+import type { Group, Member } from "@/types/splitpay";
 import { Avatar, SectionLabel } from "./ui";
 import { cn } from "@/lib/utils";
 
-// ── Validation ───────────────────────────────────────────────────────────────
+// ── Validation ────────────────────────────────────────────────────────────────
 
-function isValidPhone(v: string) { return /^[6-9]\d{9}$/.test(v); }
+function isValidPhone(v: string) {
+  return /^[6-9]\d{9}$/.test(v.trim());
+}
 
 // ── AddMemberSheet ────────────────────────────────────────────────────────────
 
 export function AddMemberSheet({
-  groupId, onClose,
-}: { groupId: string; onClose: () => void }) {
+  groupId,
+  onClose,
+}: {
+  groupId: string;
+  onClose: () => void;
+}) {
   const { addMember } = useGroupStore();
   const [name, setName]       = useState("");
   const [phone, setPhone]     = useState("");
@@ -28,21 +43,29 @@ export function AddMemberSheet({
 
   const submit = useCallback(() => {
     if (!name.trim() || !isValidPhone(phone)) return;
-    addMember(groupId, { name: name.trim(), phone, upiId: upiId.trim() || undefined });
+    addMember(groupId, {
+      name:  name.trim(),
+      phone: phone.trim(),
+      upiId: upiId.trim() || undefined,
+    });
     onClose();
   }, [name, phone, upiId, groupId, addMember, onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-sm rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl">
-        <h2 className="mb-5 text-[17px] font-bold text-slate-900">Add Member</h2>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 backdrop-blur-sm sm:items-center">
+      <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl ring-1 ring-slate-900/5">
+        <h3 className="mb-4 text-[15px] font-bold text-slate-900">Add Member</h3>
 
         <div className="space-y-3">
+          {/* Name */}
           <div>
-            <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-400">Name</label>
+            <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              Name
+            </label>
             <input
-              ref={nameRef} autoFocus type="text"
+              ref={nameRef}
+              autoFocus
+              type="text"
               value={name}
               onChange={e => setName(e.target.value)}
               onKeyDown={e => e.key === "Enter" && submit()}
@@ -51,6 +74,7 @@ export function AddMemberSheet({
             />
           </div>
 
+          {/* Phone */}
           <div>
             <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-400">
               Phone <span className="normal-case font-normal text-slate-400">(10 digits)</span>
@@ -58,24 +82,30 @@ export function AddMemberSheet({
             <div className="relative">
               <Phone className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
               <input
-                type="tel" maxLength={10}
+                type="tel"
+                maxLength={10}
                 value={phone}
                 onChange={e => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                onKeyDown={e => e.key === "Enter" && submit()}
                 placeholder="9876543210"
                 className={cn(
                   "h-10 w-full rounded-xl border bg-slate-50 pl-9 pr-3.5 text-[14px] text-slate-900 outline-none placeholder:text-slate-400 focus:bg-white transition",
-                  phoneError ? "border-red-300 focus:border-red-400" : "border-slate-200 focus:border-blue-400"
+                  phoneError
+                    ? "border-red-300 focus:border-red-400"
+                    : "border-slate-200 focus:border-blue-400"
                 )}
               />
             </div>
-            {phoneError && <p className="mt-1 text-[11px] text-red-500">Enter a valid 10-digit Indian number</p>}
+            {phoneError && (
+              <p className="mt-1 text-[11px] text-red-500">Enter a valid 10-digit Indian number</p>
+            )}
           </div>
 
-          {/* Optional UPI toggle */}
+          {/* Optional UPI */}
           <button
             type="button"
             onClick={() => setShowUpi(s => !s)}
-            className="flex items-center gap-1.5 text-[12px] font-medium text-blue-600 hover:text-blue-700"
+            className="flex items-center gap-1.5 text-[12px] font-medium text-blue-600 hover:text-blue-700 transition"
           >
             <AtSign className="h-3.5 w-3.5" />
             {showUpi ? "Hide custom UPI ID" : "Add custom UPI ID (optional)"}
@@ -93,12 +123,19 @@ export function AddMemberSheet({
         </div>
 
         <div className="mt-5 flex gap-2.5">
-          <button type="button" onClick={onClose}
-            className="flex-1 rounded-xl border border-slate-200 py-2.5 text-[14px] font-semibold text-slate-600 transition hover:bg-slate-50">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 rounded-xl border border-slate-200 py-2.5 text-[14px] font-semibold text-slate-600 transition hover:bg-slate-50"
+          >
             Cancel
           </button>
-          <button type="button" onClick={submit} disabled={!name.trim() || !isValidPhone(phone)}
-            className="flex-1 rounded-xl bg-blue-600 py-2.5 text-[14px] font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-40">
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!name.trim() || !isValidPhone(phone)}
+            className="flex-1 rounded-xl bg-blue-600 py-2.5 text-[14px] font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-40"
+          >
             Add
           </button>
         </div>
@@ -107,16 +144,84 @@ export function AddMemberSheet({
   );
 }
 
+// ── MemberRow ─────────────────────────────────────────────────────────────────
+
+function MemberRow({
+  group,
+  member,
+  onEdit,
+}: {
+  group: Group;
+  member: Member;
+  onEdit: () => void;
+}) {
+  const { removeMember } = useGroupStore();
+
+  // Count how many expenses this member is part of
+  const expenseCount = group.expenses.filter(
+    e => e.participants.some(p => p.memberId === member.id) || e.paidBy === member.id
+  ).length;
+
+  return (
+    <div className="group flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-4 py-3 transition hover:border-slate-200 hover:shadow-sm">
+      {/* Avatar */}
+      <Avatar name={member.name} color={member.color} size={36} />
+
+      {/* Info */}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[14px] font-semibold text-slate-800">{member.name}</p>
+        <p className="text-[11px] text-slate-400">
+          {member.upiId ?? `${member.phone}@upi`}
+          {expenseCount > 0 && (
+            <span className="ml-1.5 text-slate-300">· {expenseCount} expense{expenseCount !== 1 ? "s" : ""}</span>
+          )}
+        </p>
+      </div>
+
+      {/* Actions — visible on hover */}
+      <div className="flex items-center gap-1 opacity-0 transition group-hover:opacity-100">
+        {/* Edit */}
+        <button
+          type="button"
+          onClick={onEdit}
+          className="rounded-lg p-1.5 text-slate-400 transition hover:bg-blue-50 hover:text-blue-500"
+          aria-label={`Edit ${member.name}`}
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+
+        {/* Remove */}
+        <button
+          type="button"
+          onClick={() => removeMember(group.id, member.id)}
+          className="rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-400"
+          aria-label={`Remove ${member.name}`}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── MemberList ────────────────────────────────────────────────────────────────
 
 export function MemberList({ group }: { group: Group }) {
-  const { removeMember } = useGroupStore();
-  const [showAdd, setShowAdd] = useState(false);
+  const [showAdd, setShowAdd]         = useState(false);
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
 
   return (
-    <div>
-      <div className="mb-3 flex items-center justify-between">
-        <SectionLabel>Members</SectionLabel>
+    <div className="space-y-3">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <SectionLabel>
+          Members
+          {group.members.length > 0 && (
+            <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-500 normal-case tracking-normal">
+              {group.members.length}
+            </span>
+          )}
+        </SectionLabel>
         <button
           type="button"
           onClick={() => setShowAdd(true)}
@@ -126,36 +231,39 @@ export function MemberList({ group }: { group: Group }) {
         </button>
       </div>
 
+      {/* Member list */}
       {group.members.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center">
-          <p className="text-[13px] text-slate-400">No members yet — add people to split with</p>
+          <p className="text-[13px] text-slate-400">
+            No members yet — add people to split with
+          </p>
         </div>
       ) : (
         <div className="space-y-2">
           {group.members.map(m => (
-            <div
+            <MemberRow
               key={m.id}
-              className="group flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-4 py-3 transition hover:border-slate-200"
-            >
-              <Avatar name={m.name} color={m.color} size={34} />
-              <div className="min-w-0 flex-1">
-                <p className="text-[14px] font-semibold text-slate-800">{m.name}</p>
-                <p className="text-[11px] text-slate-400">{m.upiId ?? `${m.phone}@upi`}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => removeMember(group.id, m.id)}
-                className="rounded-lg p-1.5 text-slate-300 opacity-0 transition group-hover:opacity-100 hover:bg-red-50 hover:text-red-400"
-                aria-label={`Remove ${m.name}`}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
+              group={group}
+              member={m}
+              onEdit={() => setEditingMember(m)}
+            />
           ))}
         </div>
       )}
 
-      {showAdd && <AddMemberSheet groupId={group.id} onClose={() => setShowAdd(false)} />}
+      {/* Add member sheet */}
+      {showAdd && (
+        <AddMemberSheet groupId={group.id} onClose={() => setShowAdd(false)} />
+      )}
+
+      {/* Edit member sheet */}
+      {editingMember && (
+        <EditMemberSheet
+          groupId={group.id}
+          member={editingMember}
+          onClose={() => setEditingMember(null)}
+        />
+      )}
     </div>
   );
 }
