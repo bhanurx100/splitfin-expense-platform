@@ -23,7 +23,7 @@ const sql = neon(process.env.DATABASE_URL!);
 const db = drizzle(sql);
 
 // ─── CHANGE THIS to your actual Clerk userId ───────────────────────────────────
-const SEED_USER_ID = process.env.DEMO_USER_ID || "user_3CKx256pC3xrBdinPjw2hRC1NhT";
+const SEED_USER_ID = process.env.DEMO_USER_ID || "user_3DiEsxXHqLSrKG7cRKHX7ZYME7E";
 // ──────────────────────────────────────────────────────────────────────────────
 
 // ── Accounts ──────────────────────────────────────────────────────────────────
