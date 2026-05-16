@@ -98,7 +98,7 @@ export function EditExpenseModal({ group, expense, onClose }: Props) {
               className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-[14px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:bg-white transition"
             />
           </div>
-
+ 
           {/* Amount */}
           <div>
             <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-400">
