@@ -4,24 +4,24 @@ import { cn } from "@/lib/utils";
 
 /**
  * SpendWise Design System — Badge
- * Used for amounts, status tags, and category labels.
+ * Dark-mode aware with semantic CSS variable tokens.
  */
 const badgeVariants = cva(
   "inline-flex items-center gap-1 rounded-full text-[11px] font-semibold px-2.5 py-0.5 transition-colors",
   {
     variants: {
       variant: {
-        default:     "bg-blue-50 text-blue-700 border border-blue-100",
-        secondary:   "bg-slate-100 text-slate-600",
-        destructive: "bg-red-50 text-red-600 border border-red-100",
-        outline:     "border border-slate-200 text-slate-600 bg-white",
+        default:     "bg-[var(--color-info-bg)] text-[var(--color-info)] border border-[var(--border-brand)]",
+        secondary:   "bg-[var(--surface-overlay)] text-[var(--text-secondary)]",
+        destructive: "bg-[var(--color-expense-bg)] text-[var(--color-expense)] border border-[var(--color-expense-border)]",
+        outline:     "border border-[var(--border-default)] text-[var(--text-secondary)] bg-[var(--surface-card)]",
         /* Finance-specific */
-        primary:     "bg-blue-50 text-blue-700 border border-blue-100",
-        income:      "bg-emerald-50 text-emerald-700 border border-emerald-100",
-        expense:     "bg-red-50 text-red-600 border border-red-100",
-        warning:     "bg-amber-50 text-amber-700 border border-amber-100",
-        purple:      "bg-purple-50 text-purple-700 border border-purple-100",
-        slate:       "bg-slate-100 text-slate-600",
+        primary:     "bg-[var(--color-info-bg)] text-[var(--color-info)] border border-[var(--border-brand)]",
+        income:      "bg-[var(--color-income-bg)] text-[var(--color-income)] border border-[var(--color-income-border)]",
+        expense:     "bg-[var(--color-expense-bg)] text-[var(--color-expense)] border border-[var(--color-expense-border)]",
+        warning:     "bg-[var(--color-warning-bg)] text-[var(--color-warning)]",
+        purple:      "bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800",
+        slate:       "bg-[var(--surface-overlay)] text-[var(--text-secondary)]",
       },
     },
     defaultVariants: {

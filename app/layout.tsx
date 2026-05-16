@@ -6,11 +6,15 @@ import { Toaster } from "@/components/ui/sonner";
 import { siteConfig } from "@/config";
 import { QueryProviders } from "@/providers/query-provider";
 import { SheetProvider } from "@/providers/sheet-provider";
+import { ThemeProvider } from "@/providers/theme-provider";
 
 import "./globals.css";
 
 export const viewport: Viewport = {
-  themeColor: "#3d82f6",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#3b82f6" },
+    { media: "(prefers-color-scheme: dark)",  color: "#1e3a8a" },
+  ],
 };
 
 export const metadata: Metadata = siteConfig;
@@ -18,14 +22,21 @@ export const metadata: Metadata = siteConfig;
 const RootLayout = ({ children }: Readonly<PropsWithChildren>) => {
   return (
     <ClerkProvider>
-      <html lang="en">
-        <body className="antialiased">
-          <QueryProviders>
-            <SheetProvider />
-            <Toaster richColors theme="light" />
-
-            {children}
-          </QueryProviders>
+      <html lang="en" suppressHydrationWarning>
+        <body className="antialiased bg-[var(--surface-base)] text-[var(--text-primary)]">
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange={false}
+            storageKey="spendwise-theme"
+          >
+            <QueryProviders>
+              <SheetProvider />
+              <Toaster richColors position="top-right" />
+              {children}
+            </QueryProviders>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * SpendWise Design System — Card
- * Replaces the default shadcn card with cohesive fintech variants.
+ * Dark-mode aware with semantic CSS variable tokens.
  */
 
 // ── Base Card ─────────────────────────────────────────────────────────────────
@@ -13,8 +13,11 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
     <div
       ref={ref}
       className={cn(
-        "bg-white rounded-[18px] border border-slate-100 shadow-sm",
-        "transition-all duration-200 hover:shadow-md hover:border-slate-200",
+        "bg-[var(--surface-card)] rounded-[18px]",
+        "border border-[var(--border-default)]",
+        "shadow-[var(--shadow-card)]",
+        "transition-all duration-200",
+        "hover:shadow-[var(--shadow-md)] hover:border-[var(--border-strong)]",
         className
       )}
       {...props}
@@ -38,7 +41,11 @@ const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HT
   ({ className, ...props }, ref) => (
     <h3
       ref={ref}
-      className={cn("text-[15px] font-semibold leading-tight tracking-tight text-slate-900", className)}
+      className={cn(
+        "text-[15px] font-semibold leading-tight tracking-tight",
+        "text-[var(--text-primary)]",
+        className
+      )}
       {...props}
     />
   )
@@ -49,7 +56,7 @@ const CardDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttribu
   ({ className, ...props }, ref) => (
     <p
       ref={ref}
-      className={cn("text-xs text-slate-400 mt-0.5", className)}
+      className={cn("text-xs text-[var(--text-muted)] mt-0.5", className)}
       {...props}
     />
   )
@@ -68,7 +75,8 @@ const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
     <div
       ref={ref}
       className={cn(
-        "flex items-center gap-3 p-5 lg:p-6 pt-0 border-t border-slate-50 mt-2",
+        "flex items-center gap-3 p-5 lg:p-6 pt-0",
+        "border-t border-[var(--border-subtle)] mt-2",
         className
       )}
       {...props}
@@ -88,38 +96,49 @@ interface StatCardProps {
   className?: string;
 }
 
-function StatCard({ label, value, icon, iconBg = "bg-blue-50", delta, className }: StatCardProps) {
+function StatCard({ label, value, icon, iconBg, delta, className }: StatCardProps) {
   return (
     <div className={cn(
-      "bg-white rounded-[18px] border border-slate-100 shadow-sm p-5 lg:p-6",
-      "transition-all duration-200 hover:shadow-md hover:border-slate-200 slide-up",
+      "bg-[var(--surface-card)] rounded-[18px]",
+      "border border-[var(--border-default)]",
+      "shadow-[var(--shadow-card)] p-5 lg:p-6",
+      "transition-all duration-200",
+      "hover:shadow-[var(--shadow-md)] hover:border-[var(--border-strong)] hover:-translate-y-px",
+      "slide-up",
       className
     )}>
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">{label}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+          {label}
+        </p>
         {icon && (
-          <div className={cn("flex h-8 w-8 items-center justify-center rounded-xl text-sm", iconBg)}>
+          <div className={cn(
+            "flex h-8 w-8 items-center justify-center rounded-xl text-sm",
+            iconBg ?? "bg-[var(--surface-overlay)]"
+          )}>
             {icon}
           </div>
         )}
       </div>
-      <p className="text-2xl font-bold tracking-tight text-slate-900 tabular-nums">{value}</p>
+      <p className="text-2xl font-bold tracking-tight text-[var(--text-primary)] tabular-nums">
+        {value}
+      </p>
       {delta && (
         <div className="mt-2 flex items-center gap-1">
           <span className={cn(
             "text-xs font-semibold",
-            delta.positive ? "text-emerald-600" : "text-red-500"
+            delta.positive ? "text-[var(--color-income)]" : "text-[var(--color-expense)]"
           )}>
             {delta.positive ? "↑" : "↓"} {delta.value}
           </span>
-          <span className="text-xs text-slate-400">vs last period</span>
+          <span className="text-xs text-[var(--text-muted)]">vs last period</span>
         </div>
       )}
     </div>
   );
 }
 
-// ── Section Card — for content sections ───────────────────────────────────────
+// ── Section Card ───────────────────────────────────────────────────────────────
 
 interface SectionCardProps extends React.HTMLAttributes<HTMLDivElement> {
   title?: string;
@@ -131,21 +150,27 @@ function SectionCard({ title, action, noPadding, children, className, ...props }
   return (
     <div
       className={cn(
-        "bg-white rounded-[18px] border border-slate-100 shadow-sm",
-        "transition-all duration-200 hover:shadow-md hover:border-slate-200",
+        "bg-[var(--surface-card)] rounded-[18px]",
+        "border border-[var(--border-default)]",
+        "shadow-[var(--shadow-card)]",
+        "transition-all duration-200",
+        "hover:shadow-[var(--shadow-md)] hover:border-[var(--border-strong)]",
         className
       )}
       {...props}
     >
       {(title || action) && (
-        <div className="flex items-center justify-between border-b border-slate-50 px-5 py-4 lg:px-6">
-          {title && <h3 className="text-[15px] font-semibold text-slate-800">{title}</h3>}
+        <div className={cn(
+          "flex items-center justify-between",
+          "border-b border-[var(--border-subtle)] px-5 py-4 lg:px-6"
+        )}>
+          {title && (
+            <h3 className="text-[15px] font-semibold text-[var(--text-primary)]">{title}</h3>
+          )}
           {action && <div className="flex items-center gap-2">{action}</div>}
         </div>
       )}
-      <div className={noPadding ? "" : "p-5 lg:p-6"}>
-        {children}
-      </div>
+      <div className={noPadding ? "" : "p-5 lg:p-6"}>{children}</div>
     </div>
   );
 }
@@ -166,12 +191,14 @@ function EmptyCard({ icon, title, description, action, className }: EmptyCardPro
       "flex flex-col items-center justify-center py-16 text-center",
       className
     )}>
-      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-300">
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--surface-overlay)] text-[var(--text-muted)]">
         {icon}
       </div>
-      <p className="mb-1 text-sm font-semibold text-slate-600">{title}</p>
+      <p className="mb-1 text-sm font-semibold text-[var(--text-secondary)]">{title}</p>
       {description && (
-        <p className="mb-5 max-w-[220px] text-xs leading-relaxed text-slate-400">{description}</p>
+        <p className="mb-5 max-w-[220px] text-xs leading-relaxed text-[var(--text-muted)]">
+          {description}
+        </p>
       )}
       {action}
     </div>
