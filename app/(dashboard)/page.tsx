@@ -2,12 +2,7 @@
 
 /**
  * app/(dashboard)/page.tsx
- *
- * Layout contract:
- *  Container: max-w-screen-xl, px-4 sm:px-6 lg:px-8, py-6 lg:py-8
- *  Grid: full-width mobile → xl:grid-cols-12 (main 8 / side 4)
- *  Stat cards: 1 col → 2 col sm → 4 col lg
- *  Section gap: space-y-5 lg:space-y-6
+ * Semantic token migration — all hardcoded slate/white replaced with CSS vars.
  */
 
 import { useMemo, useState } from "react";
@@ -32,20 +27,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { categoryColor, categoryIcon, formatINR, formatMonthYear, formatTxDate } from "@/lib/mobile-utils";
 
-/* ─── Page container — shared constant ───────────────────────────────────── */
 const PAGE_CLS = "mx-auto w-full max-w-screen-xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8";
 
-/* ─── types ─────────────────────────────────────────────────────────────── */
 type Account  = { id: string; name: string };
 type ApiTx    = { id: string; date: string; category: string | null; payee: string; amount: number; account: string };
 type SummaryDay = { date: string; income: number; expenses: number };
 type Category   = { name: string; value: number };
 
-/* ─── helpers ────────────────────────────────────────────────────────────── */
 function fmt(v: number) { return formatINR(Math.abs(v), 0); }
 function pct(a: number, b: number) { if (!b) return 0; return Math.round(((a - b) / Math.abs(b)) * 100); }
 
-/* ─── Stat card ─────────────────────────────────────────────────────────── */
+/* ── Stat card ───────────────────────────────────────────────────────────── */
 function StatCard({
   label, value, delta, icon: Icon, accent, hidden, delay = 0,
 }: {
@@ -53,9 +45,9 @@ function StatCard({
   accent: "blue" | "emerald" | "red"; hidden: boolean; delay?: number;
 }) {
   const accentMap = {
-    blue:    { bg: "bg-blue-50",    text: "text-blue-600",    icon: "text-blue-500" },
-    emerald: { bg: "bg-emerald-50", text: "text-emerald-600", icon: "text-emerald-500" },
-    red:     { bg: "bg-red-50",     text: "text-red-500",     icon: "text-red-400" },
+    blue:    { bg: "var(--color-info-bg)",    text: "var(--color-info)",    icon: "var(--color-info-mid)"    },
+    emerald: { bg: "var(--color-income-bg)",  text: "var(--color-income)",  icon: "var(--color-income-mid)"  },
+    red:     { bg: "var(--color-expense-bg)", text: "var(--color-expense)", icon: "var(--color-expense-mid)" },
   }[accent];
 
   const isUp = delta !== undefined && delta >= 0;
@@ -63,77 +55,127 @@ function StatCard({
 
   return (
     <div
-      className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-200 hover:shadow-lg"
-      style={{ animationDelay: `${delay}s` }}
+      className="relative overflow-hidden rounded-2xl p-5 transition-all duration-300 hover:-translate-y-0.5"
+      style={{
+        background: "var(--surface-card)",
+        border: "1px solid var(--border-default)",
+        boxShadow: "var(--shadow-card)",
+        animationDelay: `${delay}s`,
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-lg)";
+        (e.currentTarget as HTMLElement).style.borderColor = "var(--border-strong)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-card)";
+        (e.currentTarget as HTMLElement).style.borderColor = "var(--border-default)";
+      }}
     >
-      <div className="relative">
-        <div className="mb-4 flex items-start justify-between">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">{label}</p>
-          <div className={`flex h-8 w-8 items-center justify-center rounded-xl ${accentMap.bg}`}>
-            <Icon className={`h-4 w-4 ${accentMap.icon}`} />
-          </div>
-        </div>
-        <p className={`mb-1 text-2xl font-bold leading-none tracking-tight text-slate-900 transition-all duration-200 lg:text-[1.6rem] ${hidden ? "blur-md select-none" : ""}`}
-           style={{ fontVariantNumeric: "tabular-nums" }}>
-          {fmt(value)}
+      <div className="mb-4 flex items-start justify-between">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--text-muted)" }}>
+          {label}
         </p>
-        {delta !== undefined && (
-          <div className={`flex items-center gap-1 text-xs font-semibold ${isUp ? "text-emerald-600" : "text-red-500"}`}>
-            <DeltaIcon className="h-3.5 w-3.5" />
-            {Math.abs(delta)}% vs last period
-          </div>
-        )}
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl" style={{ background: accentMap.bg }}>
+          <Icon className="h-4 w-4" style={{ color: accentMap.icon }} />
+        </div>
       </div>
+      <p
+        className={`mb-1 text-2xl font-bold leading-none tracking-tight transition-all duration-200 lg:text-[1.6rem] ${hidden ? "blur-md select-none" : ""}`}
+        style={{ fontVariantNumeric: "tabular-nums", color: "var(--text-primary)" }}
+      >
+        {fmt(value)}
+      </p>
+      {delta !== undefined && (
+        <div
+          className="flex items-center gap-1 text-xs font-semibold"
+          style={{ color: isUp ? "var(--color-income)" : "var(--color-expense)" }}
+        >
+          <DeltaIcon className="h-3.5 w-3.5" />
+          {Math.abs(delta)}% vs last period
+        </div>
+      )}
     </div>
   );
 }
 
-/* ─── Insight pill ───────────────────────────────────────────────────────── */
+/* ── Insight pill ────────────────────────────────────────────────────────── */
 function InsightPill({ text, sub, color }: { text: string; sub?: string; color: string }) {
   return (
-    <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-3.5 py-2.5 transition-colors hover:bg-slate-100/60">
+    <div
+      className="flex items-center justify-between rounded-xl px-3.5 py-2.5 transition-colors"
+      style={{
+        background: "var(--surface-sunken)",
+        border: "1px solid var(--border-subtle)",
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.background = "var(--surface-hover)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.background = "var(--surface-sunken)";
+      }}
+    >
       <div className="flex items-center gap-2.5">
         <div className="h-2 w-2 flex-shrink-0 rounded-full" style={{ background: color }} />
-        <span className="text-[13px] font-medium text-slate-700">{text}</span>
+        <span className="text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>{text}</span>
       </div>
-      {sub && <span className="text-[13px] font-bold text-slate-900 tabular-nums">{sub}</span>}
+      {sub && <span className="text-[13px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>{sub}</span>}
     </div>
   );
 }
 
-/* ─── Tx row ─────────────────────────────────────────────────────────────── */
+/* ── Tx row ──────────────────────────────────────────────────────────────── */
 function TxRow({ tx, index, onOpen }: { tx: ApiTx; index: number; onOpen: (id: string) => void }) {
   const isIncome = tx.amount >= 0;
-  const color    = categoryColor(index % 10);
+  const color = categoryColor(index % 10);
   return (
-    <button type="button" onClick={() => onOpen(tx.id)}
-      className="group flex w-full items-center gap-3.5 rounded-xl px-3 py-2.5 text-left transition-all duration-150 hover:bg-slate-50 active:scale-[0.99]">
-      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-sm transition-transform duration-150 group-hover:scale-105"
-        style={{ background: `${color}15` }}>
+    <button
+      type="button"
+      onClick={() => onOpen(tx.id)}
+      className="group flex w-full items-center gap-3.5 rounded-xl px-3 py-2.5 text-left transition-all duration-150"
+      style={{ background: "transparent" }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--surface-hover)"; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+    >
+      <div
+        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-sm transition-transform duration-150 group-hover:scale-105"
+        style={{ background: `${color}18` }}
+      >
         {categoryIcon(tx.category ?? "")}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-semibold text-slate-800">{tx.payee}</p>
-        <p className="text-[11px] text-slate-400">{formatTxDate(tx.date)}</p>
+        <p className="truncate text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>{tx.payee}</p>
+        <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{formatTxDate(tx.date)}</p>
       </div>
-      <span className={`text-[13px] font-bold tabular-nums ${isIncome ? "text-emerald-600" : "text-red-500"}`}>
+      <span
+        className="text-[13px] font-bold tabular-nums"
+        style={{ color: isIncome ? "var(--color-income)" : "var(--color-expense)" }}
+      >
         {isIncome ? "+" : "−"}{fmt(tx.amount)}
       </span>
     </button>
   );
 }
 
-/* ─── Chart tooltip ──────────────────────────────────────────────────────── */
+/* ── Chart tooltip ───────────────────────────────────────────────────────── */
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl border border-slate-100 bg-white/95 p-3.5 shadow-xl backdrop-blur-sm">
-      <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{label}</p>
+    <div
+      className="rounded-xl p-3.5"
+      style={{
+        background: "var(--surface-raised)",
+        border: "1px solid var(--border-default)",
+        boxShadow: "var(--shadow-xl)",
+      }}
+    >
+      <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+        {label}
+      </p>
       {payload.map((p: any) => (
         <div key={p.dataKey} className="flex items-center gap-2 text-[13px]">
           <div className="h-2 w-2 rounded-full" style={{ background: p.color }} />
-          <span className="text-slate-500 capitalize">{p.dataKey}</span>
-          <span className="ml-auto font-bold text-slate-800 tabular-nums">
+          <span style={{ color: "var(--text-tertiary)" }} className="capitalize">{p.dataKey}</span>
+          <span className="ml-auto font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
             ₹{Math.abs(p.value).toLocaleString("en-IN")}
           </span>
         </div>
@@ -142,12 +184,14 @@ function ChartTooltip({ active, payload, label }: any) {
   );
 }
 
-/* ─── Mini pie ───────────────────────────────────────────────────────────── */
+/* ── Mini pie ────────────────────────────────────────────────────────────── */
 function CategoryPie({ categories }: { categories: Category[] }) {
   const top   = categories.slice(0, 6);
   const total = top.reduce((s, c) => s + c.value, 0);
   if (!top.length) return (
-    <div className="flex h-40 items-center justify-center text-sm text-slate-400">No data for this period</div>
+    <div className="flex h-40 items-center justify-center text-sm" style={{ color: "var(--text-muted)" }}>
+      No data for this period
+    </div>
   );
   return (
     <div className="flex items-center gap-5">
@@ -160,16 +204,18 @@ function CategoryPie({ categories }: { categories: Category[] }) {
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <p className="text-[10px] text-slate-400 uppercase tracking-wider">Total</p>
-          <p className="text-sm font-bold text-slate-800 tabular-nums">{fmt(total)}</p>
+          <p className="text-[10px] uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Total</p>
+          <p className="text-sm font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>{fmt(total)}</p>
         </div>
       </div>
       <div className="min-w-0 flex-1 space-y-2">
         {top.map((cat, i) => (
           <div key={cat.name} className="flex items-center gap-2">
             <div className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: categoryColor(i) }} />
-            <p className="min-w-0 flex-1 truncate text-[12px] font-medium text-slate-600">{cat.name}</p>
-            <p className="text-[12px] font-bold text-slate-800 tabular-nums">
+            <p className="min-w-0 flex-1 truncate text-[12px] font-medium" style={{ color: "var(--text-tertiary)" }}>
+              {cat.name}
+            </p>
+            <p className="text-[12px] font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
               {Math.round((cat.value / total) * 100)}%
             </p>
           </div>
@@ -179,31 +225,36 @@ function CategoryPie({ categories }: { categories: Category[] }) {
   );
 }
 
-/* ─── Budget bar ─────────────────────────────────────────────────────────── */
+/* ── Budget bar ──────────────────────────────────────────────────────────── */
 function BudgetBar({ cat, index, max }: { cat: Category; index: number; max: number }) {
-  const pct   = Math.min(Math.round((cat.value / max) * 100), 100);
+  const pctVal = Math.min(Math.round((cat.value / max) * 100), 100);
   const color  = categoryColor(index);
-  const isHigh = pct > 80;
+  const isHigh = pctVal > 80;
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-sm">{categoryIcon(cat.name)}</span>
-          <span className="text-[13px] font-medium text-slate-700">{cat.name}</span>
+          <span className="text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>{cat.name}</span>
         </div>
-        <span className={`text-[13px] font-bold tabular-nums ${isHigh ? "text-red-500" : "text-slate-800"}`}>
+        <span
+          className="text-[13px] font-bold tabular-nums"
+          style={{ color: isHigh ? "var(--color-expense)" : "var(--text-primary)" }}
+        >
           {fmt(cat.value)}
         </span>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-        <div className="h-full rounded-full transition-all duration-700"
-          style={{ width: `${pct}%`, background: isHigh ? "#ef4444" : color }} />
+      <div className="h-1.5 overflow-hidden rounded-full" style={{ background: "var(--surface-sunken)" }}>
+        <div
+          className="h-full rounded-full transition-all duration-700"
+          style={{ width: `${pctVal}%`, background: isHigh ? "var(--color-expense)" : color }}
+        />
       </div>
     </div>
   );
 }
 
-/* ─── Account picker ─────────────────────────────────────────────────────── */
+/* ── Account picker ──────────────────────────────────────────────────────── */
 function AccountPicker({ accounts, selectedId, onChange, isLoading, dark = false }: {
   accounts: Account[]; selectedId: string; onChange: (a: Account) => void;
   isLoading: boolean; dark?: boolean;
@@ -211,32 +262,44 @@ function AccountPicker({ accounts, selectedId, onChange, isLoading, dark = false
   const selected = accounts.find(a => a.id === selectedId);
   const label    = selected?.name ?? "All Accounts";
   if (isLoading) return (
-    <div className={`h-8 w-36 animate-pulse rounded-xl ${dark ? "bg-white/20" : "bg-slate-200"}`} />
+    <div
+      className="h-8 w-36 animate-pulse rounded-xl"
+      style={{ background: dark ? "rgba(255,255,255,0.15)" : "var(--surface-sunken)" }}
+    />
   );
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button type="button" className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[13px] font-medium transition-all focus-visible:outline-none ${
-          dark
-            ? "border-white/20 bg-white/10 text-white hover:bg-white/20"
-            : "border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 hover:border-slate-300"
-        }`}>
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+        <button
+          type="button"
+          className="flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[13px] font-medium transition-all focus-visible:outline-none"
+          style={{
+            background: dark ? "rgba(255,255,255,0.10)" : "var(--surface-card)",
+            border: dark ? "1px solid rgba(255,255,255,0.18)" : "1px solid var(--border-default)",
+            color: dark ? "rgba(255,255,255,0.90)" : "var(--text-secondary)",
+            boxShadow: dark ? "none" : "var(--shadow-xs)",
+          }}
+        >
+          <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--color-income-light)" }} />
           <span className="max-w-[130px] truncate">{label}</span>
-          <ChevronDown className={`h-3.5 w-3.5 ${dark ? "text-white/50" : "text-slate-400"}`} />
+          <ChevronDown className="h-3.5 w-3.5 opacity-50" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-52 rounded-2xl border-slate-100 p-1.5 shadow-xl">
-        <DropdownMenuItem className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-2.5 text-[13px]"
-          onClick={() => onChange({ id: "", name: "All Accounts" })}>
+      <DropdownMenuContent align="end" className="w-52 rounded-2xl p-1.5 shadow-xl">
+        <DropdownMenuItem
+          className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-2.5 text-[13px]"
+          onClick={() => onChange({ id: "", name: "All Accounts" })}
+        >
           All Accounts
           {selectedId === "" && <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />}
         </DropdownMenuItem>
-        <DropdownMenuSeparator className="my-1 bg-slate-100" />
+        <DropdownMenuSeparator />
         {accounts.map(acc => (
-          <DropdownMenuItem key={acc.id}
+          <DropdownMenuItem
+            key={acc.id}
             className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-2.5 text-[13px]"
-            onClick={() => onChange(acc)}>
+            onClick={() => onChange(acc)}
+          >
             {acc.name}
             {acc.id === selectedId && <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />}
           </DropdownMenuItem>
@@ -270,7 +333,6 @@ export default function HomePage() {
   const accName     = selectedAcc?.name ?? "All Accounts";
   const period      = formatMonthYear(new Date());
 
-  /* chart data */
   const chartData = useMemo(() => {
     if (chartPeriod === "M") {
       return (summary?.days ?? []).map((d: SummaryDay) => ({
@@ -335,8 +397,8 @@ export default function HomePage() {
   if (sumLoading || accLoading) return <DashboardSkeleton />;
 
   return (
-    <div className="min-h-screen bg-slate-50/60">
-      {/* ── Mobile ────────────────────────────────────────────────────── */}
+    <div className="min-h-screen" style={{ background: "var(--surface-bg)" }}>
+      {/* ── Mobile ─────────────────────────────────────────── */}
       <div className="lg:hidden">
         <MobileHeader
           accounts={accounts} selectedId={selectedAccId} accName={accName}
@@ -352,7 +414,7 @@ export default function HomePage() {
         />
       </div>
 
-      {/* ── Desktop ───────────────────────────────────────────────────── */}
+      {/* ── Desktop ─────────────────────────────────────────── */}
       <div className="hidden lg:block">
         <DesktopDashboard
           accounts={accounts} selectedId={selectedAccId} accName={accName}
@@ -378,38 +440,66 @@ function DesktopDashboard({
   const net = income + expenses;
 
   return (
-    <div className={PAGE_CLS}>
-      {/* ── Top bar ──────────────────────────────────────────────────── */}
-      <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-5">
+    <div className={`mx-auto w-full max-w-screen-xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8`}>
+      {/* ── Top bar ────────────────────────────────────────── */}
+      <div
+        className="mb-6 flex items-center justify-between pb-5"
+        style={{ borderBottom: "1px solid var(--border-subtle)" }}
+      >
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">Overview</h1>
-          <p className="text-[13px] text-slate-400">{period}</p>
+          <h1 className="text-xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
+            Overview
+          </h1>
+          <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>{period}</p>
         </div>
         <div className="flex items-center gap-2.5">
           <AccountPicker accounts={accounts} selectedId={selectedId} onChange={onAccChange} isLoading={isLoading} />
-          <button type="button" onClick={onHide}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50">
+          <button
+            type="button" onClick={onHide}
+            className="flex h-9 w-9 items-center justify-center rounded-xl transition"
+            style={{
+              background: "var(--surface-card)",
+              border: "1px solid var(--border-default)",
+              color: "var(--text-tertiary)",
+              boxShadow: "var(--shadow-xs)",
+            }}
+          >
             {hidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
-          <button type="button"
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50">
+          <button
+            type="button"
+            className="flex h-9 w-9 items-center justify-center rounded-xl transition"
+            style={{
+              background: "var(--surface-card)",
+              border: "1px solid var(--border-default)",
+              color: "var(--text-tertiary)",
+              boxShadow: "var(--shadow-xs)",
+            }}
+          >
             <Bell className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      {/* ── Stat cards — 1→2→4 col ───────────────────────────────────── */}
+      {/* ── Stat cards ─────────────────────────────────────── */}
       <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
-        {/* Hero balance card */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-600 to-indigo-700 p-5 text-white shadow-lg shadow-blue-500/20">
+        {/* Hero balance */}
+        <div
+          className="relative overflow-hidden rounded-2xl p-5 text-white shadow-lg"
+          style={{ background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 40%, #3b82f6 100%)" }}
+        >
           <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/5" />
           <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-blue-200">Net Balance</p>
-          <p className={`mb-3 text-3xl font-bold tracking-tight transition-all duration-200 ${hidden ? "blur-md select-none" : ""}`}
-             style={{ fontVariantNumeric: "tabular-nums" }}>
+          <p
+            className={`mb-3 text-3xl font-bold tracking-tight transition-all duration-200 ${hidden ? "blur-md select-none" : ""}`}
+            style={{ fontVariantNumeric: "tabular-nums" }}
+          >
             {fmt(remaining)}
           </p>
           <div className="flex items-center gap-1.5">
-            <div className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold ${net >= 0 ? "bg-emerald-400/25 text-emerald-200" : "bg-red-400/25 text-red-200"}`}>
+            <div
+              className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold ${net >= 0 ? "bg-emerald-400/25 text-emerald-200" : "bg-red-400/25 text-red-200"}`}
+            >
               {net >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
               {net >= 0 ? "+" : "-"}{fmt(net)}
             </div>
@@ -418,30 +508,53 @@ function DesktopDashboard({
           <p className="mt-3 text-[11px] text-blue-300/70">{accName}</p>
         </div>
 
-        <StatCard label="Income"       value={income}      delta={summary?.incomeChange   ? Math.round(summary.incomeChange)   : undefined} icon={TrendingUp}   accent="emerald" hidden={hidden} delay={0.05} />
+        <StatCard label="Income"       value={income}             delta={summary?.incomeChange   ? Math.round(summary.incomeChange)   : undefined} icon={TrendingUp}   accent="emerald" hidden={hidden} delay={0.05} />
         <StatCard label="Expenses"     value={Math.abs(expenses)} delta={summary?.expensesChange ? Math.round(summary.expensesChange) : undefined} icon={TrendingDown} accent="red"     hidden={hidden} delay={0.1} />
-        <StatCard label="Savings Rate" value={savingsRate}  icon={Sparkles} accent="blue" hidden={hidden} delay={0.15} />
+        <StatCard label="Savings Rate" value={savingsRate}        icon={Sparkles}                                                                  accent="blue"       hidden={hidden} delay={0.15} />
       </div>
 
-      {/* ── Main grid — full width → xl:8/4 split ────────────────────── */}
+      {/* ── Main grid ──────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-5 lg:gap-6 xl:grid-cols-12">
 
         {/* Left column */}
         <div className="space-y-5 lg:space-y-6 xl:col-span-8">
 
           {/* Cash flow chart */}
-          <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all duration-200 hover:border-slate-200 hover:shadow-md lg:p-6">
+          <div
+            className="rounded-2xl p-5 transition-all duration-200 lg:p-6"
+            style={{
+              background: "var(--surface-card)",
+              border: "1px solid var(--border-default)",
+              boxShadow: "var(--shadow-card)",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-md)";
+              (e.currentTarget as HTMLElement).style.borderColor = "var(--border-strong)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-card)";
+              (e.currentTarget as HTMLElement).style.borderColor = "var(--border-default)";
+            }}
+          >
             <div className="mb-5 flex items-center justify-between">
               <div>
-                <h3 className="text-[15px] font-semibold text-slate-900">Cash Flow</h3>
-                <p className="mt-0.5 text-[12px] text-slate-400">Income vs Expenses</p>
+                <h3 className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>Cash Flow</h3>
+                <p className="mt-0.5 text-[12px]" style={{ color: "var(--text-muted)" }}>Income vs Expenses</p>
               </div>
-              <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1">
+              <div
+                className="flex items-center gap-1 rounded-xl p-1"
+                style={{ background: "var(--surface-sunken)" }}
+              >
                 {(["W", "M", "Y"] as const).map(p => (
-                  <button key={p} type="button" onClick={() => setChartPeriod(p)}
-                    className={`rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all duration-150 ${
-                      chartPeriod === p ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
-                    }`}>
+                  <button
+                    key={p} type="button" onClick={() => setChartPeriod(p)}
+                    className="rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all duration-150"
+                    style={{
+                      background: chartPeriod === p ? "var(--surface-card)" : "transparent",
+                      color: chartPeriod === p ? "var(--text-primary)" : "var(--text-tertiary)",
+                      boxShadow: chartPeriod === p ? "var(--shadow-xs)" : "none",
+                    }}
+                  >
                     {p === "W" ? "Week" : p === "M" ? "Month" : "Year"}
                   </button>
                 ))}
@@ -452,19 +565,19 @@ function DesktopDashboard({
                 <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
                   <defs>
                     <linearGradient id="gInc" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%"   stopColor="#3b82f6" stopOpacity={0.15} />
+                      <stop offset="0%"   stopColor="#3b82f6" stopOpacity={0.18} />
                       <stop offset="100%" stopColor="#3b82f6" stopOpacity={0}    />
                     </linearGradient>
                     <linearGradient id="gExp" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%"   stopColor="#ef4444" stopOpacity={0.12} />
+                      <stop offset="0%"   stopColor="#ef4444" stopOpacity={0.14} />
                       <stop offset="100%" stopColor="#ef4444" stopOpacity={0}    />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid stroke="#f1f5f9" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8" }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8" }}
+                  <CartesianGrid stroke="var(--border-subtle)" strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--text-muted)" }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "var(--text-muted)" }}
                     tickFormatter={v => v >= 100000 ? `₹${(v/100000).toFixed(0)}L` : v >= 1000 ? `₹${(v/1000).toFixed(0)}k` : `₹${v}`} />
-                  <Tooltip content={<ChartTooltip />} cursor={{ stroke: "#e2e8f0", strokeWidth: 1.5 }} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ stroke: "var(--border-default)", strokeWidth: 1.5 }} />
                   <Area type="monotone" dataKey="income"   stroke="#3b82f6" strokeWidth={2.5} fill="url(#gInc)" dot={false} activeDot={{ r: 4, fill: "#3b82f6", strokeWidth: 0 }} />
                   <Area type="monotone" dataKey="expenses" stroke="#f43f5e" strokeWidth={2.5} fill="url(#gExp)" dot={false} activeDot={{ r: 4, fill: "#f43f5e", strokeWidth: 0 }} />
                 </AreaChart>
@@ -474,25 +587,48 @@ function DesktopDashboard({
               {[{ color: "#3b82f6", label: "Income" }, { color: "#f43f5e", label: "Expenses" }].map(l => (
                 <div key={l.label} className="flex items-center gap-2">
                   <div className="h-2.5 w-2.5 rounded-full" style={{ background: l.color }} />
-                  <span className="text-[12px] text-slate-500">{l.label}</span>
+                  <span className="text-[12px]" style={{ color: "var(--text-tertiary)" }}>{l.label}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Category row — 2 col at lg */}
+          {/* Category row */}
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-            <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all duration-200 hover:border-slate-200 hover:shadow-md lg:p-6">
-              <h3 className="mb-4 text-[15px] font-semibold text-slate-900">By Category</h3>
+            {/* Category pie */}
+            <div
+              className="rounded-2xl p-5 transition-all duration-200 lg:p-6"
+              style={{
+                background: "var(--surface-card)",
+                border: "1px solid var(--border-default)",
+                boxShadow: "var(--shadow-card)",
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-md)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-card)"; }}
+            >
+              <h3 className="mb-4 text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>By Category</h3>
               <CategoryPie categories={categories} />
             </div>
-            <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all duration-200 hover:border-slate-200 hover:shadow-md lg:p-6">
-              <h3 className="mb-4 text-[15px] font-semibold text-slate-900">Top Spending</h3>
+
+            {/* Top spending */}
+            <div
+              className="rounded-2xl p-5 transition-all duration-200 lg:p-6"
+              style={{
+                background: "var(--surface-card)",
+                border: "1px solid var(--border-default)",
+                boxShadow: "var(--shadow-card)",
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-md)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-card)"; }}
+            >
+              <h3 className="mb-4 text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>Top Spending</h3>
               <div className="space-y-4">
                 {categories.slice(0, 4).map((cat: Category, i: number) => (
                   <BudgetBar key={cat.name} cat={cat} index={i} max={maxCat} />
                 ))}
-                {!categories.length && <p className="py-8 text-center text-sm text-slate-400">No expense data</p>}
+                {!categories.length && (
+                  <p className="py-8 text-center text-sm" style={{ color: "var(--text-muted)" }}>No expense data</p>
+                )}
               </div>
             </div>
           </div>
@@ -502,30 +638,60 @@ function DesktopDashboard({
         <div className="space-y-5 lg:space-y-6 xl:col-span-4">
 
           {/* Insights */}
-          <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all duration-200 hover:border-slate-200 hover:shadow-md">
+          <div
+            className="rounded-2xl p-5 transition-all duration-200"
+            style={{
+              background: "var(--surface-card)",
+              border: "1px solid var(--border-default)",
+              boxShadow: "var(--shadow-card)",
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-md)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-card)"; }}
+          >
             <div className="mb-3.5 flex items-center gap-2">
               <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-              <h3 className="text-[14px] font-semibold text-slate-800">Insights</h3>
+              <h3 className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Insights</h3>
             </div>
             <div className="space-y-2">
               {topMerchant && <InsightPill text={`Top: ${topMerchant.name}`} sub={fmt(topMerchant.val)} color="#f59e0b" />}
-              <InsightPill text={income > 0 ? `Saving ${savingsRate}% of income` : "No income this period"} color={savingsRate >= 20 ? "#10b981" : "#ef4444"} />
-              {expenses < 0 && <InsightPill text="Total expenses" sub={fmt(Math.abs(expenses))} color="#ef4444" />}
+              <InsightPill
+                text={income > 0 ? `Saving ${savingsRate}% of income` : "No income this period"}
+                color={savingsRate >= 20 ? "var(--color-income)" : "var(--color-expense)"}
+              />
+              {expenses < 0 && <InsightPill text="Total expenses" sub={fmt(Math.abs(expenses))} color="var(--color-expense)" />}
               {categories[0] && <InsightPill text={`${categories[0].name} is top category`} color={categoryColor(0)} />}
             </div>
           </div>
 
           {/* Recent transactions */}
-          <div className="rounded-2xl border border-slate-100 bg-white shadow-sm transition-all duration-200 hover:border-slate-200 hover:shadow-md">
-            <div className="flex items-center justify-between border-b border-slate-50 px-5 py-4">
-              <h3 className="text-[14px] font-semibold text-slate-800">Recent Transactions</h3>
-              <a href="/transactions" className="text-[12px] font-semibold text-blue-600 transition hover:text-blue-700">
+          <div
+            className="rounded-2xl shadow-sm transition-all duration-200"
+            style={{
+              background: "var(--surface-card)",
+              border: "1px solid var(--border-default)",
+              boxShadow: "var(--shadow-card)",
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-md)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-card)"; }}
+          >
+            <div
+              className="flex items-center justify-between px-5 py-4"
+              style={{ borderBottom: "1px solid var(--border-subtle)" }}
+            >
+              <h3 className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Recent Transactions</h3>
+              <a
+                href="/transactions"
+                className="text-[12px] font-semibold transition hover:opacity-75"
+                style={{ color: "var(--text-brand)" }}
+              >
                 View all →
               </a>
             </div>
             <div className="p-2">
               {txs.length === 0 ? (
-                <div className="py-10 text-center"><p className="text-sm text-slate-400">No transactions yet</p></div>
+                <div className="py-10 text-center">
+                  <p className="text-sm" style={{ color: "var(--text-muted)" }}>No transactions yet</p>
+                </div>
               ) : (
                 txs.slice(0, 8).map((tx: ApiTx, i: number) => (
                   <TxRow key={tx.id} tx={tx} index={i} onOpen={onOpen} />
@@ -540,32 +706,38 @@ function DesktopDashboard({
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   MOBILE HEADER
+   MOBILE HEADER — gradient hero card
    ═══════════════════════════════════════════════════════════════════════════ */
 function MobileHeader({ accounts, selectedId, accName, period, income, expenses, remaining, hidden, onHide, onAccChange, isLoading }: any) {
   const net = income + expenses;
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-blue-900 px-4 pb-10 pt-5 text-white">
-      <div className="pointer-events-none absolute inset-0 opacity-[0.04]"
+    <div
+      className="relative overflow-hidden px-4 pb-10 pt-5 text-white"
+      style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1d4ed8 100%)" }}
+    >
+      <div className="pointer-events-none absolute inset-0 opacity-[0.03]"
         style={{ backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
       <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-blue-500/10" />
       <div className="relative">
         <div className="mb-6 flex items-center justify-between">
           <AccountPicker accounts={accounts} selectedId={selectedId} onChange={onAccChange} isLoading={isLoading} dark />
           <div className="flex items-center gap-2">
-            <button type="button" onClick={onHide}
-              className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-white/70 transition hover:bg-white/20">
+            <button
+              type="button" onClick={onHide}
+              className="flex h-8 w-8 items-center justify-center rounded-xl text-white/70 transition hover:bg-white/20"
+            >
               {hidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
             </button>
-            <button type="button"
-              className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-white/70">
+            <button type="button" className="flex h-8 w-8 items-center justify-center rounded-xl text-white/70">
               <Bell className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
         <div className="mb-1 text-[12px] font-medium text-blue-200/70">{period} · {accName}</div>
-        <div className={`mb-2 text-4xl font-bold tracking-tight transition-all duration-200 ${hidden ? "blur-lg select-none" : ""}`}
-             style={{ fontVariantNumeric: "tabular-nums" }}>
+        <div
+          className={`mb-2 text-4xl font-bold tracking-tight transition-all duration-200 ${hidden ? "blur-lg select-none" : ""}`}
+          style={{ fontVariantNumeric: "tabular-nums" }}
+        >
           {fmt(remaining)}
         </div>
         <div className={`flex items-center gap-1.5 text-[13px] font-semibold ${net >= 0 ? "text-emerald-300" : "text-red-300"}`}>
@@ -597,17 +769,29 @@ function MobileHeader({ accounts, selectedId, accName, period, income, expenses,
    MOBILE CONTENT
    ═══════════════════════════════════════════════════════════════════════════ */
 function MobileContent({ txs, categories, income, expenses, summary, hidden, savingsRate, topMerchant, onOpen, chartData, chartPeriod, setChartPeriod }: any) {
+  const cardStyle = {
+    background: "var(--surface-card)",
+    border: "1px solid var(--border-default)",
+    boxShadow: "var(--shadow-card)",
+  };
+
   return (
     <div className="-mt-4 space-y-4 px-4 pb-4 sm:px-6">
-
       {/* Chart */}
-      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+      <div className="rounded-2xl p-4" style={cardStyle}>
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-[14px] font-semibold text-slate-800">Cash Flow</h3>
-          <div className="flex rounded-xl bg-slate-100 p-0.5">
+          <h3 className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Cash Flow</h3>
+          <div className="flex rounded-xl p-0.5" style={{ background: "var(--surface-sunken)" }}>
             {(["W", "M", "Y"] as const).map(p => (
-              <button key={p} type="button" onClick={() => setChartPeriod(p)}
-                className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all ${chartPeriod === p ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}`}>
+              <button
+                key={p} type="button" onClick={() => setChartPeriod(p)}
+                className="rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all"
+                style={{
+                  background: chartPeriod === p ? "var(--surface-card)" : "transparent",
+                  color: chartPeriod === p ? "var(--text-primary)" : "var(--text-tertiary)",
+                  boxShadow: chartPeriod === p ? "var(--shadow-xs)" : "none",
+                }}
+              >
                 {p}
               </button>
             ))}
@@ -626,8 +810,8 @@ function MobileContent({ txs, categories, income, expenses, summary, hidden, sav
                   <stop offset="100%" stopColor="#ef4444" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid stroke="#f1f5f9" strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "#94a3b8" }} />
+              <CartesianGrid stroke="var(--border-subtle)" strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "var(--text-muted)" }} />
               <YAxis hide />
               <Tooltip content={<ChartTooltip />} />
               <Area type="monotone" dataKey="income"   stroke="#3b82f6" strokeWidth={2} fill="url(#mInc)" dot={false} />
@@ -638,35 +822,43 @@ function MobileContent({ txs, categories, income, expenses, summary, hidden, sav
       </div>
 
       {/* Insights */}
-      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+      <div className="rounded-2xl p-4" style={cardStyle}>
         <div className="mb-3 flex items-center gap-2">
           <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-          <h3 className="text-[14px] font-semibold text-slate-800">Insights</h3>
+          <h3 className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Insights</h3>
         </div>
         <div className="space-y-2">
           {topMerchant && <InsightPill text={`Top spend: ${topMerchant.name}`} sub={fmt(topMerchant.val)} color="#f59e0b" />}
-          <InsightPill text={income > 0 ? `Saving ${savingsRate}% of income` : "No income this period"} color={savingsRate >= 20 ? "#10b981" : "#ef4444"} />
+          <InsightPill
+            text={income > 0 ? `Saving ${savingsRate}% of income` : "No income this period"}
+            color={savingsRate >= 20 ? "var(--color-income)" : "var(--color-expense)"}
+          />
           {categories[0] && <InsightPill text={`${categories[0].name} is top category`} color={categoryColor(0)} />}
         </div>
       </div>
 
       {/* Category pie */}
       {categories.length > 0 && (
-        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-          <h3 className="mb-4 text-[14px] font-semibold text-slate-800">Spending Breakdown</h3>
+        <div className="rounded-2xl p-4" style={cardStyle}>
+          <h3 className="mb-4 text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Spending Breakdown</h3>
           <CategoryPie categories={categories} />
         </div>
       )}
 
       {/* Recent transactions */}
-      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-50 px-4 py-3.5">
-          <h3 className="text-[14px] font-semibold text-slate-800">Recent Transactions</h3>
-          <a href="/transactions" className="text-[12px] font-semibold text-blue-600">View all →</a>
+      <div className="rounded-2xl" style={cardStyle}>
+        <div
+          className="flex items-center justify-between px-4 py-3.5"
+          style={{ borderBottom: "1px solid var(--border-subtle)" }}
+        >
+          <h3 className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>Recent Transactions</h3>
+          <a href="/transactions" className="text-[12px] font-semibold" style={{ color: "var(--text-brand)" }}>
+            View all →
+          </a>
         </div>
         <div className="p-2">
           {txs.length === 0
-            ? <p className="py-10 text-center text-sm text-slate-400">No transactions yet</p>
+            ? <p className="py-10 text-center text-sm" style={{ color: "var(--text-muted)" }}>No transactions yet</p>
             : txs.slice(0, 6).map((tx: ApiTx, i: number) => <TxRow key={tx.id} tx={tx} index={i} onOpen={onOpen} />)
           }
         </div>
@@ -675,36 +867,40 @@ function MobileContent({ txs, categories, income, expenses, summary, hidden, sav
   );
 }
 
-/* ─── Skeleton ────────────────────────────────────────────────────────────── */
+/* ── Dashboard skeleton ───────────────────────────────────────────────────── */
 function DashboardSkeleton() {
   return (
-    <div className={PAGE_CLS}>
-      <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-5">
+    <div className="mx-auto w-full max-w-screen-xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <div className="mb-6 flex items-center justify-between pb-5" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
         <div className="space-y-2">
-          <div className="h-5 w-24 animate-pulse rounded-xl bg-slate-200" />
-          <div className="h-3.5 w-32 animate-pulse rounded-xl bg-slate-100" />
+          <div className="h-5 w-24 animate-pulse rounded-xl" style={{ background: "var(--surface-sunken)" }} />
+          <div className="h-3.5 w-32 animate-pulse rounded-xl" style={{ background: "var(--surface-sunken)" }} />
         </div>
         <div className="flex gap-2">
-          <div className="h-9 w-36 animate-pulse rounded-xl bg-slate-200" />
-          <div className="h-9 w-9 animate-pulse rounded-xl bg-slate-200" />
+          <div className="h-9 w-36 animate-pulse rounded-xl" style={{ background: "var(--surface-sunken)" }} />
+          <div className="h-9 w-9 animate-pulse rounded-xl"  style={{ background: "var(--surface-sunken)" }} />
         </div>
       </div>
       <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
         {[0, 1, 2, 3].map(i => (
-          <div key={i} className="h-32 animate-pulse rounded-2xl bg-slate-200/60" style={{ animationDelay: `${i * 0.1}s` }} />
+          <div
+            key={i}
+            className="h-32 animate-pulse rounded-2xl"
+            style={{ background: "var(--surface-sunken)", animationDelay: `${i * 0.1}s` }}
+          />
         ))}
       </div>
       <div className="grid grid-cols-1 gap-5 lg:gap-6 xl:grid-cols-12">
         <div className="space-y-5 xl:col-span-8">
-          <div className="h-72 animate-pulse rounded-2xl border border-slate-100 bg-white" />
+          <div className="h-72 animate-pulse rounded-2xl" style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)" }} />
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-            <div className="h-52 animate-pulse rounded-2xl border border-slate-100 bg-white" />
-            <div className="h-52 animate-pulse rounded-2xl border border-slate-100 bg-white" />
+            <div className="h-52 animate-pulse rounded-2xl" style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)" }} />
+            <div className="h-52 animate-pulse rounded-2xl" style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)" }} />
           </div>
         </div>
         <div className="space-y-5 xl:col-span-4">
-          <div className="h-40 animate-pulse rounded-2xl border border-slate-100 bg-white" />
-          <div className="h-72 animate-pulse rounded-2xl border border-slate-100 bg-white" />
+          <div className="h-40 animate-pulse rounded-2xl" style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)" }} />
+          <div className="h-72 animate-pulse rounded-2xl" style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)" }} />
         </div>
       </div>
     </div>

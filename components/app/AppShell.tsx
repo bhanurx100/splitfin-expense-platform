@@ -26,27 +26,33 @@ const NAV_ITEMS = [
   { href: "/split",        label: "Split Pay",    icon: SplitSquareHorizontal, exact: false },
 ] as const;
 
-// ── Sidebar (desktop only) ────────────────────────────────────────────────────
+// ── Sidebar ───────────────────────────────────────────────────────────────────
 function Sidebar() {
   const pathname = usePathname();
   return (
-    <aside className={cn(
-      "fixed inset-y-0 left-0 z-40 hidden w-60 flex-col lg:flex",
-      "ds-sidebar"
-    )}>
+    <aside
+      className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col lg:flex"
+      style={{ background: "var(--sidebar-bg)", borderRight: "1px solid var(--sidebar-border)" }}
+    >
       {/* Logo */}
-      <div className="flex h-16 flex-shrink-0 items-center gap-3 border-b border-[var(--sidebar-border)] px-5">
+      <div
+        className="flex h-16 flex-shrink-0 items-center gap-3 px-5"
+        style={{ borderBottom: "1px solid var(--sidebar-border)" }}
+      >
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 shadow-sm">
           <TrendingUp className="h-4 w-4 text-white" strokeWidth={2.5} />
         </div>
-        <span className="text-[15px] font-bold tracking-tight text-[var(--text-primary)]">
+        <span className="text-[15px] font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
           SpendWise
         </span>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
-        <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+        <p
+          className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest"
+          style={{ color: "var(--text-muted)" }}
+        >
           Menu
         </p>
         {NAV_ITEMS.map(({ href, label, icon: Icon, exact }) => {
@@ -57,40 +63,61 @@ function Sidebar() {
               href={href}
               className={cn(
                 "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-150",
-                active
-                  ? "bg-[var(--sidebar-nav-active)] text-[var(--sidebar-nav-active-text)] font-semibold"
-                  : "text-[var(--text-secondary)] hover:bg-[var(--sidebar-nav-hover)] hover:text-[var(--text-primary)]"
               )}
+              style={{
+                background: active ? "var(--sidebar-nav-active)" : "transparent",
+                color: active ? "var(--sidebar-nav-active-text)" : "var(--text-tertiary)",
+                fontWeight: active ? "600" : "500",
+              }}
+              onMouseEnter={(e) => {
+                if (!active) {
+                  (e.currentTarget as HTMLElement).style.background = "var(--sidebar-nav-hover)";
+                  (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!active) {
+                  (e.currentTarget as HTMLElement).style.background = "transparent";
+                  (e.currentTarget as HTMLElement).style.color = "var(--text-tertiary)";
+                }
+              }}
             >
               <Icon
-                className={cn(
-                  "h-[18px] w-[18px] flex-shrink-0 transition-colors",
-                  active
-                    ? "text-[var(--sidebar-nav-active-icon)]"
-                    : "text-[var(--text-muted)] group-hover:text-[var(--text-secondary)]"
-                )}
+                className="h-[18px] w-[18px] flex-shrink-0 transition-colors"
+                style={{ color: active ? "var(--sidebar-nav-active-icon)" : "var(--text-muted)" }}
                 strokeWidth={active ? 2.5 : 2}
               />
               {label}
               {active && (
-                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[var(--sidebar-nav-active-icon)]" />
+                <span
+                  className="ml-auto h-1.5 w-1.5 rounded-full"
+                  style={{ background: "var(--sidebar-nav-active-icon)" }}
+                />
               )}
             </Link>
           );
         })}
       </nav>
 
-      {/* Bottom: Theme toggle + User */}
-      <div className="flex-shrink-0 border-t border-[var(--sidebar-border)] p-4 space-y-2">
+      {/* Bottom: Theme + User */}
+      <div
+        className="flex-shrink-0 space-y-2 p-4"
+        style={{ borderTop: "1px solid var(--sidebar-border)" }}
+      >
         <ThemeToggleCompact />
-        <div className="flex items-center gap-3 rounded-xl bg-[var(--surface-overlay)] px-3 py-2.5">
+        <div
+          className="flex items-center gap-3 rounded-xl px-3 py-2.5"
+          style={{ background: "var(--surface-sunken)" }}
+        >
           <ClerkLoaded>
             <UserButton afterSignOutUrl="/" />
           </ClerkLoaded>
           <ClerkLoading>
-            <Loader2 className="h-5 w-5 animate-spin text-[var(--text-muted)]" />
+            <Loader2 className="h-5 w-5 animate-spin" style={{ color: "var(--text-muted)" }} />
           </ClerkLoading>
-          <span className="text-xs font-medium text-[var(--text-muted)]">Account</span>
+          <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+            Account
+          </span>
         </div>
       </div>
     </aside>
@@ -100,16 +127,22 @@ function Sidebar() {
 // ── Mobile top bar ────────────────────────────────────────────────────────────
 function MobileTopBar() {
   return (
-    <div className={cn(
-      "sticky top-0 z-30 flex h-14 flex-shrink-0 items-center justify-between",
-      "border-b border-[var(--border-default)] px-4 lg:hidden",
-      "bg-[var(--surface-card)]/95 backdrop-blur-md"
-    )}>
+    <div
+      className="sticky top-0 z-30 flex h-14 flex-shrink-0 items-center justify-between px-4 lg:hidden"
+      style={{
+        background: "var(--surface-card)",
+        borderBottom: "1px solid var(--border-default)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+      }}
+    >
       <div className="flex items-center gap-2.5">
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 shadow-sm">
           <TrendingUp className="h-3.5 w-3.5 text-white" strokeWidth={2.5} />
         </div>
-        <span className="text-sm font-bold tracking-tight text-[var(--text-primary)]">SpendWise</span>
+        <span className="text-sm font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
+          SpendWise
+        </span>
       </div>
       <div className="flex items-center gap-2">
         <ThemeToggle />
@@ -117,7 +150,7 @@ function MobileTopBar() {
           <UserButton afterSignOutUrl="/" />
         </ClerkLoaded>
         <ClerkLoading>
-          <Loader2 className="h-4 w-4 animate-spin text-[var(--text-muted)]" />
+          <Loader2 className="h-4 w-4 animate-spin" style={{ color: "var(--text-muted)" }} />
         </ClerkLoading>
       </div>
     </div>
@@ -130,11 +163,13 @@ function BottomNav() {
   const bottomItems = NAV_ITEMS.slice(0, 4);
   return (
     <nav
-      className={cn(
-        "fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around",
-        "ds-bottom-nav lg:hidden"
-      )}
-      style={{ paddingBottom: "env(safe-area-inset-bottom, 8px)", paddingTop: "6px" }}
+      className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around lg:hidden"
+      style={{
+        background: "var(--surface-card)",
+        borderTop: "1px solid var(--border-subtle)",
+        paddingBottom: "env(safe-area-inset-bottom, 8px)",
+        paddingTop: "6px",
+      }}
     >
       {bottomItems.map(({ href, label, icon: Icon, exact }) => {
         const active = exact ? pathname === href : pathname.startsWith(href);
@@ -145,24 +180,24 @@ function BottomNav() {
             className="flex flex-col items-center gap-0.5 px-3 py-1"
           >
             <div
-              className={cn(
-                "rounded-xl p-1.5 transition-all duration-150",
-                active ? "bg-[var(--sidebar-nav-active)]" : ""
-              )}
+              className="rounded-xl p-1.5 transition-all duration-150"
+              style={{
+                background: active ? "var(--sidebar-nav-active)" : "transparent",
+              }}
             >
               <Icon
-                className={cn(
-                  "h-5 w-5",
-                  active ? "text-[var(--sidebar-nav-active-icon)]" : "text-[var(--text-muted)]"
-                )}
+                className="h-5 w-5"
+                style={{
+                  color: active ? "var(--sidebar-nav-active-icon)" : "var(--text-muted)",
+                }}
                 strokeWidth={active ? 2.5 : 1.8}
               />
             </div>
             <span
-              className={cn(
-                "text-[10px] font-semibold",
-                active ? "text-[var(--sidebar-nav-active-text)]" : "text-[var(--text-muted)]"
-              )}
+              className="text-[10px] font-semibold"
+              style={{
+                color: active ? "var(--sidebar-nav-active-text)" : "var(--text-muted)",
+              }}
             >
               {label}
             </span>
@@ -176,7 +211,7 @@ function BottomNav() {
 // ── AppShell ──────────────────────────────────────────────────────────────────
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[var(--surface-base)]">
+    <div className="min-h-screen" style={{ background: "var(--surface-bg)" }}>
       <Sidebar />
       <div className="flex min-h-screen flex-col lg:pl-60">
         <MobileTopBar />
