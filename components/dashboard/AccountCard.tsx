@@ -1,8 +1,7 @@
 "use client";
 
 // components/dashboard/AccountCard.tsx
-// New component — shows a single account in BalanceCard visual style.
-// Used on /accounts page in a grid.
+// Refined account card — toned gradients, improved type hierarchy, better hover
 
 import { useOpenAccount } from "@/features/accounts/hooks/use-open-account";
 import { useDeleteAccount } from "@/features/accounts/api/use-delete-account";
@@ -14,27 +13,55 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Edit, Trash2, Wallet } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type AccountCardProps = {
   id: string;
   name: string;
+  index?: number;
 };
 
-// Deterministic gradient per account index
-const GRADIENTS = [
-  "from-blue-600 via-blue-500 to-blue-400",
-  "from-violet-600 via-violet-500 to-violet-400",
-  "from-emerald-600 via-emerald-500 to-emerald-400",
-  "from-rose-600 via-rose-500 to-rose-400",
-  "from-amber-600 via-amber-500 to-amber-400",
-  "from-cyan-600 via-cyan-500 to-cyan-400",
+// Refined, less saturated gradient pairs — [from, to, accent]
+const CARD_THEMES = [
+  {
+    bg: "from-blue-600/90 to-blue-800/90",
+    ring: "ring-blue-500/20",
+    iconBg: "bg-white/15",
+    dot: "bg-blue-300",
+  },
+  {
+    bg: "from-violet-600/90 to-violet-800/90",
+    ring: "ring-violet-500/20",
+    iconBg: "bg-white/15",
+    dot: "bg-violet-300",
+  },
+  {
+    bg: "from-emerald-600/90 to-emerald-800/90",
+    ring: "ring-emerald-500/20",
+    iconBg: "bg-white/15",
+    dot: "bg-emerald-300",
+  },
+  {
+    bg: "from-rose-600/90 to-rose-800/90",
+    ring: "ring-rose-500/20",
+    iconBg: "bg-white/15",
+    dot: "bg-rose-300",
+  },
+  {
+    bg: "from-amber-600/90 to-amber-800/90",
+    ring: "ring-amber-500/20",
+    iconBg: "bg-white/15",
+    dot: "bg-amber-300",
+  },
+  {
+    bg: "from-cyan-600/90 to-cyan-800/90",
+    ring: "ring-cyan-500/20",
+    iconBg: "bg-white/15",
+    dot: "bg-cyan-300",
+  },
 ] as const;
 
-export function AccountCard({
-  id,
-  name,
-  index = 0,
-}: AccountCardProps & { index?: number }) {
+export function AccountCard({ id, name, index = 0 }: AccountCardProps) {
   const { onOpen } = useOpenAccount();
   const deleteMutation = useDeleteAccount(id);
   const [ConfirmDialog, confirm] = useConfirm(
@@ -42,7 +69,7 @@ export function AccountCard({
     "This will also delete all transactions linked to this account."
   );
 
-  const gradient = GRADIENTS[index % GRADIENTS.length];
+  const theme = CARD_THEMES[index % CARD_THEMES.length];
 
   async function handleDelete() {
     const ok = await confirm();
@@ -53,53 +80,95 @@ export function AccountCard({
     <>
       <ConfirmDialog />
       <div
-        className={`group relative overflow-hidden rounded-3xl bg-gradient-to-br ${gradient} p-5 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl`}
+        className={cn(
+          // Base
+          "group relative overflow-hidden rounded-2xl",
+          "bg-gradient-to-br",
+          theme.bg,
+          // Ring & shadow
+          "ring-1",
+          theme.ring,
+          "shadow-sm",
+          // Transitions — lift on hover, no scale pop
+          "transition-all duration-200",
+          "hover:-translate-y-0.5 hover:shadow-lg",
+          // Text
+          "text-white select-none",
+        )}
       >
-        {/* Decorative circles */}
-        <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/10" />
-        <div className="absolute -bottom-8 -right-2 h-24 w-24 rounded-full bg-white/10" />
-        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-        <div className="relative">
-          {/* Top row */}
-          <div className="mb-6 flex items-start justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/20 transition-transform duration-300 group-hover:scale-110">
-              <Wallet className="h-5 w-5 text-white" />
+        {/* Subtle noise texture overlay */}
+        <div className="pointer-events-none absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")",
+          }}
+        />
+
+        {/* Soft highlight at top */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/20" />
+
+        <div className="relative p-4">
+          {/* Header row */}
+          <div className="flex items-start justify-between mb-4">
+            <div className={cn(
+              "flex h-9 w-9 items-center justify-center rounded-xl",
+              theme.iconBg,
+            )}>
+              <Wallet className="h-4 w-4 text-white" strokeWidth={2} />
             </div>
 
             {/* 3-dot menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="rounded-full p-1.5 transition hover:bg-white/20"
+                  className={cn(
+                    "flex h-7 w-7 items-center justify-center rounded-lg",
+                    "text-white/60 transition-all duration-150",
+                    "hover:bg-white/15 hover:text-white",
+                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/40",
+                  )}
                   aria-label="Account options"
                 >
-                  <MoreHorizontal className="h-4 w-4 text-white/80" />
+                  <MoreHorizontal className="h-4 w-4" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40 rounded-2xl">
+              <DropdownMenuContent
+                align="end"
+                className="w-40 rounded-xl border-[var(--border-default)] bg-[var(--surface-card)] shadow-[var(--shadow-lg)]"
+              >
                 <DropdownMenuItem
                   onClick={() => onOpen(id)}
-                  className="cursor-pointer rounded-xl"
+                  className="cursor-pointer rounded-lg text-[13px] text-[var(--text-secondary)] focus:text-[var(--text-primary)] focus:bg-[var(--surface-hover)]"
                 >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
+                  <Edit className="mr-2 h-3.5 w-3.5" />
+                  Rename
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleDelete}
                   disabled={deleteMutation.isPending}
-                  className="cursor-pointer rounded-xl text-red-600 focus:text-red-600"
+                  className="cursor-pointer rounded-lg text-[13px] text-[var(--color-expense)] focus:text-[var(--color-expense)] focus:bg-[var(--color-expense-bg)]"
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
+                  <Trash2 className="mr-2 h-3.5 w-3.5" />
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
 
-          {/* Account name */}
-          <p className="text-xs font-medium text-white/70">Account</p>
-          <h3 className="mt-0.5 text-xl font-bold tracking-tight">{name}</h3>
-          <p className="mt-3 text-xs text-white/40">Tap ··· to manage</p>
+          {/* Account info */}
+          <div>
+            <p className="text-[10px] font-medium uppercase tracking-widest text-white/50 mb-0.5">
+              Account
+            </p>
+            <h3 className="text-[15px] font-semibold text-white leading-tight truncate">
+              {name}
+            </h3>
+          </div>
+
+          {/* Bottom row */}
+          <div className="mt-3 flex items-center gap-1.5">
+            <span className={cn("h-1.5 w-1.5 rounded-full", theme.dot)} />
+            <span className="text-[11px] text-white/50 font-medium">Active</span>
+          </div>
         </div>
       </div>
     </>

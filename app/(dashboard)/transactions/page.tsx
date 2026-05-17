@@ -3,24 +3,31 @@
 /**
  * app/(dashboard)/transactions/page.tsx
  *
- * Layout contract:
- *  - Container: max-w-screen-xl, px-4 sm:px-6 lg:px-8, py-6 lg:py-8
- *  - Desktop: sticky-header table with inline filters, bulk actions, pagination
- *  - Mobile: grouped transaction cards
- *  - Import: full CSV import flow preserved
+ * Premium fintech activity-feed redesign.
+ *
+ * Key decisions:
+ *  - ONE Add Transaction CTA per layout (toolbar on desktop, header on mobile)
+ *  - NO floating FAB (belongs only on home page)
+ *  - NO duplicate sticky add bar on mobile
+ *  - Desktop: full activity table with micro-elevation rows
+ *  - Mobile: grouped date-feed with swipe-friendly cards
+ *  - Import flow preserved, triggered from toolbar only
+ *  - All colors via semantic CSS tokens
  */
 
-import { useState, useMemo, memo } from "react";
+import { useState, useMemo, memo, useCallback } from "react";
 import {
   Plus, Search, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
   ChevronLeft, ChevronRight, TriangleAlert, X, FileText,
-  CheckSquare, Edit, Loader2,
+  CheckSquare, Edit, Loader2, Upload,
+  TrendingUp, TrendingDown,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useCSVReader } from "react-papaparse";
 
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+//import { Button } from "@/components/ui/button";
+//import { Skeleton } from "@/components/ui/skeleton";
 import { transactions as transactionSchema } from "@/db/schema";
 import { useSelectAccount } from "@/features/accounts/hooks/use-select-account";
 import { useBulkCreateTransactions } from "@/features/transactions/api/use-bulk-create-transactions";
@@ -34,9 +41,8 @@ import { useOpenCategory } from "@/features/categories/hooks/use-open-category";
 import { categoryColor, categoryIcon, formatINR } from "@/lib/mobile-utils";
 import { cn } from "@/lib/utils";
 import { ImportCard } from "./import-card";
-import { UploadButton } from "./upload-button";
 
-/* ─── types ──────────────────────────────────────────────────────────────── */
+/* ─── types ───────────────────────────────────────────────────────────────── */
 type Tx = {
   id: string;
   date: Date | string;
@@ -62,11 +68,33 @@ function fmtDate(d: Date | string) {
 }
 function fmtAmt(n: number) { return formatINR(Math.abs(n), 2); }
 
-/* ─── Shared page container class ─────────────────────────────────────────── */
-const PAGE_CLS = "mx-auto w-full max-w-screen-xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8";
+/* ─── Inline Upload Button — no separate file needed ─────────────────────── */
+function UploadButton({ onUpload }: { onUpload: (results: any) => void }) {
+  const { CSVReader } = useCSVReader();
+  return (
+    <CSVReader onUploadAccepted={onUpload}>
+      {({ getRootProps }: any) => (
+        <button
+          type="button"
+          {...getRootProps()}
+          className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[12px] font-semibold transition-all"
+          style={{
+            background: "var(--surface-card)",
+            border: "1px solid var(--border-default)",
+            color: "var(--text-secondary)",
+            boxShadow: "var(--shadow-xs)",
+          }}
+        >
+          <Upload className="h-3.5 w-3.5" />
+          Import CSV
+        </button>
+      )}
+    </CSVReader>
+  );
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PAGE
+   PAGE ROOT
    ═══════════════════════════════════════════════════════════════════════════ */
 export default function TransactionsPage() {
   const [view, setView] = useState<VIEW>(VIEW.LIST);
@@ -79,32 +107,42 @@ export default function TransactionsPage() {
   const transactions = (txQuery.data ?? []) as Tx[];
   const isDisabled = txQuery.isLoading || bulkDelete.isPending;
 
-  const onUpload = (r: typeof INITIAL_IMPORT) => { setImportData(r); setView(VIEW.IMPORT); };
-  const onCancelImport = () => { setImportData(INITIAL_IMPORT); setView(VIEW.LIST); };
-  const onSubmitImport = async (values: (typeof transactionSchema.$inferInsert)[]) => {
+  const onUpload = useCallback((r: typeof INITIAL_IMPORT) => {
+    setImportData(r);
+    setView(VIEW.IMPORT);
+  }, []);
+
+  const onCancelImport = useCallback(() => {
+    setImportData(INITIAL_IMPORT);
+    setView(VIEW.LIST);
+  }, []);
+
+  const onSubmitImport = useCallback(async (values: (typeof transactionSchema.$inferInsert)[]) => {
     const accountId = await confirmAccount();
     if (!accountId) return toast.error("Please select an account to continue.");
     bulkCreate.mutate(
       values.map((v) => ({ ...v, accountId: accountId as string })),
       { onSuccess: onCancelImport }
     );
-  };
+  }, [confirmAccount, bulkCreate, onCancelImport]);
 
-  if (view === VIEW.IMPORT)
+  if (view === VIEW.IMPORT) {
     return (
       <>
         <AccountDialog />
-        <div className={PAGE_CLS}>
+        <div className="mx-auto w-full max-w-screen-xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <ImportCard data={importData.data} onCancel={onCancelImport} onSubmit={onSubmitImport} />
         </div>
       </>
     );
+  }
 
   if (txQuery.isLoading) return <TransactionsSkeleton />;
 
   return (
     <>
       <AccountDialog />
+      {/* Desktop */}
       <div className="hidden lg:block">
         <DesktopTransactions
           transactions={transactions}
@@ -114,6 +152,7 @@ export default function TransactionsPage() {
           isDisabled={isDisabled}
         />
       </div>
+      {/* Mobile */}
       <div className="lg:hidden">
         <MobileTransactions
           transactions={transactions}
@@ -184,15 +223,18 @@ function DesktopTransactions({
     else { setSortKey(key); setSortDir("desc"); }
     setPage(1);
   };
+
   const toggleAll = () => {
     if (selected.size === paginated.length) setSelected(new Set());
     else setSelected(new Set(paginated.map(t => t.id)));
   };
+
   const toggleOne = (id: string) => {
     const s = new Set(selected);
     s.has(id) ? s.delete(id) : s.add(id);
     setSelected(s);
   };
+
   const handleBulkDelete = () => {
     if (!selected.size) return;
     onBulkDelete(Array.from(selected));
@@ -200,133 +242,221 @@ function DesktopTransactions({
   };
 
   const SortIcon = ({ k }: { k: SortKey }) => {
-    if (sortKey !== k) return <ArrowUpDown className="h-3.5 w-3.5 opacity-30" />;
+    if (sortKey !== k) return <ArrowUpDown className="h-3 w-3 opacity-30" />;
     return sortDir === "asc"
-      ? <ArrowUp className="h-3.5 w-3.5 text-blue-600" />
-      : <ArrowDown className="h-3.5 w-3.5 text-blue-600" />;
+      ? <ArrowUp className="h-3 w-3" style={{ color: "var(--text-brand)" }} />
+      : <ArrowDown className="h-3 w-3" style={{ color: "var(--text-brand)" }} />;
   };
 
   return (
-    <div className={PAGE_CLS}>
-      {/* ── Page header ──────────────────────────────────────────────────── */}
-      <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-5">
+    <div className="mx-auto w-full max-w-screen-xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+
+      {/* ── Page header ───────────────────────────────────────────────────── */}
+      <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">
-            Transactions
+          <h1 className="text-xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
+            Activity
           </h1>
-          <p className="mt-0.5 text-[13px] text-slate-400">
-            {transactions.length.toLocaleString()} total
-            {filtered.length !== transactions.length && ` · ${filtered.length} filtered`}
-            {" · "}
-            <span className="text-emerald-600">+{fmtAmt(totalIncome)}</span>
-            {" · "}
-            <span className="text-red-500">−{fmtAmt(totalExpense)}</span>
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <UploadButton onUpload={onUpload} />
-          <Button onClick={onNewTx} className="gap-2 rounded-xl text-[13px]">
-            <Plus className="h-4 w-4" />
-            Add Transaction
-          </Button>
-        </div>
-      </div>
-
-      {/* ── Filter chips + search ─────────────────────────────────────────── */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        {[
-          { label: "All",     value: "all",     count: transactions.length },
-          { label: "Income",  value: "income",  count: transactions.filter(t => t.amount > 0).length },
-          { label: "Expense", value: "expense", count: transactions.filter(t => t.amount < 0).length },
-        ].map(chip => (
-          <button
-            key={chip.value} type="button"
-            onClick={() => { setTypeFilter(chip.value as any); setPage(1); setSelected(new Set()); }}
-            className={cn(
-              "flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-[12px] font-semibold transition-all duration-150",
-              typeFilter === chip.value
-                ? "border-slate-300 bg-slate-900 text-white shadow-sm"
-                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900"
-            )}
-          >
-            {chip.label}
-            <span className={cn(
-              "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-              typeFilter === chip.value ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
-            )}>
-              {chip.count}
+          <div className="mt-1 flex items-center gap-3">
+            <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+              {transactions.length.toLocaleString()} transactions
             </span>
-          </button>
-        ))}
-
-        <div className="ml-auto flex items-center gap-2">
-          {/* Bulk delete bar */}
-          {selected.size > 0 && (
-            <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-1.5">
-              <CheckSquare className="h-3.5 w-3.5 text-red-500" />
-              <span className="text-[12px] font-semibold text-red-600">{selected.size} selected</span>
-              <button
-                type="button" onClick={handleBulkDelete} disabled={isDisabled}
-                className="ml-1 flex items-center gap-1 rounded-lg bg-red-500 px-2.5 py-1 text-[11px] font-bold text-white transition hover:bg-red-600 disabled:opacity-50"
-              >
-                <Trash2 className="h-3 w-3" /> Delete
-              </button>
-              <button type="button" onClick={() => setSelected(new Set())} className="ml-0.5 text-red-400 hover:text-red-600">
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          )}
-
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text" value={search}
-              onChange={e => { setSearch(e.target.value); setPage(1); setSelected(new Set()); }}
-              placeholder="Search payee, category, account…"
-              className="h-9 w-56 rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-[13px] text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-400 focus:shadow-[0_0_0_3px_rgb(59,130,246,0.1)] xl:w-64"
-            />
-            {search && (
-              <button type="button" onClick={() => setSearch("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
+            <span className="h-3 w-px" style={{ background: "var(--border-default)" }} />
+            <span className="flex items-center gap-1 text-[13px] font-medium" style={{ color: "var(--color-income)" }}>
+              <TrendingUp className="h-3 w-3" />
+              +{fmtAmt(totalIncome)}
+            </span>
+            <span className="flex items-center gap-1 text-[13px] font-medium" style={{ color: "var(--color-expense)" }}>
+              <TrendingDown className="h-3 w-3" />
+              −{fmtAmt(totalExpense)}
+            </span>
           </div>
         </div>
+
+        {/* Single primary CTA */}
+        <div className="flex items-center gap-2">
+          <UploadButton onUpload={onUpload} />
+          <button
+            type="button"
+            onClick={onNewTx}
+            className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[13px] font-semibold text-white transition-all"
+            style={{
+              background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+              boxShadow: "0 2px 8px rgba(37,99,235,0.30)",
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 16px rgba(37,99,235,0.40)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(37,99,235,0.30)"; }}
+          >
+            <Plus className="h-4 w-4" />
+            Add Transaction
+          </button>
+        </div>
       </div>
 
-      {/* ── Table ────────────────────────────────────────────────────────── */}
-      <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+      {/* ── Toolbar: filters + search + bulk ─────────────────────────────── */}
+      <div className="mb-4 flex flex-wrap items-center gap-2.5">
+
+        {/* Type filter pills */}
+        <div
+          className="flex items-center gap-1 rounded-xl p-1"
+          style={{ background: "var(--surface-sunken)" }}
+        >
+          {[
+            { value: "all",     label: "All",     count: transactions.length },
+            { value: "income",  label: "Income",  count: transactions.filter(t => t.amount > 0).length },
+            { value: "expense", label: "Expense", count: transactions.filter(t => t.amount < 0).length },
+          ].map(chip => (
+            <button
+              key={chip.value}
+              type="button"
+              onClick={() => { setTypeFilter(chip.value as any); setPage(1); setSelected(new Set()); }}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-all duration-150"
+              style={{
+                background: typeFilter === chip.value ? "var(--surface-card)" : "transparent",
+                color: typeFilter === chip.value ? "var(--text-primary)" : "var(--text-tertiary)",
+                boxShadow: typeFilter === chip.value ? "var(--shadow-sm)" : "none",
+              }}
+            >
+              {chip.label}
+              <span
+                className="rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none"
+                style={{
+                  background: typeFilter === chip.value
+                    ? (chip.value === "income" ? "var(--color-income-bg)" : chip.value === "expense" ? "var(--color-expense-bg)" : "var(--surface-sunken)")
+                    : "transparent",
+                  color: typeFilter === chip.value
+                    ? (chip.value === "income" ? "var(--color-income)" : chip.value === "expense" ? "var(--color-expense)" : "var(--text-muted)")
+                    : "var(--text-muted)",
+                }}
+              >
+                {chip.count}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Bulk delete bar — replaces filter space when rows selected */}
+        {selected.size > 0 && (
+          <div
+            className="flex items-center gap-2 rounded-xl px-3 py-1.5"
+            style={{
+              background: "var(--color-expense-bg)",
+              border: "1px solid var(--color-expense-border)",
+            }}
+          >
+            <CheckSquare className="h-3.5 w-3.5" style={{ color: "var(--color-expense)" }} />
+            <span className="text-[12px] font-semibold" style={{ color: "var(--color-expense)" }}>
+              {selected.size} selected
+            </span>
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              disabled={isDisabled}
+              className="ml-1 flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold text-white transition"
+              style={{ background: "var(--color-expense-mid)" }}
+            >
+              <Trash2 className="h-3 w-3" />
+              Delete
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelected(new Set())}
+              className="ml-0.5 transition hover:opacity-70"
+              style={{ color: "var(--color-expense)" }}
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Search */}
+        <div className="relative">
+          <Search
+            className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2"
+            style={{ color: "var(--text-muted)" }}
+          />
+          <input
+            type="text"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1); setSelected(new Set()); }}
+            placeholder="Search payee, category…"
+            className="h-9 w-56 rounded-xl pl-9 pr-8 text-[13px] outline-none transition xl:w-64"
+            style={{
+              background: "var(--surface-card)",
+              border: "1px solid var(--border-default)",
+              color: "var(--text-primary)",
+              boxShadow: "var(--shadow-xs)",
+            }}
+            onFocus={e => {
+              (e.target as HTMLElement).style.borderColor = "var(--border-focus)";
+              (e.target as HTMLElement).style.boxShadow = "0 0 0 3px rgba(37,99,235,0.10)";
+            }}
+            onBlur={e => {
+              (e.target as HTMLElement).style.borderColor = "var(--border-default)";
+              (e.target as HTMLElement).style.boxShadow = "var(--shadow-xs)";
+            }}
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 transition hover:opacity-70"
+              style={{ color: "var(--text-muted)" }}
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Activity table ────────────────────────────────────────────────── */}
+      <div
+        className="overflow-hidden rounded-2xl"
+        style={{
+          background: "var(--surface-card)",
+          border: "1px solid var(--border-default)",
+          boxShadow: "var(--shadow-md)",
+        }}
+      >
         {filtered.length === 0 ? (
-          <EmptyState search={search} onClear={() => setSearch("")} onAdd={onNewTx} onImport={() => {}} />
+          <EmptyState search={search} onClear={() => setSearch("")} onAdd={onNewTx} />
         ) : (
           <>
+            {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/80">
+                  <tr style={{ background: "var(--surface-sunken)", borderBottom: "1px solid var(--border-subtle)" }}>
                     <th className="w-10 px-4 py-3">
                       <input
                         type="checkbox"
                         checked={paginated.length > 0 && selected.size === paginated.length}
                         ref={el => { if (el) el.indeterminate = selected.size > 0 && selected.size < paginated.length; }}
                         onChange={toggleAll}
-                        className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-blue-600"
+                        className="h-4 w-4 cursor-pointer rounded"
+                        style={{ accentColor: "var(--color-info-mid)" }}
                       />
                     </th>
                     {([
                       { key: "date",     label: "Date",     cls: "w-28" },
-                      { key: "payee",    label: "Payee",    cls: "min-w-[140px]" },
-                      { key: "category", label: "Category", cls: "w-32" },
+                      { key: "payee",    label: "Payee",    cls: "min-w-[160px]" },
+                      { key: "category", label: "Category", cls: "w-36" },
                       { key: "account",  label: "Account",  cls: "w-36" },
-                      { key: "amount",   label: "Amount",   cls: "w-28" },
+                      { key: "amount",   label: "Amount",   cls: "w-32 text-right" },
                     ] as { key: SortKey; label: string; cls: string }[]).map(col => (
-                      <th key={col.key}
-                        className={cn("px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider", col.cls)}>
-                        <button type="button" onClick={() => toggleSort(col.key)}
-                          className={cn("inline-flex items-center gap-1.5 transition-colors hover:text-slate-900",
-                            sortKey === col.key ? "text-blue-600" : "text-slate-400")}>
+                      <th
+                        key={col.key}
+                        className={cn("px-4 py-3 text-left", col.cls)}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => toggleSort(col.key)}
+                          className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors hover:opacity-80"
+                          style={{ color: sortKey === col.key ? "var(--text-brand)" : "var(--text-muted)" }}
+                        >
                           {col.label}
                           <SortIcon k={col.key} />
                         </button>
@@ -335,10 +465,12 @@ function DesktopTransactions({
                     <th className="w-16 px-4 py-3" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody>
                   {paginated.map((tx, i) => (
                     <DesktopTxRow
-                      key={tx.id} tx={tx} index={i}
+                      key={tx.id}
+                      tx={tx}
+                      index={i}
                       selected={selected.has(tx.id)}
                       onToggle={() => toggleOne(tx.id)}
                     />
@@ -348,36 +480,77 @@ function DesktopTransactions({
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between border-t border-slate-50 px-5 py-3">
-              <p className="text-[12px] text-slate-400">
+            <div
+              className="flex items-center justify-between px-5 py-3"
+              style={{ borderTop: "1px solid var(--border-subtle)" }}
+            >
+              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
                 {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
               </p>
               <div className="flex items-center gap-1">
-                <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 disabled:opacity-40">
+                <PaginationBtn
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
                   <ChevronLeft className="h-3.5 w-3.5" />
-                </button>
+                </PaginationBtn>
+
                 {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
                   const p = i + 1;
                   return (
-                    <button key={p} type="button" onClick={() => setPage(p)}
-                      className={cn("flex h-7 w-7 items-center justify-center rounded-lg text-[12px] font-semibold transition",
-                        page === p ? "bg-slate-900 text-white shadow-sm" : "border border-slate-200 bg-white text-slate-500 hover:bg-slate-50")}>
+                    <PaginationBtn
+                      key={p}
+                      onClick={() => setPage(p)}
+                      active={page === p}
+                    >
                       {p}
-                    </button>
+                    </PaginationBtn>
                   );
                 })}
-                {totalPages > 7 && <span className="px-1 text-slate-400">…</span>}
-                <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 disabled:opacity-40">
+
+                {totalPages > 7 && (
+                  <span className="px-1 text-[12px]" style={{ color: "var(--text-muted)" }}>…</span>
+                )}
+
+                <PaginationBtn
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                >
                   <ChevronRight className="h-3.5 w-3.5" />
-                </button>
+                </PaginationBtn>
               </div>
             </div>
           </>
         )}
       </div>
     </div>
+  );
+}
+
+/* ─── Pagination button ───────────────────────────────────────────────────── */
+function PaginationBtn({
+  children, onClick, disabled, active,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  active?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="flex h-7 w-7 items-center justify-center rounded-lg text-[12px] font-semibold transition disabled:opacity-40"
+      style={{
+        background: active ? "var(--text-primary)" : "var(--surface-card)",
+        color: active ? "var(--surface-card)" : "var(--text-tertiary)",
+        border: active ? "none" : "1px solid var(--border-default)",
+        boxShadow: active ? "none" : "var(--shadow-xs)",
+      }}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -393,63 +566,162 @@ const DesktopTxRow = memo(function DesktopTxRow({
   const catColor = categoryColor(index % 10);
 
   return (
-    <tr className={cn("group transition-colors", selected ? "bg-blue-50/60" : "hover:bg-slate-50/60")}>
-      <td className="w-10 px-4 py-3.5">
-        <input type="checkbox" checked={selected} onChange={onToggle}
-          className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-blue-600" />
+    <tr
+      className="group relative transition-colors"
+      style={{
+        background: selected ? "var(--surface-active)" : undefined,
+        borderBottom: "1px solid var(--border-subtle)",
+      }}
+      onMouseEnter={e => {
+        if (!selected) (e.currentTarget as HTMLElement).style.background = "var(--surface-hover)";
+      }}
+      onMouseLeave={e => {
+        if (!selected) (e.currentTarget as HTMLElement).style.background = "";
+      }}
+    >
+      {/* Income/expense accent bar */}
+      <td className="relative w-10 px-4 py-3.5">
+        <div
+          className="absolute left-0 top-1/4 bottom-1/4 w-[3px] rounded-r-full opacity-0 transition-opacity group-hover:opacity-100"
+          style={{ background: isIncome ? "var(--color-income-light)" : "var(--color-expense-light)" }}
+        />
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onToggle}
+          className="h-4 w-4 cursor-pointer rounded"
+          style={{ accentColor: "var(--color-info-mid)" }}
+        />
       </td>
+
+      {/* Date */}
       <td className="px-4 py-3.5">
-        <span className="text-[13px] font-medium text-slate-600 tabular-nums">{fmtDate(tx.date)}</span>
+        <span className="text-[13px] tabular-nums" style={{ color: "var(--text-tertiary)" }}>
+          {fmtDate(tx.date)}
+        </span>
       </td>
+
+      {/* Payee */}
       <td className="px-4 py-3.5">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-sm"
-            style={{ background: `${catColor}14` }}>
+          <div
+            className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-sm"
+            style={{ background: `${catColor}18` }}
+          >
             {categoryIcon(tx.category ?? "")}
           </div>
-          <span className="max-w-[160px] truncate text-[13px] font-semibold text-slate-800">{tx.payee}</span>
+          <span
+            className="max-w-[180px] truncate text-[13px] font-semibold"
+            style={{ color: "var(--text-primary)" }}
+          >
+            {tx.payee}
+          </span>
         </div>
       </td>
+
+      {/* Category */}
       <td className="px-4 py-3.5">
         {tx.category ? (
-          <button type="button" onClick={() => tx.categoryId && openCategory(tx.categoryId)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-100 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600 transition hover:border-slate-200">
+          <button
+            type="button"
+            onClick={() => tx.categoryId && openCategory(tx.categoryId)}
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition hover:opacity-80"
+            style={{
+              background: `${catColor}14`,
+              color: "var(--text-secondary)",
+              border: `1px solid ${catColor}28`,
+            }}
+          >
             <span className="h-1.5 w-1.5 rounded-full" style={{ background: catColor }} />
             {tx.category}
           </button>
         ) : (
-          <button type="button" onClick={() => onOpen(tx.id)}
-            className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 hover:text-amber-700">
-            <TriangleAlert className="h-3 w-3" /> Uncategorized
+          <button
+            type="button"
+            onClick={() => onOpen(tx.id)}
+            className="inline-flex items-center gap-1 text-[11px] font-medium transition hover:opacity-80"
+            style={{ color: "var(--color-warning)" }}
+          >
+            <TriangleAlert className="h-3 w-3" />
+            Uncategorized
           </button>
         )}
       </td>
+
+      {/* Account */}
       <td className="px-4 py-3.5">
-        <button type="button" onClick={() => openAccount(tx.accountId)}
-          className="text-[13px] text-slate-500 transition hover:text-slate-800 hover:underline">
+        <button
+          type="button"
+          onClick={() => openAccount(tx.accountId)}
+          className="text-[13px] transition hover:underline"
+          style={{ color: "var(--text-tertiary)" }}
+        >
           {tx.account}
         </button>
       </td>
+
+      {/* Amount */}
       <td className="px-4 py-3.5 text-right">
-        <span className={cn("text-[13px] font-bold tabular-nums", isIncome ? "text-emerald-600" : "text-red-500")}>
+        <span
+          className="text-[14px] font-bold tabular-nums"
+          style={{ color: isIncome ? "var(--color-income)" : "var(--color-expense)" }}
+        >
           {isIncome ? "+" : "−"}{fmtAmt(tx.amount)}
         </span>
       </td>
+
+      {/* Actions */}
       <td className="px-4 py-3.5">
         <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-          <button type="button" onClick={() => onOpen(tx.id)}
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
+          <ActionBtn onClick={() => onOpen(tx.id)} title="Edit">
             <Edit className="h-3.5 w-3.5" />
-          </button>
-          <button type="button" onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending}
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-500 disabled:opacity-40">
-            {deleteMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-          </button>
+          </ActionBtn>
+          <ActionBtn
+            onClick={() => deleteMutation.mutate()}
+            disabled={deleteMutation.isPending}
+            danger
+            title="Delete"
+          >
+            {deleteMutation.isPending
+              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              : <Trash2 className="h-3.5 w-3.5" />}
+          </ActionBtn>
         </div>
       </td>
     </tr>
   );
 });
+
+function ActionBtn({
+  children, onClick, disabled, danger, title,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  danger?: boolean;
+  title?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className="flex h-7 w-7 items-center justify-center rounded-lg transition disabled:opacity-40"
+      style={{ color: "var(--text-muted)" }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLElement).style.background = danger ? "var(--color-expense-bg)" : "var(--surface-hover)";
+        (e.currentTarget as HTMLElement).style.color = danger ? "var(--color-expense)" : "var(--text-primary)";
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLElement).style.background = "";
+        (e.currentTarget as HTMLElement).style.color = "var(--text-muted)";
+      }}
+    >
+      {children}
+    </button>
+  );
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    MOBILE TRANSACTIONS
@@ -486,113 +758,204 @@ function MobileTransactions({
   }, [filtered]);
 
   return (
-    <div className="min-h-screen bg-slate-50/60">
-      {/* ── Mobile sticky header ──────────────────────────────────────── */}
-      <div className="sticky top-14 z-20 bg-white/95 backdrop-blur-md">
-        <div className="border-b border-slate-100 px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-[15px] font-bold text-slate-900">Transactions</h1>
-              <p className="text-[11px] text-slate-400">
-                <span className="text-emerald-600">+{fmtAmt(totalIncome)}</span>
-                {" · "}
-                <span className="text-red-500">−{fmtAmt(totalExpense)}</span>
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button type="button" onClick={() => setShowSearch(s => !s)}
-                className={cn("flex h-8 w-8 items-center justify-center rounded-xl border transition",
-                  showSearch ? "border-blue-300 bg-blue-50 text-blue-600" : "border-slate-200 bg-white text-slate-500")}>
-                <Search className="h-4 w-4" />
-              </button>
-              <button type="button" onClick={onNewTx}
-                className="flex h-8 items-center gap-1.5 rounded-xl bg-blue-600 px-3 text-[12px] font-semibold text-white shadow-sm transition active:scale-95">
-                <Plus className="h-3.5 w-3.5" /> Add
-              </button>
+    <div className="min-h-screen" style={{ background: "var(--surface-bg)" }}>
+
+      {/* ── Sticky header ─────────────────────────────────────────────── */}
+      <div
+        className="sticky top-14 z-20"
+        style={{
+          background: "var(--surface-card)",
+          borderBottom: "1px solid var(--border-default)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+        }}
+      >
+        {/* Row 1: title + summary + actions */}
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="min-w-0">
+            <h1 className="text-[15px] font-bold" style={{ color: "var(--text-primary)" }}>Activity</h1>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[11px] font-medium" style={{ color: "var(--color-income)" }}>
+                +{fmtAmt(totalIncome)}
+              </span>
+              <span className="text-[11px]" style={{ color: "var(--border-strong)" }}>·</span>
+              <span className="text-[11px] font-medium" style={{ color: "var(--color-expense)" }}>
+                −{fmtAmt(totalExpense)}
+              </span>
             </div>
           </div>
 
-          {showSearch && (
-            <div className="mt-2.5 flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                <input autoFocus type="text" value={search} onChange={e => setSearch(e.target.value)}
-                  placeholder="Search transactions…"
-                  className="h-9 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-[13px] outline-none placeholder:text-slate-400 focus:border-blue-400" />
-              </div>
+          <div className="flex items-center gap-2">
+            {/* Search toggle */}
+            <button
+              type="button"
+              onClick={() => setShowSearch(s => !s)}
+              className="flex h-8 w-8 items-center justify-center rounded-xl border transition"
+              style={{
+                background: showSearch ? "var(--color-info-bg)" : "var(--surface-card)",
+                border: showSearch ? "1px solid var(--color-info-border)" : "1px solid var(--border-default)",
+                color: showSearch ? "var(--color-info)" : "var(--text-muted)",
+              }}
+            >
+              <Search className="h-4 w-4" />
+            </button>
+
+            {/* Import */}
+            <UploadButton onUpload={onUpload} />
+
+            {/* Add — single CTA */}
+            <button
+              type="button"
+              onClick={onNewTx}
+              className="flex h-8 items-center gap-1.5 rounded-xl px-3 text-[12px] font-semibold text-white transition active:scale-95"
+              style={{
+                background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+                boxShadow: "0 2px 8px rgba(37,99,235,0.30)",
+              }}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add
+            </button>
+          </div>
+        </div>
+
+        {/* Search input (collapsible) */}
+        {showSearch && (
+          <div className="px-4 pb-2.5">
+            <div className="relative">
+              <Search
+                className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2"
+                style={{ color: "var(--text-muted)" }}
+              />
+              <input
+                autoFocus
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search transactions…"
+                className="h-9 w-full rounded-xl pl-9 pr-3 text-[13px] outline-none"
+                style={{
+                  background: "var(--surface-sunken)",
+                  border: "1px solid var(--border-default)",
+                  color: "var(--text-primary)",
+                }}
+                onFocus={e => { (e.target as HTMLElement).style.borderColor = "var(--border-focus)"; }}
+                onBlur={e => { (e.target as HTMLElement).style.borderColor = "var(--border-default)"; }}
+              />
               {search && (
-                <button type="button" onClick={() => setSearch("")}
-                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500">
-                  <X className="h-4 w-4" />
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  <X className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
-          )}
-
-          <div className="mt-2.5 flex gap-1.5">
-            {[
-              { v: "all",     l: "All",     n: transactions.length },
-              { v: "income",  l: "Income",  n: transactions.filter(t => t.amount > 0).length },
-              { v: "expense", l: "Expense", n: transactions.filter(t => t.amount < 0).length },
-            ].map(chip => (
-              <button key={chip.v} type="button" onClick={() => setFilter(chip.v as any)}
-                className={cn("flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition",
-                  filter === chip.v ? "border-slate-800 bg-slate-800 text-white" : "border-slate-200 bg-white text-slate-500")}>
-                {chip.l}
-                <span className={cn("rounded-full px-1 text-[10px]", filter === chip.v ? "text-white/70" : "text-slate-400")}>
-                  {chip.n}
-                </span>
-              </button>
-            ))}
           </div>
+        )}
+
+        {/* Row 2: type filter pills */}
+        <div className="flex gap-1.5 px-4 pb-2.5">
+          {[
+            { v: "all",     l: "All",     n: transactions.length },
+            { v: "income",  l: "Income",  n: transactions.filter(t => t.amount > 0).length },
+            { v: "expense", l: "Expense", n: transactions.filter(t => t.amount < 0).length },
+          ].map(chip => (
+            <button
+              key={chip.v}
+              type="button"
+              onClick={() => setFilter(chip.v as any)}
+              className="flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition"
+              style={{
+                background: filter === chip.v
+                  ? (chip.v === "income" ? "var(--color-income-bg)" : chip.v === "expense" ? "var(--color-expense-bg)" : "var(--text-primary)")
+                  : "var(--surface-card)",
+                border: filter === chip.v
+                  ? (chip.v === "income" ? "1px solid var(--color-income-border)" : chip.v === "expense" ? "1px solid var(--color-expense-border)" : "1px solid var(--text-primary)")
+                  : "1px solid var(--border-default)",
+                color: filter === chip.v
+                  ? (chip.v === "income" ? "var(--color-income)" : chip.v === "expense" ? "var(--color-expense)" : "var(--surface-card)")
+                  : "var(--text-tertiary)",
+              }}
+            >
+              {chip.l}
+              <span className="opacity-60">{chip.n}</span>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* ── Transaction list ──────────────────────────────────────────── */}
-      <div className="space-y-0">
+      {/* ── Transaction feed ───────────────────────────────────────────── */}
+      <div className="pb-24">
         {grouped.length === 0 ? (
           <div className="flex flex-col items-center px-4 py-20 text-center">
-            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
-              <FileText className="h-6 w-6 text-slate-300" />
+            <div
+              className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
+              style={{ background: "var(--surface-sunken)" }}
+            >
+              <FileText className="h-6 w-6" style={{ color: "var(--text-muted)" }} />
             </div>
-            <p className="text-sm font-semibold text-slate-600">
+            <p className="text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>
               {search ? "No matching transactions" : "No transactions yet"}
             </p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs" style={{ color: "var(--text-muted)" }}>
               {search ? "Try a different search term" : "Tap Add to record your first one"}
             </p>
           </div>
         ) : (
           grouped.map(([date, txs]) => (
             <div key={date}>
-              <div className="flex items-center gap-3 bg-slate-50/90 px-4 py-2 backdrop-blur-sm">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{date}</span>
-                <div className="flex-1 border-t border-slate-100" />
-                <span className={cn("text-[11px] font-bold tabular-nums",
-                  txs.reduce((s, t) => s + t.amount, 0) >= 0 ? "text-emerald-600" : "text-red-500")}>
+              {/* Date header */}
+              <div
+                className="sticky top-[calc(var(--mobile-header-h,130px))] z-10 flex items-center gap-3 px-4 py-2"
+                style={{ background: "var(--surface-bg)" }}
+              >
+                <span
+                  className="text-[11px] font-bold uppercase tracking-wider"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  {date}
+                </span>
+                <div className="flex-1" style={{ height: "1px", background: "var(--border-subtle)" }} />
+                <span
+                  className={cn(
+                    "text-[11px] font-bold tabular-nums",
+                    txs.reduce((s, t) => s + t.amount, 0) >= 0 ? "" : ""
+                  )}
+                  style={{
+                    color: txs.reduce((s, t) => s + t.amount, 0) >= 0
+                      ? "var(--color-income)"
+                      : "var(--color-expense)"
+                  }}
+                >
                   {txs.reduce((s, t) => s + t.amount, 0) >= 0 ? "+" : "−"}
                   {fmtAmt(Math.abs(txs.reduce((s, t) => s + t.amount, 0)))}
                 </span>
               </div>
-              <div className="bg-white">
+
+              {/* Cards */}
+              <div
+                className="mx-4 mb-3 overflow-hidden rounded-2xl"
+                style={{
+                  background: "var(--surface-card)",
+                  border: "1px solid var(--border-default)",
+                  boxShadow: "var(--shadow-sm)",
+                }}
+              >
                 {txs.map((tx, i) => (
-                  <MobileTxCard key={tx.id} tx={tx} index={i} isLast={i === txs.length - 1} />
+                  <MobileTxCard
+                    key={tx.id}
+                    tx={tx}
+                    index={i}
+                    isLast={i === txs.length - 1}
+                  />
                 ))}
               </div>
             </div>
           ))
         )}
-      </div>
-
-      {/* ── Import / new bar ─────────────────────────────────────────── */}
-      <div className="fixed bottom-[72px] left-0 right-0 z-20 px-4 pb-2">
-        <div className="flex gap-2 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-xl">
-          <UploadButton onUpload={onUpload} />
-          <button type="button" onClick={onNewTx}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 text-[13px] font-semibold text-white transition active:scale-95">
-            <Plus className="h-4 w-4" /> New Transaction
-          </button>
-        </div>
       </div>
     </div>
   );
@@ -606,30 +969,57 @@ const MobileTxCard = memo(function MobileTxCard({
   const catColor = categoryColor(index % 10);
 
   return (
-    <button type="button" onClick={() => onOpen(tx.id)}
-      className={cn("flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors active:bg-slate-50",
-        !isLast && "border-b border-slate-50")}>
-      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-base"
-        style={{ background: `${catColor}14` }}>
+    <button
+      type="button"
+      onClick={() => onOpen(tx.id)}
+      className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors active:scale-[0.99]"
+      style={{
+        borderBottom: isLast ? "none" : "1px solid var(--border-subtle)",
+      }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--surface-hover)"; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ""; }}
+    >
+      {/* Category icon */}
+      <div
+        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-base"
+        style={{ background: `${catColor}18` }}
+      >
         {categoryIcon(tx.category ?? "")}
       </div>
+
+      {/* Info */}
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p className="truncate text-[14px] font-semibold text-slate-800">{tx.payee}</p>
-          {!tx.category && <TriangleAlert className="h-3 w-3 flex-shrink-0 text-amber-500" />}
-        </div>
-        <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-400">
-          {tx.category ? (
-            <><span className="h-1.5 w-1.5 rounded-full" style={{ background: catColor }} />{tx.category}</>
-          ) : (
-            <span className="text-amber-600">Uncategorized</span>
+        <div className="flex items-center gap-1.5">
+          <p className="truncate text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>
+            {tx.payee}
+          </p>
+          {!tx.category && (
+            <TriangleAlert className="h-3 w-3 flex-shrink-0" style={{ color: "var(--color-warning)" }} />
           )}
-          <span className="text-slate-300">·</span>
+        </div>
+        <p className="mt-0.5 flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
+          {tx.category ? (
+            <>
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ background: catColor }}
+              />
+              {tx.category}
+            </>
+          ) : (
+            <span style={{ color: "var(--color-warning)" }}>Uncategorized</span>
+          )}
+          <span style={{ color: "var(--border-strong)" }}>·</span>
           {tx.account}
         </p>
       </div>
+
+      {/* Amount */}
       <div className="text-right">
-        <p className={cn("text-[14px] font-bold tabular-nums", isIncome ? "text-emerald-600" : "text-red-500")}>
+        <p
+          className="text-[14px] font-bold tabular-nums"
+          style={{ color: isIncome ? "var(--color-income)" : "var(--color-expense)" }}
+        >
           {isIncome ? "+" : "−"}{fmtAmt(tx.amount)}
         </p>
       </div>
@@ -638,32 +1028,64 @@ const MobileTxCard = memo(function MobileTxCard({
 });
 
 /* ─── Empty state ─────────────────────────────────────────────────────────── */
-function EmptyState({ search, onClear, onAdd, onImport }: {
-  search: string; onClear: () => void; onAdd: () => void; onImport: () => void;
-}) {
+function EmptyState({
+  search, onClear, onAdd,
+}: { search: string; onClear: () => void; onAdd: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center px-8 py-20 text-center">
-      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-100 bg-slate-50">
-        <FileText className="h-7 w-7 text-slate-300" />
+      <div
+        className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl"
+        style={{
+          background: "var(--surface-sunken)",
+          border: "1px solid var(--border-default)",
+        }}
+      >
+        <FileText className="h-7 w-7" style={{ color: "var(--text-muted)" }} />
       </div>
       {search ? (
         <>
-          <p className="mb-1 text-[15px] font-semibold text-slate-700">No results for &quot;{search}&quot;</p>
-          <p className="mb-5 text-[13px] text-slate-400">Try a different payee, category, or account name</p>
-          <button type="button" onClick={onClear}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-[13px] font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50">
+          <p className="mb-1 text-[15px] font-semibold" style={{ color: "var(--text-secondary)" }}>
+            No results for &quot;{search}&quot;
+          </p>
+          <p className="mb-5 text-[13px]" style={{ color: "var(--text-muted)" }}>
+            Try a different payee, category, or account name
+          </p>
+          <button
+            type="button"
+            onClick={onClear}
+            className="rounded-xl px-4 py-2 text-[13px] font-semibold transition"
+            style={{
+              background: "var(--surface-card)",
+              border: "1px solid var(--border-default)",
+              color: "var(--text-secondary)",
+              boxShadow: "var(--shadow-xs)",
+            }}
+          >
             Clear search
           </button>
         </>
       ) : (
         <>
-          <p className="mb-1 text-[15px] font-semibold text-slate-700">No transactions yet</p>
-          <p className="mb-6 max-w-[280px] text-[13px] leading-relaxed text-slate-400">
+          <p className="mb-1 text-[15px] font-semibold" style={{ color: "var(--text-secondary)" }}>
+            No transactions yet
+          </p>
+          <p
+            className="mb-6 max-w-[280px] text-[13px] leading-relaxed"
+            style={{ color: "var(--text-muted)" }}
+          >
             Start by adding a transaction manually or import from a CSV file
           </p>
-          <button type="button" onClick={onAdd}
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-blue-700">
-            <Plus className="h-4 w-4" /> Add Transaction
+          <button
+            type="button"
+            onClick={onAdd}
+            className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white transition"
+            style={{
+              background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+              boxShadow: "0 2px 8px rgba(37,99,235,0.28)",
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            Add Transaction
           </button>
         </>
       )}
@@ -673,42 +1095,90 @@ function EmptyState({ search, onClear, onAdd, onImport }: {
 
 /* ─── Skeleton ────────────────────────────────────────────────────────────── */
 function TransactionsSkeleton() {
+  const PAGE_CLS = "mx-auto w-full max-w-screen-xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8";
   return (
     <div className={PAGE_CLS}>
-      <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-5">
+      {/* Header */}
+      <div
+        className="mb-6 flex items-start justify-between pb-5"
+        style={{ borderBottom: "1px solid var(--border-subtle)" }}
+      >
         <div className="space-y-2">
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-3.5 w-52" />
+          <div
+            className="h-5 w-24 animate-pulse rounded-xl"
+            style={{ background: "var(--surface-sunken)" }}
+          />
+          <div
+            className="h-4 w-48 animate-pulse rounded-xl"
+            style={{ background: "var(--surface-sunken)" }}
+          />
         </div>
         <div className="flex gap-2">
-          <Skeleton className="h-9 w-24 rounded-xl" />
-          <Skeleton className="h-9 w-36 rounded-xl" />
+          <div className="h-9 w-28 animate-pulse rounded-xl" style={{ background: "var(--surface-sunken)" }} />
+          <div className="h-9 w-36 animate-pulse rounded-xl" style={{ background: "var(--surface-sunken)" }} />
         </div>
       </div>
-      <div className="mb-4 flex gap-2">
-        {[80, 70, 80].map((w, i) => <Skeleton key={i} className="h-8 rounded-xl" style={{ width: w }} />)}
-        <Skeleton className="ml-auto h-9 w-56 rounded-xl xl:w-64" />
+
+      {/* Toolbar */}
+      <div className="mb-4 flex items-center gap-2.5">
+        <div className="h-9 w-52 animate-pulse rounded-xl" style={{ background: "var(--surface-sunken)" }} />
+        <div className="ml-auto h-9 w-56 animate-pulse rounded-xl" style={{ background: "var(--surface-sunken)" }} />
       </div>
-      <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-        <div className="flex items-center gap-4 border-b border-slate-100 bg-slate-50/80 px-4 py-3">
-          {[10, 20, 35, 20, 15].map((w, i) => <Skeleton key={i} className="h-3" style={{ width: `${w}%` }} />)}
+
+      {/* Table */}
+      <div
+        className="overflow-hidden rounded-2xl"
+        style={{
+          background: "var(--surface-card)",
+          border: "1px solid var(--border-default)",
+          boxShadow: "var(--shadow-md)",
+        }}
+      >
+        {/* Header row */}
+        <div
+          className="flex items-center gap-4 px-4 py-3"
+          style={{ background: "var(--surface-sunken)", borderBottom: "1px solid var(--border-subtle)" }}
+        >
+          <div className="h-4 w-4 animate-pulse rounded" style={{ background: "var(--border-default)" }} />
+          {[16, 28, 20, 20, 16].map((w, i) => (
+            <div
+              key={i}
+              className="h-3 animate-pulse rounded"
+              style={{ width: `${w}%`, background: "var(--border-default)" }}
+            />
+          ))}
         </div>
+
+        {/* Data rows */}
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-4 border-b border-slate-50 px-4 py-3.5">
-            <Skeleton className="h-4 w-4 rounded" />
-            <Skeleton className="h-3.5 w-20" />
+          <div
+            key={i}
+            className="flex items-center gap-4 px-4 py-3.5"
+            style={{ borderBottom: "1px solid var(--border-subtle)" }}
+          >
+            <div className="h-4 w-4 animate-pulse rounded" style={{ background: "var(--surface-sunken)" }} />
+            <div className="h-3.5 w-20 animate-pulse rounded" style={{ background: "var(--surface-sunken)" }} />
             <div className="flex items-center gap-2">
-              <Skeleton className="h-7 w-7 rounded-lg" />
-              <Skeleton className="h-3.5 w-28" />
+              <div className="h-7 w-7 animate-pulse rounded-lg" style={{ background: "var(--surface-sunken)" }} />
+              <div className="h-3.5 w-28 animate-pulse rounded" style={{ background: "var(--surface-sunken)" }} />
             </div>
-            <Skeleton className="h-5 w-20 rounded-full" />
-            <Skeleton className="h-3.5 w-24" />
-            <Skeleton className="ml-auto h-3.5 w-16" />
+            <div className="h-5 w-20 animate-pulse rounded-full" style={{ background: "var(--surface-sunken)" }} />
+            <div className="h-3.5 w-24 animate-pulse rounded" style={{ background: "var(--surface-sunken)" }} />
+            <div className="ml-auto h-3.5 w-16 animate-pulse rounded" style={{ background: "var(--surface-sunken)" }} />
           </div>
         ))}
-        <div className="flex items-center justify-between border-t border-slate-50 px-5 py-3">
-          <Skeleton className="h-3.5 w-24" />
-          <div className="flex gap-1">{[0, 1, 2, 3].map(i => <Skeleton key={i} className="h-7 w-7 rounded-lg" />)}</div>
+
+        {/* Pagination */}
+        <div
+          className="flex items-center justify-between px-5 py-3"
+          style={{ borderTop: "1px solid var(--border-subtle)" }}
+        >
+          <div className="h-3.5 w-24 animate-pulse rounded" style={{ background: "var(--surface-sunken)" }} />
+          <div className="flex gap-1">
+            {[0, 1, 2, 3].map(i => (
+              <div key={i} className="h-7 w-7 animate-pulse rounded-lg" style={{ background: "var(--surface-sunken)" }} />
+            ))}
+          </div>
         </div>
       </div>
     </div>
