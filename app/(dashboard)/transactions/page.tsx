@@ -13,6 +13,12 @@
  *  - Mobile: grouped date-feed with swipe-friendly cards
  *  - Import flow preserved, triggered from toolbar only
  *  - All colors via semantic CSS tokens
+ *
+ * Architecture:
+ *  - Pure filter/sort/grouping logic → @/features/transactions/lib/filters
+ *  - Format helpers               → @/features/transactions/lib/formatters
+ *  - Category color/icon          → @/features/transactions/lib/categories
+ *  - Constants                    → @/features/transactions/constants
  */
 
 import { useState, useMemo, memo, useCallback } from "react";
@@ -22,12 +28,40 @@ import {
   CheckSquare, Edit, Loader2, Upload,
   TrendingUp, TrendingDown,
 } from "lucide-react";
-import { format } from "date-fns";
 import { toast } from "sonner";
 import { useCSVReader } from "react-papaparse";
 
-//import { Button } from "@/components/ui/button";
-//import { Skeleton } from "@/components/ui/skeleton";
+// ── Feature-scoped imports (new locations) ─────────────────────────────────────
+import {
+  filterTransactions,
+  sortTransactions,
+  paginateTransactions,
+  totalPages as calcTotalPages,
+  groupTransactionsByDate,
+  totalIncome,
+  totalExpense,
+  fmtDate,
+  type Tx,
+  type SortKey,
+  type SortDir,
+  type TypeFilter,
+} from "@/features/transactions/lib/filters";
+
+import {
+  formatAbsINR,
+} from "@/features/transactions/lib/formatters";
+
+import {
+  categoryColor,
+  categoryIcon,
+} from "@/features/transactions/lib/categories";
+
+import {
+  TX_PAGE_SIZE,
+  INITIAL_IMPORT,
+} from "@/features/transactions/constants";
+
+// ── App-level imports (unchanged) ──────────────────────────────────────────────
 import { transactions as transactionSchema } from "@/db/schema";
 import { useSelectAccount } from "@/features/accounts/hooks/use-select-account";
 import { useBulkCreateTransactions } from "@/features/transactions/api/use-bulk-create-transactions";
@@ -38,37 +72,15 @@ import { useOpenTransaction } from "@/features/transactions/hooks/use-open-trans
 import { useDeleteTransaction } from "@/features/transactions/api/use-delete-transaction";
 import { useOpenAccount } from "@/features/accounts/hooks/use-open-account";
 import { useOpenCategory } from "@/features/categories/hooks/use-open-category";
-import { categoryColor, categoryIcon, formatINR } from "@/lib/mobile-utils";
 import { cn } from "@/lib/utils";
 import { ImportCard } from "./import-card";
 
-/* ─── types ───────────────────────────────────────────────────────────────── */
-type Tx = {
-  id: string;
-  date: Date | string;
-  category: string | null;
-  categoryId: string | null;
-  payee: string;
-  amount: number;
-  account: string;
-  accountId: string;
-  notes?: string | null;
-};
-type SortKey = "date" | "payee" | "category" | "amount" | "account";
-type SortDir = "asc" | "desc";
+/* ─── helpers (local) ────────────────────────────────────────────────────────── */
+function fmtAmt(n: number) { return formatAbsINR(Math.abs(n), 2); }
 
 enum VIEW { LIST = "LIST", IMPORT = "IMPORT" }
-const INITIAL_IMPORT = { data: [], errors: [], meta: [] };
-const PAGE_SIZE = 20;
 
-/* ─── helpers ─────────────────────────────────────────────────────────────── */
-function fmtDate(d: Date | string) {
-  const date = typeof d === "string" ? new Date(d) : d;
-  return format(date, "dd MMM yyyy");
-}
-function fmtAmt(n: number) { return formatINR(Math.abs(n), 2); }
-
-/* ─── Inline Upload Button — no separate file needed ─────────────────────── */
+/* ─── Inline Upload Button ───────────────────────────────────────────────────── */
 function UploadButton({ onUpload }: { onUpload: (results: any) => void }) {
   const { CSVReader } = useCSVReader();
   return (
@@ -117,14 +129,17 @@ export default function TransactionsPage() {
     setView(VIEW.LIST);
   }, []);
 
-  const onSubmitImport = useCallback(async (values: (typeof transactionSchema.$inferInsert)[]) => {
-    const accountId = await confirmAccount();
-    if (!accountId) return toast.error("Please select an account to continue.");
-    bulkCreate.mutate(
-      values.map((v) => ({ ...v, accountId: accountId as string })),
-      { onSuccess: onCancelImport }
-    );
-  }, [confirmAccount, bulkCreate, onCancelImport]);
+  const onSubmitImport = useCallback(
+    async (values: (typeof transactionSchema.$inferInsert)[]) => {
+      const accountId = await confirmAccount();
+      if (!accountId) return toast.error("Please select an account to continue.");
+      bulkCreate.mutate(
+        values.map((v) => ({ ...v, accountId: accountId as string })),
+        { onSuccess: onCancelImport }
+      );
+    },
+    [confirmAccount, bulkCreate, onCancelImport]
+  );
 
   if (view === VIEW.IMPORT) {
     return (
@@ -181,52 +196,32 @@ function DesktopTransactions({
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
-  const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense">("all");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
 
-  const totalIncome  = useMemo(() => transactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0), [transactions]);
-  const totalExpense = useMemo(() => transactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0), [transactions]);
+  // ── Aggregate stats ──────────────────────────────────────────────────────────
+  const incomeTotal  = useMemo(() => totalIncome(transactions),  [transactions]);
+  const expenseTotal = useMemo(() => totalExpense(transactions), [transactions]);
 
+  // ── Filter → sort → paginate pipeline (pure functions from lib/filters) ───────
   const filtered = useMemo(() => {
-    let out = transactions;
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      out = out.filter(t =>
-        t.payee.toLowerCase().includes(q) ||
-        (t.category ?? "").toLowerCase().includes(q) ||
-        t.account.toLowerCase().includes(q)
-      );
-    }
-    if (typeFilter === "income")  out = out.filter(t => t.amount > 0);
-    if (typeFilter === "expense") out = out.filter(t => t.amount < 0);
-    out = [...out].sort((a, b) => {
-      let av: any, bv: any;
-      switch (sortKey) {
-        case "date":     av = new Date(a.date).getTime(); bv = new Date(b.date).getTime(); break;
-        case "payee":    av = a.payee;    bv = b.payee;    break;
-        case "category": av = a.category ?? ""; bv = b.category ?? ""; break;
-        case "amount":   av = a.amount;   bv = b.amount;   break;
-        case "account":  av = a.account;  bv = b.account;  break;
-      }
-      if (typeof av === "number") return sortDir === "asc" ? av - bv : bv - av;
-      return sortDir === "asc"
-        ? String(av).localeCompare(String(bv))
-        : String(bv).localeCompare(String(av));
-    });
-    return out;
+    const f = filterTransactions(transactions, search, typeFilter);
+    return sortTransactions(f, sortKey, sortDir);
   }, [transactions, search, typeFilter, sortKey, sortDir]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const numPages  = useMemo(() => calcTotalPages(filtered.length, TX_PAGE_SIZE), [filtered.length]);
+  const paginated = useMemo(() => paginateTransactions(filtered, page, TX_PAGE_SIZE), [filtered, page]);
 
+  // ── Sort helpers ─────────────────────────────────────────────────────────────
   const toggleSort = (key: SortKey) => {
-    if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortKey(key); setSortDir("desc"); }
     setPage(1);
   };
 
+  // ── Selection helpers ────────────────────────────────────────────────────────
   const toggleAll = () => {
     if (selected.size === paginated.length) setSelected(new Set());
-    else setSelected(new Set(paginated.map(t => t.id)));
+    else setSelected(new Set(paginated.map((t) => t.id)));
   };
 
   const toggleOne = (id: string) => {
@@ -264,16 +259,15 @@ function DesktopTransactions({
             <span className="h-3 w-px" style={{ background: "var(--border-default)" }} />
             <span className="flex items-center gap-1 text-[13px] font-medium" style={{ color: "var(--color-income)" }}>
               <TrendingUp className="h-3 w-3" />
-              +{fmtAmt(totalIncome)}
+              +{fmtAmt(incomeTotal)}
             </span>
             <span className="flex items-center gap-1 text-[13px] font-medium" style={{ color: "var(--color-expense)" }}>
               <TrendingDown className="h-3 w-3" />
-              −{fmtAmt(totalExpense)}
+              −{fmtAmt(expenseTotal)}
             </span>
           </div>
         </div>
 
-        {/* Single primary CTA */}
         <div className="flex items-center gap-2">
           <UploadButton onUpload={onUpload} />
           <button
@@ -284,8 +278,8 @@ function DesktopTransactions({
               background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
               boxShadow: "0 2px 8px rgba(37,99,235,0.30)",
             }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 16px rgba(37,99,235,0.40)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(37,99,235,0.30)"; }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 16px rgba(37,99,235,0.40)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(37,99,235,0.30)"; }}
           >
             <Plus className="h-4 w-4" />
             Add Transaction
@@ -293,23 +287,20 @@ function DesktopTransactions({
         </div>
       </div>
 
-      {/* ── Toolbar: filters + search + bulk ─────────────────────────────── */}
+      {/* ── Toolbar ───────────────────────────────────────────────────────── */}
       <div className="mb-4 flex flex-wrap items-center gap-2.5">
 
         {/* Type filter pills */}
-        <div
-          className="flex items-center gap-1 rounded-xl p-1"
-          style={{ background: "var(--surface-sunken)" }}
-        >
-          {[
+        <div className="flex items-center gap-1 rounded-xl p-1" style={{ background: "var(--surface-sunken)" }}>
+          {([
             { value: "all",     label: "All",     count: transactions.length },
-            { value: "income",  label: "Income",  count: transactions.filter(t => t.amount > 0).length },
-            { value: "expense", label: "Expense", count: transactions.filter(t => t.amount < 0).length },
-          ].map(chip => (
+            { value: "income",  label: "Income",  count: transactions.filter((t) => t.amount > 0).length },
+            { value: "expense", label: "Expense", count: transactions.filter((t) => t.amount < 0).length },
+          ] as { value: TypeFilter; label: string; count: number }[]).map((chip) => (
             <button
               key={chip.value}
               type="button"
-              onClick={() => { setTypeFilter(chip.value as any); setPage(1); setSelected(new Set()); }}
+              onClick={() => { setTypeFilter(chip.value); setPage(1); setSelected(new Set()); }}
               className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-all duration-150"
               style={{
                 background: typeFilter === chip.value ? "var(--surface-card)" : "transparent",
@@ -335,14 +326,11 @@ function DesktopTransactions({
           ))}
         </div>
 
-        {/* Bulk delete bar — replaces filter space when rows selected */}
+        {/* Bulk delete bar */}
         {selected.size > 0 && (
           <div
             className="flex items-center gap-2 rounded-xl px-3 py-1.5"
-            style={{
-              background: "var(--color-expense-bg)",
-              border: "1px solid var(--color-expense-border)",
-            }}
+            style={{ background: "var(--color-expense-bg)", border: "1px solid var(--color-expense-border)" }}
           >
             <CheckSquare className="h-3.5 w-3.5" style={{ color: "var(--color-expense)" }} />
             <span className="text-[12px] font-semibold" style={{ color: "var(--color-expense)" }}>
@@ -369,19 +357,15 @@ function DesktopTransactions({
           </div>
         )}
 
-        {/* Spacer */}
         <div className="flex-1" />
 
         {/* Search */}
         <div className="relative">
-          <Search
-            className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2"
-            style={{ color: "var(--text-muted)" }}
-          />
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
           <input
             type="text"
             value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1); setSelected(new Set()); }}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); setSelected(new Set()); }}
             placeholder="Search payee, category…"
             className="h-9 w-56 rounded-xl pl-9 pr-8 text-[13px] outline-none transition xl:w-64"
             style={{
@@ -390,11 +374,11 @@ function DesktopTransactions({
               color: "var(--text-primary)",
               boxShadow: "var(--shadow-xs)",
             }}
-            onFocus={e => {
+            onFocus={(e) => {
               (e.target as HTMLElement).style.borderColor = "var(--border-focus)";
               (e.target as HTMLElement).style.boxShadow = "0 0 0 3px rgba(37,99,235,0.10)";
             }}
-            onBlur={e => {
+            onBlur={(e) => {
               (e.target as HTMLElement).style.borderColor = "var(--border-default)";
               (e.target as HTMLElement).style.boxShadow = "var(--shadow-xs)";
             }}
@@ -425,7 +409,6 @@ function DesktopTransactions({
           <EmptyState search={search} onClear={() => setSearch("")} onAdd={onNewTx} />
         ) : (
           <>
-            {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -434,7 +417,7 @@ function DesktopTransactions({
                       <input
                         type="checkbox"
                         checked={paginated.length > 0 && selected.size === paginated.length}
-                        ref={el => { if (el) el.indeterminate = selected.size > 0 && selected.size < paginated.length; }}
+                        ref={(el) => { if (el) el.indeterminate = selected.size > 0 && selected.size < paginated.length; }}
                         onChange={toggleAll}
                         className="h-4 w-4 cursor-pointer rounded"
                         style={{ accentColor: "var(--color-info-mid)" }}
@@ -446,11 +429,8 @@ function DesktopTransactions({
                       { key: "category", label: "Category", cls: "w-36" },
                       { key: "account",  label: "Account",  cls: "w-36" },
                       { key: "amount",   label: "Amount",   cls: "w-32 text-right" },
-                    ] as { key: SortKey; label: string; cls: string }[]).map(col => (
-                      <th
-                        key={col.key}
-                        className={cn("px-4 py-3 text-left", col.cls)}
-                      >
+                    ] as { key: SortKey; label: string; cls: string }[]).map((col) => (
+                      <th key={col.key} className={cn("px-4 py-3 text-left", col.cls)}>
                         <button
                           type="button"
                           onClick={() => toggleSort(col.key)}
@@ -480,42 +460,29 @@ function DesktopTransactions({
             </div>
 
             {/* Pagination */}
-            <div
-              className="flex items-center justify-between px-5 py-3"
-              style={{ borderTop: "1px solid var(--border-subtle)" }}
-            >
+            <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: "1px solid var(--border-subtle)" }}>
               <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+                {(page - 1) * TX_PAGE_SIZE + 1}–{Math.min(page * TX_PAGE_SIZE, filtered.length)} of {filtered.length}
               </p>
               <div className="flex items-center gap-1">
-                <PaginationBtn
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                >
+                <PaginationBtn onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
                   <ChevronLeft className="h-3.5 w-3.5" />
                 </PaginationBtn>
 
-                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                {Array.from({ length: Math.min(numPages, 7) }, (_, i) => {
                   const p = i + 1;
                   return (
-                    <PaginationBtn
-                      key={p}
-                      onClick={() => setPage(p)}
-                      active={page === p}
-                    >
+                    <PaginationBtn key={p} onClick={() => setPage(p)} active={page === p}>
                       {p}
                     </PaginationBtn>
                   );
                 })}
 
-                {totalPages > 7 && (
+                {numPages > 7 && (
                   <span className="px-1 text-[12px]" style={{ color: "var(--text-muted)" }}>…</span>
                 )}
 
-                <PaginationBtn
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                >
+                <PaginationBtn onClick={() => setPage((p) => Math.min(numPages, p + 1))} disabled={page === numPages}>
                   <ChevronRight className="h-3.5 w-3.5" />
                 </PaginationBtn>
               </div>
@@ -528,9 +495,7 @@ function DesktopTransactions({
 }
 
 /* ─── Pagination button ───────────────────────────────────────────────────── */
-function PaginationBtn({
-  children, onClick, disabled, active,
-}: {
+function PaginationBtn({ children, onClick, disabled, active }: {
   children: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
@@ -572,14 +537,10 @@ const DesktopTxRow = memo(function DesktopTxRow({
         background: selected ? "var(--surface-active)" : undefined,
         borderBottom: "1px solid var(--border-subtle)",
       }}
-      onMouseEnter={e => {
-        if (!selected) (e.currentTarget as HTMLElement).style.background = "var(--surface-hover)";
-      }}
-      onMouseLeave={e => {
-        if (!selected) (e.currentTarget as HTMLElement).style.background = "";
-      }}
+      onMouseEnter={(e) => { if (!selected) (e.currentTarget as HTMLElement).style.background = "var(--surface-hover)"; }}
+      onMouseLeave={(e) => { if (!selected) (e.currentTarget as HTMLElement).style.background = ""; }}
     >
-      {/* Income/expense accent bar */}
+      {/* Accent bar */}
       <td className="relative w-10 px-4 py-3.5">
         <div
           className="absolute left-0 top-1/4 bottom-1/4 w-[3px] rounded-r-full opacity-0 transition-opacity group-hover:opacity-100"
@@ -610,10 +571,7 @@ const DesktopTxRow = memo(function DesktopTxRow({
           >
             {categoryIcon(tx.category ?? "")}
           </div>
-          <span
-            className="max-w-[180px] truncate text-[13px] font-semibold"
-            style={{ color: "var(--text-primary)" }}
-          >
+          <span className="max-w-[180px] truncate text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
             {tx.payee}
           </span>
         </div>
@@ -626,11 +584,7 @@ const DesktopTxRow = memo(function DesktopTxRow({
             type="button"
             onClick={() => tx.categoryId && openCategory(tx.categoryId)}
             className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition hover:opacity-80"
-            style={{
-              background: `${catColor}14`,
-              color: "var(--text-secondary)",
-              border: `1px solid ${catColor}28`,
-            }}
+            style={{ background: `${catColor}14`, color: "var(--text-secondary)", border: `1px solid ${catColor}28` }}
           >
             <span className="h-1.5 w-1.5 rounded-full" style={{ background: catColor }} />
             {tx.category}
@@ -662,10 +616,7 @@ const DesktopTxRow = memo(function DesktopTxRow({
 
       {/* Amount */}
       <td className="px-4 py-3.5 text-right">
-        <span
-          className="text-[14px] font-bold tabular-nums"
-          style={{ color: isIncome ? "var(--color-income)" : "var(--color-expense)" }}
-        >
+        <span className="text-[14px] font-bold tabular-nums" style={{ color: isIncome ? "var(--color-income)" : "var(--color-expense)" }}>
           {isIncome ? "+" : "−"}{fmtAmt(tx.amount)}
         </span>
       </td>
@@ -676,15 +627,8 @@ const DesktopTxRow = memo(function DesktopTxRow({
           <ActionBtn onClick={() => onOpen(tx.id)} title="Edit">
             <Edit className="h-3.5 w-3.5" />
           </ActionBtn>
-          <ActionBtn
-            onClick={() => deleteMutation.mutate()}
-            disabled={deleteMutation.isPending}
-            danger
-            title="Delete"
-          >
-            {deleteMutation.isPending
-              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              : <Trash2 className="h-3.5 w-3.5" />}
+          <ActionBtn onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending} danger title="Delete">
+            {deleteMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
           </ActionBtn>
         </div>
       </td>
@@ -692,9 +636,7 @@ const DesktopTxRow = memo(function DesktopTxRow({
   );
 });
 
-function ActionBtn({
-  children, onClick, disabled, danger, title,
-}: {
+function ActionBtn({ children, onClick, disabled, danger, title }: {
   children: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
@@ -709,11 +651,11 @@ function ActionBtn({
       title={title}
       className="flex h-7 w-7 items-center justify-center rounded-lg transition disabled:opacity-40"
       style={{ color: "var(--text-muted)" }}
-      onMouseEnter={e => {
+      onMouseEnter={(e) => {
         (e.currentTarget as HTMLElement).style.background = danger ? "var(--color-expense-bg)" : "var(--surface-hover)";
         (e.currentTarget as HTMLElement).style.color = danger ? "var(--color-expense)" : "var(--text-primary)";
       }}
-      onMouseLeave={e => {
+      onMouseLeave={(e) => {
         (e.currentTarget as HTMLElement).style.background = "";
         (e.currentTarget as HTMLElement).style.color = "var(--text-muted)";
       }}
@@ -730,32 +672,21 @@ function MobileTransactions({
   transactions, onUpload, onNewTx,
 }: { transactions: Tx[]; onUpload: (r: any) => void; onNewTx: () => void }) {
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
+  const [filter, setFilter] = useState<TypeFilter>("all");
   const [showSearch, setShowSearch] = useState(false);
 
-  const totalIncome  = useMemo(() => transactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0), [transactions]);
-  const totalExpense = useMemo(() => transactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0), [transactions]);
+  const incomeTotal  = useMemo(() => totalIncome(transactions),  [transactions]);
+  const expenseTotal = useMemo(() => totalExpense(transactions), [transactions]);
 
-  const filtered = useMemo(() => {
-    let out = transactions;
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      out = out.filter(t => t.payee.toLowerCase().includes(q) || (t.category ?? "").toLowerCase().includes(q));
-    }
-    if (filter === "income")  out = out.filter(t => t.amount > 0);
-    if (filter === "expense") out = out.filter(t => t.amount < 0);
-    return out;
-  }, [transactions, search, filter]);
+  const filtered = useMemo(
+    () => filterTransactions(transactions, search, filter),
+    [transactions, search, filter]
+  );
 
-  const grouped = useMemo(() => {
-    const map = new Map<string, Tx[]>();
-    filtered.forEach(tx => {
-      const key = fmtDate(tx.date);
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(tx);
-    });
-    return Array.from(map.entries());
-  }, [filtered]);
+  const grouped = useMemo(
+    () => groupTransactionsByDate(filtered),
+    [filtered]
+  );
 
   return (
     <div className="min-h-screen" style={{ background: "var(--surface-bg)" }}>
@@ -776,20 +707,19 @@ function MobileTransactions({
             <h1 className="text-[15px] font-bold" style={{ color: "var(--text-primary)" }}>Activity</h1>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="text-[11px] font-medium" style={{ color: "var(--color-income)" }}>
-                +{fmtAmt(totalIncome)}
+                +{fmtAmt(incomeTotal)}
               </span>
               <span className="text-[11px]" style={{ color: "var(--border-strong)" }}>·</span>
               <span className="text-[11px] font-medium" style={{ color: "var(--color-expense)" }}>
-                −{fmtAmt(totalExpense)}
+                −{fmtAmt(expenseTotal)}
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Search toggle */}
             <button
               type="button"
-              onClick={() => setShowSearch(s => !s)}
+              onClick={() => setShowSearch((s) => !s)}
               className="flex h-8 w-8 items-center justify-center rounded-xl border transition"
               style={{
                 background: showSearch ? "var(--color-info-bg)" : "var(--surface-card)",
@@ -800,10 +730,8 @@ function MobileTransactions({
               <Search className="h-4 w-4" />
             </button>
 
-            {/* Import */}
             <UploadButton onUpload={onUpload} />
 
-            {/* Add — single CTA */}
             <button
               type="button"
               onClick={onNewTx}
@@ -823,15 +751,12 @@ function MobileTransactions({
         {showSearch && (
           <div className="px-4 pb-2.5">
             <div className="relative">
-              <Search
-                className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2"
-                style={{ color: "var(--text-muted)" }}
-              />
+              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
               <input
                 autoFocus
                 type="text"
                 value={search}
-                onChange={e => setSearch(e.target.value)}
+                onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search transactions…"
                 className="h-9 w-full rounded-xl pl-9 pr-3 text-[13px] outline-none"
                 style={{
@@ -839,8 +764,8 @@ function MobileTransactions({
                   border: "1px solid var(--border-default)",
                   color: "var(--text-primary)",
                 }}
-                onFocus={e => { (e.target as HTMLElement).style.borderColor = "var(--border-focus)"; }}
-                onBlur={e => { (e.target as HTMLElement).style.borderColor = "var(--border-default)"; }}
+                onFocus={(e) => { (e.target as HTMLElement).style.borderColor = "var(--border-focus)"; }}
+                onBlur={(e) => { (e.target as HTMLElement).style.borderColor = "var(--border-default)"; }}
               />
               {search && (
                 <button
@@ -858,15 +783,15 @@ function MobileTransactions({
 
         {/* Row 2: type filter pills */}
         <div className="flex gap-1.5 px-4 pb-2.5">
-          {[
+          {([
             { v: "all",     l: "All",     n: transactions.length },
-            { v: "income",  l: "Income",  n: transactions.filter(t => t.amount > 0).length },
-            { v: "expense", l: "Expense", n: transactions.filter(t => t.amount < 0).length },
-          ].map(chip => (
+            { v: "income",  l: "Income",  n: transactions.filter((t) => t.amount > 0).length },
+            { v: "expense", l: "Expense", n: transactions.filter((t) => t.amount < 0).length },
+          ] as { v: TypeFilter; l: string; n: number }[]).map((chip) => (
             <button
               key={chip.v}
               type="button"
-              onClick={() => setFilter(chip.v as any)}
+              onClick={() => setFilter(chip.v)}
               className="flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition"
               style={{
                 background: filter === chip.v
@@ -891,10 +816,7 @@ function MobileTransactions({
       <div className="pb-24">
         {grouped.length === 0 ? (
           <div className="flex flex-col items-center px-4 py-20 text-center">
-            <div
-              className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
-              style={{ background: "var(--surface-sunken)" }}
-            >
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: "var(--surface-sunken)" }}>
               <FileText className="h-6 w-6" style={{ color: "var(--text-muted)" }} />
             </div>
             <p className="text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>
@@ -912,22 +834,16 @@ function MobileTransactions({
                 className="sticky top-[calc(var(--mobile-header-h,130px))] z-10 flex items-center gap-3 px-4 py-2"
                 style={{ background: "var(--surface-bg)" }}
               >
-                <span
-                  className="text-[11px] font-bold uppercase tracking-wider"
-                  style={{ color: "var(--text-muted)" }}
-                >
+                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
                   {date}
                 </span>
                 <div className="flex-1" style={{ height: "1px", background: "var(--border-subtle)" }} />
                 <span
-                  className={cn(
-                    "text-[11px] font-bold tabular-nums",
-                    txs.reduce((s, t) => s + t.amount, 0) >= 0 ? "" : ""
-                  )}
+                  className="text-[11px] font-bold tabular-nums"
                   style={{
                     color: txs.reduce((s, t) => s + t.amount, 0) >= 0
                       ? "var(--color-income)"
-                      : "var(--color-expense)"
+                      : "var(--color-expense)",
                   }}
                 >
                   {txs.reduce((s, t) => s + t.amount, 0) >= 0 ? "+" : "−"}
@@ -945,12 +861,7 @@ function MobileTransactions({
                 }}
               >
                 {txs.map((tx, i) => (
-                  <MobileTxCard
-                    key={tx.id}
-                    tx={tx}
-                    index={i}
-                    isLast={i === txs.length - 1}
-                  />
+                  <MobileTxCard key={tx.id} tx={tx} index={i} isLast={i === txs.length - 1} />
                 ))}
               </div>
             </div>
@@ -973,11 +884,9 @@ const MobileTxCard = memo(function MobileTxCard({
       type="button"
       onClick={() => onOpen(tx.id)}
       className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors active:scale-[0.99]"
-      style={{
-        borderBottom: isLast ? "none" : "1px solid var(--border-subtle)",
-      }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--surface-hover)"; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ""; }}
+      style={{ borderBottom: isLast ? "none" : "1px solid var(--border-subtle)" }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--surface-hover)"; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = ""; }}
     >
       {/* Category icon */}
       <div
@@ -1000,10 +909,7 @@ const MobileTxCard = memo(function MobileTxCard({
         <p className="mt-0.5 flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
           {tx.category ? (
             <>
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ background: catColor }}
-              />
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: catColor }} />
               {tx.category}
             </>
           ) : (
@@ -1016,10 +922,7 @@ const MobileTxCard = memo(function MobileTxCard({
 
       {/* Amount */}
       <div className="text-right">
-        <p
-          className="text-[14px] font-bold tabular-nums"
-          style={{ color: isIncome ? "var(--color-income)" : "var(--color-expense)" }}
-        >
+        <p className="text-[14px] font-bold tabular-nums" style={{ color: isIncome ? "var(--color-income)" : "var(--color-expense)" }}>
           {isIncome ? "+" : "−"}{fmtAmt(tx.amount)}
         </p>
       </div>
@@ -1028,17 +931,12 @@ const MobileTxCard = memo(function MobileTxCard({
 });
 
 /* ─── Empty state ─────────────────────────────────────────────────────────── */
-function EmptyState({
-  search, onClear, onAdd,
-}: { search: string; onClear: () => void; onAdd: () => void }) {
+function EmptyState({ search, onClear, onAdd }: { search: string; onClear: () => void; onAdd: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center px-8 py-20 text-center">
       <div
         className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl"
-        style={{
-          background: "var(--surface-sunken)",
-          border: "1px solid var(--border-default)",
-        }}
+        style={{ background: "var(--surface-sunken)", border: "1px solid var(--border-default)" }}
       >
         <FileText className="h-7 w-7" style={{ color: "var(--text-muted)" }} />
       </div>
@@ -1069,10 +967,7 @@ function EmptyState({
           <p className="mb-1 text-[15px] font-semibold" style={{ color: "var(--text-secondary)" }}>
             No transactions yet
           </p>
-          <p
-            className="mb-6 max-w-[280px] text-[13px] leading-relaxed"
-            style={{ color: "var(--text-muted)" }}
-          >
+          <p className="mb-6 max-w-[280px] text-[13px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
             Start by adding a transaction manually or import from a CSV file
           </p>
           <button
@@ -1095,23 +990,12 @@ function EmptyState({
 
 /* ─── Skeleton ────────────────────────────────────────────────────────────── */
 function TransactionsSkeleton() {
-  const PAGE_CLS = "mx-auto w-full max-w-screen-xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8";
   return (
-    <div className={PAGE_CLS}>
-      {/* Header */}
-      <div
-        className="mb-6 flex items-start justify-between pb-5"
-        style={{ borderBottom: "1px solid var(--border-subtle)" }}
-      >
+    <div className="mx-auto w-full max-w-screen-xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <div className="mb-6 flex items-start justify-between pb-5" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
         <div className="space-y-2">
-          <div
-            className="h-5 w-24 animate-pulse rounded-xl"
-            style={{ background: "var(--surface-sunken)" }}
-          />
-          <div
-            className="h-4 w-48 animate-pulse rounded-xl"
-            style={{ background: "var(--surface-sunken)" }}
-          />
+          <div className="h-5 w-24 animate-pulse rounded-xl" style={{ background: "var(--surface-sunken)" }} />
+          <div className="h-4 w-48 animate-pulse rounded-xl" style={{ background: "var(--surface-sunken)" }} />
         </div>
         <div className="flex gap-2">
           <div className="h-9 w-28 animate-pulse rounded-xl" style={{ background: "var(--surface-sunken)" }} />
@@ -1119,43 +1003,24 @@ function TransactionsSkeleton() {
         </div>
       </div>
 
-      {/* Toolbar */}
       <div className="mb-4 flex items-center gap-2.5">
         <div className="h-9 w-52 animate-pulse rounded-xl" style={{ background: "var(--surface-sunken)" }} />
         <div className="ml-auto h-9 w-56 animate-pulse rounded-xl" style={{ background: "var(--surface-sunken)" }} />
       </div>
 
-      {/* Table */}
       <div
         className="overflow-hidden rounded-2xl"
-        style={{
-          background: "var(--surface-card)",
-          border: "1px solid var(--border-default)",
-          boxShadow: "var(--shadow-md)",
-        }}
+        style={{ background: "var(--surface-card)", border: "1px solid var(--border-default)", boxShadow: "var(--shadow-md)" }}
       >
-        {/* Header row */}
-        <div
-          className="flex items-center gap-4 px-4 py-3"
-          style={{ background: "var(--surface-sunken)", borderBottom: "1px solid var(--border-subtle)" }}
-        >
+        <div className="flex items-center gap-4 px-4 py-3" style={{ background: "var(--surface-sunken)", borderBottom: "1px solid var(--border-subtle)" }}>
           <div className="h-4 w-4 animate-pulse rounded" style={{ background: "var(--border-default)" }} />
           {[16, 28, 20, 20, 16].map((w, i) => (
-            <div
-              key={i}
-              className="h-3 animate-pulse rounded"
-              style={{ width: `${w}%`, background: "var(--border-default)" }}
-            />
+            <div key={i} className="h-3 animate-pulse rounded" style={{ width: `${w}%`, background: "var(--border-default)" }} />
           ))}
         </div>
 
-        {/* Data rows */}
         {Array.from({ length: 8 }).map((_, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-4 px-4 py-3.5"
-            style={{ borderBottom: "1px solid var(--border-subtle)" }}
-          >
+          <div key={i} className="flex items-center gap-4 px-4 py-3.5" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
             <div className="h-4 w-4 animate-pulse rounded" style={{ background: "var(--surface-sunken)" }} />
             <div className="h-3.5 w-20 animate-pulse rounded" style={{ background: "var(--surface-sunken)" }} />
             <div className="flex items-center gap-2">
@@ -1168,14 +1033,10 @@ function TransactionsSkeleton() {
           </div>
         ))}
 
-        {/* Pagination */}
-        <div
-          className="flex items-center justify-between px-5 py-3"
-          style={{ borderTop: "1px solid var(--border-subtle)" }}
-        >
+        <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: "1px solid var(--border-subtle)" }}>
           <div className="h-3.5 w-24 animate-pulse rounded" style={{ background: "var(--surface-sunken)" }} />
           <div className="flex gap-1">
-            {[0, 1, 2, 3].map(i => (
+            {[0, 1, 2, 3].map((i) => (
               <div key={i} className="h-7 w-7 animate-pulse rounded-lg" style={{ background: "var(--surface-sunken)" }} />
             ))}
           </div>
