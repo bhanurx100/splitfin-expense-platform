@@ -25,7 +25,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { categoryColor, categoryIcon, formatINR, formatMonthYear, formatTxDate } from "@/lib/mobile-utils";
+import { formatINR, formatMonthYear, formatTxDate } from "@/features/transactions/lib/formatters";
+import { categoryColor, categoryIcon } from "@/features/transactions/lib/categories";
 
 const PAGE_CLS = "mx-auto w-full max-w-screen-xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8";
 
