@@ -9,7 +9,7 @@
 export const TX_PAGE_SIZE = 20;
 
 /** Initial import state — reset to this after a successful import. */
-export const INITIAL_IMPORT = { data: [], errors: [], meta: [] } as const;
+export const INITIAL_IMPORT = { data: [] as string[][], errors: [], meta: [] } as const;
 
 /** CSV date format expected from bank exports. */
 export const CSV_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
