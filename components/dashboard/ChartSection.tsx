@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import { useGetSummary } from "@/features/summary/api/use-get-summary";
 import { useGetTransactions } from "@/features/transactions/api/use-get-transactions";
-import { formatChartValue, formatINR } from "@/lib/mobile-utils";
+import { formatChartValue, formatINR } from "@/features/transactions/lib/formatters";
 import { ChartSkeleton } from "./Skeletons";
 
 type Period = "Week" | "Month" | "Year";

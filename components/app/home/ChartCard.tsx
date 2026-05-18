@@ -17,7 +17,7 @@ import { AppCard } from "@/components/app/AppCard";
 import {
   formatChartValue,
   formatINR,
-} from "@/lib/mobile-utils";
+} from "@/features/transactions/lib/formatters";
 
 type Period = "Week" | "Month" | "Year";
 

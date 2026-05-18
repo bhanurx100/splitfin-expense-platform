@@ -8,7 +8,8 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { PieChart as PieIcon } from "lucide-react";
 import { useGetSummary } from "@/features/summary/api/use-get-summary";
 import { useGetTransactions } from "@/features/transactions/api/use-get-transactions";
-import { formatINR, categoryColor, categoryIcon } from "@/lib/mobile-utils";
+import { formatINR} from "@/features/transactions/lib/formatters";
+import {categoryColor,categoryIcon} from "@/features/transactions/lib/categories";
 import { CategorySkeleton } from "./Skeletons";
 
 type ChartEntry = { name: string; value: number; color: string; icon: string };

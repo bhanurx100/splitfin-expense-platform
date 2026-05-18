@@ -4,7 +4,7 @@
 // Moved from components/mobile/CashFlowSummary.tsx — import path only change.
 
 import { TrendingUp, TrendingDown, Wallet } from "lucide-react";
-import { formatINR } from "@/lib/mobile-utils";
+import { formatINR } from "@/features/transactions/lib/formatters";
 
 type CashFlowProps = {
   income: number;

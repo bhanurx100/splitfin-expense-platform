@@ -8,7 +8,9 @@ import { useState } from "react";
 import { ChevronRight, Receipt } from "lucide-react";
 import { useGetTransactions } from "@/features/transactions/api/use-get-transactions";
 import { useOpenTransaction } from "@/features/transactions/hooks/use-open-transaction";
-import { formatINR, formatTxDate, categoryColor, categoryIcon } from "@/lib/mobile-utils";
+import { formatINR, formatTxDate} from "@/features/transactions/lib/formatters";
+import {categoryColor,categoryIcon} from "@/features/transactions/lib/categories";
+
 import { TransactionSkeleton } from "./Skeletons";
 
 type ApiTx = {

@@ -6,7 +6,8 @@
 
 import { Lightbulb, TrendingUp, TrendingDown, Calendar } from "lucide-react";
 import { AppCard } from "./AppCard";
-import { formatINR, categoryIcon } from "@/lib/mobile-utils";
+import { formatINR } from "@/features/transactions/lib/formatters";
+import {categoryIcon } from "@/features/transactions/lib/categories";
 
 type Tx = { date: string; amount: number; category: string | null; payee: string };
 type Summary = {

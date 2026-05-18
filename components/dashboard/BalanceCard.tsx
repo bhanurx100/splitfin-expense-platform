@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { TrendingUp, TrendingDown, Eye, EyeOff } from "lucide-react";
-import { formatINR } from "@/lib/mobile-utils";
+import { formatINR } from "@/features/transactions/lib/formatters";
 
 type BalanceCardProps = {
   accountName: string;

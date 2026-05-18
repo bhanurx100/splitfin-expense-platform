@@ -6,8 +6,8 @@
 // When a budget API exists, swap the limit calculation only.
 
 import { AppCard } from "./AppCard";
-import { formatINR, categoryColor, categoryIcon } from "@/lib/mobile-utils";
-
+import { formatINR } from "@/features/transactions/lib/formatters";
+import { categoryColor, categoryIcon } from "@/features/transactions/lib/categories";
 type Category = { name: string; value: number };
 
 function computeBudgets(categories: Category[]) {

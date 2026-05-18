@@ -6,7 +6,8 @@
 import { useState, useMemo } from "react";
 import { LayoutGrid } from "lucide-react";
 import { useGetTransactions } from "@/features/transactions/api/use-get-transactions";
-import { formatINR, categoryColor, categoryIcon } from "@/lib/mobile-utils";
+import { formatINR } from "@/features/transactions/lib/formatters";
+import {categoryColor, categoryIcon } from "@/features/transactions/lib/categories";
 
 type ApiTx = { amount: number; category: string | null };
 

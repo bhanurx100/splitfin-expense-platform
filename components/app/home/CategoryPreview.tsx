@@ -9,11 +9,8 @@ import {
 
 import { AppCard } from "@/components/app/AppCard";
 
-import {
-  categoryColor,
-  categoryIcon,
-  formatINR,
-} from "@/lib/mobile-utils";
+import { formatINR} from "@/features/transactions/lib/formatters";
+import { categoryColor, categoryIcon } from "@/features/transactions/lib/categories";
 
 type Category = {
   name: string;
