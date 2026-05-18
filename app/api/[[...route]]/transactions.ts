@@ -1,27 +1,55 @@
+/**
+ * app/api/[[...route]]/transactions.ts
+ *
+ * PARTIALLY MIGRATED — GET "/" now delegates to transactionService.
+ * All other routes are unchanged from the original.
+ *
+ * MIGRATION STATUS:
+ *   ✅ GET /transactions         → uses transactionService
+ *   ⬜ GET /transactions/:id     → still inline (safe to migrate next)
+ *   ⬜ POST /transactions        → still inline
+ *   ⬜ POST /transactions/bulk-create → still inline
+ *   ⬜ POST /transactions/bulk-delete → still inline
+ *   ⬜ PATCH /transactions/:id   → still inline
+ *   ⬜ DELETE /transactions/:id  → still inline
+ *
+ * WHY ONLY ONE:
+ *   Proof-of-concept to verify the service/repository layer works in the
+ *   Vercel edge runtime before migrating higher-risk write routes.
+ *
+ * ROLLBACK:
+ *   If service migration causes issues, restore the original inline query
+ *   from git. The rest of the routes are unaffected.
+ */
+
 import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import { zValidator } from "@hono/zod-validator";
 import { createId } from "@paralleldrive/cuid2";
-import { parse, subDays } from "date-fns";
-import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+//import { parse, subDays } from "date-fns";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 
 import { db } from "@/db/drizzle";
 import {
   accounts,
-  categories,
   insertTransactionSchema,
   transactions,
 } from "@/db/schema";
 
+// ── Service import (used by migrated GET route only) ───────────────────────────
+import { transactionService } from "@/server/services/transaction-service";
+
 const app = new Hono()
+
+  // ── GET / — MIGRATED to service layer ─────────────────────────────────────
   .get(
     "/",
     zValidator(
       "query",
       z.object({
-        from: z.string().optional(),
-        to: z.string().optional(),
+        from:      z.string().optional(),
+        to:        z.string().optional(),
         accountId: z.string().optional(),
       })
     ),
@@ -34,42 +62,22 @@ const app = new Hono()
         return ctx.json({ error: "Unauthorized." }, 401);
       }
 
-      const defaultTo = new Date();
-      const defaultFrom = subDays(defaultTo, 30);
-
-      const startDate = from
-        ? parse(from, "yyyy-MM-dd", new Date())
-        : defaultFrom;
-      const endDate = to ? parse(to, "yyyy-MM-dd", new Date()) : defaultTo;
-
-      const data = await db
-        .select({
-          id: transactions.id,
-          date: transactions.date,
-          category: categories.name,
-          categoryId: transactions.categoryId,
-          payee: transactions.payee,
-          amount: transactions.amount,
-          notes: transactions.notes,
-          account: accounts.name,
-          accountId: transactions.accountId,
-        })
-        .from(transactions)
-        .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-        .leftJoin(categories, eq(transactions.categoryId, categories.id))
-        .where(
-          and(
-            accountId ? eq(transactions.accountId, accountId) : undefined,
-            eq(accounts.userId, auth.userId),
-            gte(transactions.date, startDate),
-            lte(transactions.date, endDate)
-          )
-        )
-        .orderBy(desc(transactions.date));
+      // CHANGED: was inline drizzle query, now delegates to service.
+      // Response shape is identical — amount is still in plain decimals
+      // because the service handles the milliunit conversion.
+      const data = await transactionService.getTransactionsForUser({
+        userId:    auth.userId,
+        from,
+        to,
+        accountId,
+      });
 
       return ctx.json({ data });
     }
   )
+
+  // ── GET /:id — UNCHANGED ───────────────────────────────────────────────────
+  // TODO(next): migrate to transactionService.getTransactionForUser()
   .get(
     "/:id",
     zValidator(
@@ -93,13 +101,13 @@ const app = new Hono()
 
       const [data] = await db
         .select({
-          id: transactions.id,
-          date: transactions.date,
+          id:         transactions.id,
+          date:       transactions.date,
           categoryId: transactions.categoryId,
-          payee: transactions.payee,
-          amount: transactions.amount,
-          notes: transactions.notes,
-          accountId: transactions.accountId,
+          payee:      transactions.payee,
+          amount:     transactions.amount,
+          notes:      transactions.notes,
+          accountId:  transactions.accountId,
         })
         .from(transactions)
         .innerJoin(accounts, eq(transactions.accountId, accounts.id))
@@ -112,6 +120,9 @@ const app = new Hono()
       return ctx.json({ data });
     }
   )
+
+  // ── POST / — UNCHANGED ────────────────────────────────────────────────────
+  // TODO(next-safe): migrate to transactionService.createTransactionForUser()
   .post(
     "/",
     clerkMiddleware(),
@@ -140,6 +151,8 @@ const app = new Hono()
       return ctx.json({ data });
     }
   )
+
+  // ── POST /bulk-create — UNCHANGED ─────────────────────────────────────────
   .post(
     "/bulk-create",
     clerkMiddleware(),
@@ -165,6 +178,8 @@ const app = new Hono()
       return ctx.json({ data });
     }
   )
+
+  // ── POST /bulk-delete — UNCHANGED ─────────────────────────────────────────
   .post(
     "/bulk-delete",
     clerkMiddleware(),
@@ -211,6 +226,8 @@ const app = new Hono()
       return ctx.json({ data });
     }
   )
+
+  // ── PATCH /:id — UNCHANGED ────────────────────────────────────────────────
   .patch(
     "/:id",
     clerkMiddleware(),
@@ -266,6 +283,8 @@ const app = new Hono()
       return ctx.json({ data });
     }
   )
+
+  // ── DELETE /:id — UNCHANGED ───────────────────────────────────────────────
   .delete(
     "/:id",
     clerkMiddleware(),
