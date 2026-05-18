@@ -27,7 +27,7 @@ import { useExpenseForm } from "@/hooks/splitpay/useExpenseForm";
 import {
   computeExpenseShares, computeGroupSettlement,
   buildSettlementText, resolveUpi, buildUpiLink,
-} from "@/utils/splitpay/calculations";
+} from "@/features/splitpay/lib/calculations";
 import { Avatar, Card, EmptyBlock, SectionLabel, inr, ParticipantChip } from "@/components/splitpay/ui";
 import { MemberList } from "@/components/splitpay/MemberPanel";
 import { EditExpenseModal } from "@/components/splitpay/EditExpenseModal";
@@ -179,7 +179,7 @@ function GroupListIntercepted({ onSelectGroup }: { onSelectGroup: (id: string) =
   }
 
   // Compute group stats
-  const { computeGroupBalances } = require("@/utils/splitpay/calculations");
+  const { computeGroupBalances } = require("@/features/splitpay/lib/calculations");
   const { DEMO_GROUPS } = require("@/data/splitpay/demo");
   const { RefreshCw, Plus, ChevronRight, Trash2, Sparkles } = require("lucide-react");
   const DEMO_IDS = new Set(DEMO_GROUPS.map((g: Group) => g.id));

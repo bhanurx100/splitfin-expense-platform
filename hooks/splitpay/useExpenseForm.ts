@@ -14,7 +14,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import type { Expense, SplitMethod, Member } from "@/types/splitpay";
-import { validateExpenseShares } from "@/utils/splitpay/calculations";
+import { validateExpenseShares } from "@/features/splitpay/lib/calculations";
 
 type ExpenseFormState = Omit<Expense, "id" | "groupId">;
 

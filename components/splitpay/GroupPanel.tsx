@@ -13,7 +13,7 @@
 import { useState } from "react";
 import { Plus, Users, Trash2, ChevronRight, RefreshCw, Sparkles } from "lucide-react";
 import { useGroupStore } from "@/hooks/splitpay/useGroupStore";
-import { computeGroupBalances } from "@/utils/splitpay/calculations";
+import { computeGroupBalances } from "@/features/splitpay/lib/calculations";
 import { DEMO_GROUPS } from "@/data/splitpay/demo";
 import type { Group } from "@/types/splitpay";
 import { EmptyBlock, inr, SectionLabel } from "./ui";

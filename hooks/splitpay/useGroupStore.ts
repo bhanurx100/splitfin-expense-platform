@@ -204,7 +204,7 @@ export const useGroupStore = create<GroupStore>()(
 // ── Derived hook: settlement for a group ──────────────────────────────────────
 
 import { useMemo } from "react";
-import { computeGroupSettlement } from "@/utils/splitpay/calculations";
+import { computeGroupSettlement } from "@/features/splitpay/lib/calculations";
 
 export function useGroupSettlement(groupId: string | null) {
   const group = useGroupStore(s => s.groups.find(g => g.id === groupId));
@@ -217,7 +217,7 @@ export function useGroupSettlement(groupId: string | null) {
 
 // ── Derived hook: expense breakdowns for a group ──────────────────────────────
 
-import { computeExpenseBreakdown } from "@/utils/splitpay/calculations";
+import { computeExpenseBreakdown } from "@/features/splitpay/lib/calculations";
 
 export function useExpenseBreakdowns(groupId: string | null) {
   const group = useGroupStore(s => s.groups.find(g => g.id === groupId));
