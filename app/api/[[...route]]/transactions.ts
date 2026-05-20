@@ -1,48 +1,31 @@
 /**
  * app/api/[[...route]]/transactions.ts
  *
- * PARTIALLY MIGRATED — GET "/" now delegates to transactionService.
- * All other routes are unchanged from the original.
+ * Route handlers only — auth, input validation, and ctx.json().
+ * All DB access is delegated to the service layer.
  *
- * MIGRATION STATUS:
- *   ✅ GET /transactions         → uses transactionService
- *   ⬜ GET /transactions/:id     → still inline (safe to migrate next)
- *   ⬜ POST /transactions        → still inline
- *   ⬜ POST /transactions/bulk-create → still inline
- *   ⬜ POST /transactions/bulk-delete → still inline
- *   ⬜ PATCH /transactions/:id   → still inline
- *   ⬜ DELETE /transactions/:id  → still inline
- *
- * WHY ONLY ONE:
- *   Proof-of-concept to verify the service/repository layer works in the
- *   Vercel edge runtime before migrating higher-risk write routes.
- *
- * ROLLBACK:
- *   If service migration causes issues, restore the original inline query
- *   from git. The rest of the routes are unaffected.
+ * Response shapes are preserved exactly to avoid breaking clients.
  */
 
 import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import { zValidator } from "@hono/zod-validator";
-import { createId } from "@paralleldrive/cuid2";
-//import { parse, subDays } from "date-fns";
-import { and, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { db } from "@/db/drizzle";
+import { insertTransactionSchema } from "@/db/schema";
 import {
-  accounts,
-  insertTransactionSchema,
-  transactions,
-} from "@/db/schema";
-
-// ── Service import (used by migrated GET route only) ───────────────────────────
-import { transactionService } from "@/server/services/transaction-service";
+  getTransactions,
+  getTransaction,
+  createTransaction,
+  createManyTransactions,
+  editTransaction,
+  removeTransaction,
+  removeManyTransactions,
+} from "@/server/services/transaction-service";
 
 const app = new Hono()
 
-  // ── GET / — MIGRATED to service layer ─────────────────────────────────────
+  // ── GET / ─────────────────────────────────────────────────────────────────
   .get(
     "/",
     zValidator(
@@ -56,280 +39,117 @@ const app = new Hono()
     clerkMiddleware(),
     async (ctx) => {
       const auth = getAuth(ctx);
+      if (!auth?.userId) return ctx.json({ error: "Unauthorized." }, 401);
+
       const { from, to, accountId } = ctx.req.valid("query");
 
-      if (!auth?.userId) {
-        return ctx.json({ error: "Unauthorized." }, 401);
-      }
-
-      // CHANGED: was inline drizzle query, now delegates to service.
-      // Response shape is identical — amount is still in plain decimals
-      // because the service handles the milliunit conversion.
-      const data = await transactionService.getTransactionsForUser({
-        userId:    auth.userId,
-        from,
-        to,
-        accountId,
-      });
-
+      const data = await getTransactions(auth.userId, { from, to, accountId });
       return ctx.json({ data });
     }
   )
 
-  // ── GET /:id — UNCHANGED ───────────────────────────────────────────────────
-  // TODO(next): migrate to transactionService.getTransactionForUser()
+  // ── GET /:id ──────────────────────────────────────────────────────────────
   .get(
     "/:id",
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().optional(),
-      })
-    ),
+    zValidator("param", z.object({ id: z.string().optional() })),
     clerkMiddleware(),
     async (ctx) => {
       const auth = getAuth(ctx);
       const { id } = ctx.req.valid("param");
 
-      if (!id) {
-        return ctx.json({ error: "Missing id." }, 400);
-      }
+      if (!id)           return ctx.json({ error: "Missing id." }, 400);
+      if (!auth?.userId) return ctx.json({ error: "Unauthorized." }, 401);
 
-      if (!auth?.userId) {
-        return ctx.json({ error: "Unauthorized." }, 401);
-      }
-
-      const [data] = await db
-        .select({
-          id:         transactions.id,
-          date:       transactions.date,
-          categoryId: transactions.categoryId,
-          payee:      transactions.payee,
-          amount:     transactions.amount,
-          notes:      transactions.notes,
-          accountId:  transactions.accountId,
-        })
-        .from(transactions)
-        .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-        .where(and(eq(transactions.id, id), eq(accounts.userId, auth.userId)));
-
-      if (!data) {
-        return ctx.json({ error: "Not found." }, 404);
-      }
+      const data = await getTransaction(id, auth.userId);
+      if (!data) return ctx.json({ error: "Not found." }, 404);
 
       return ctx.json({ data });
     }
   )
 
-  // ── POST / — UNCHANGED ────────────────────────────────────────────────────
-  // TODO(next-safe): migrate to transactionService.createTransactionForUser()
+  // ── POST / ────────────────────────────────────────────────────────────────
   .post(
     "/",
     clerkMiddleware(),
-    zValidator(
-      "json",
-      insertTransactionSchema.omit({
-        id: true,
-      })
-    ),
+    zValidator("json", insertTransactionSchema.omit({ id: true })),
     async (ctx) => {
-      const auth = getAuth(ctx);
+      const auth   = getAuth(ctx);
       const values = ctx.req.valid("json");
 
-      if (!auth?.userId) {
-        return ctx.json({ error: "Unauthorized." }, 401);
-      }
+      if (!auth?.userId) return ctx.json({ error: "Unauthorized." }, 401);
 
-      const [data] = await db
-        .insert(transactions)
-        .values({
-          id: createId(),
-          ...values,
-        })
-        .returning();
-
+      const data = await createTransaction(values);
       return ctx.json({ data });
     }
   )
 
-  // ── POST /bulk-create — UNCHANGED ─────────────────────────────────────────
+  // ── POST /bulk-create ─────────────────────────────────────────────────────
   .post(
     "/bulk-create",
     clerkMiddleware(),
     zValidator("json", z.array(insertTransactionSchema.omit({ id: true }))),
     async (ctx) => {
-      const auth = getAuth(ctx);
+      const auth   = getAuth(ctx);
       const values = ctx.req.valid("json");
 
-      if (!auth?.userId) {
-        return ctx.json({ error: "Unauthorized." }, 401);
-      }
+      if (!auth?.userId) return ctx.json({ error: "Unauthorized." }, 401);
 
-      const data = await db
-        .insert(transactions)
-        .values(
-          values.map((value) => ({
-            id: createId(),
-            ...value,
-          }))
-        )
-        .returning();
-
+      const data = await createManyTransactions(values);
       return ctx.json({ data });
     }
   )
 
-  // ── POST /bulk-delete — UNCHANGED ─────────────────────────────────────────
+  // ── POST /bulk-delete ─────────────────────────────────────────────────────
   .post(
     "/bulk-delete",
     clerkMiddleware(),
-    zValidator(
-      "json",
-      z.object({
-        ids: z.array(z.string()),
-      })
-    ),
+    zValidator("json", z.object({ ids: z.array(z.string()) })),
     async (ctx) => {
-      const auth = getAuth(ctx);
+      const auth   = getAuth(ctx);
       const values = ctx.req.valid("json");
 
-      if (!auth?.userId) {
-        return ctx.json({ error: "Unauthorized." }, 401);
-      }
+      if (!auth?.userId) return ctx.json({ error: "Unauthorized." }, 401);
 
-      const transactionsToDelete = db.$with("transactions_to_delete").as(
-        db
-          .select({ id: transactions.id })
-          .from(transactions)
-          .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-          .where(
-            and(
-              inArray(transactions.id, values.ids),
-              eq(accounts.userId, auth.userId)
-            )
-          )
-      );
-
-      const data = await db
-        .with(transactionsToDelete)
-        .delete(transactions)
-        .where(
-          inArray(
-            transactions.id,
-            sql`(select id from ${transactionsToDelete})`
-          )
-        )
-        .returning({
-          id: transactions.id,
-        });
-
+      const data = await removeManyTransactions(values.ids, auth.userId);
       return ctx.json({ data });
     }
   )
 
-  // ── PATCH /:id — UNCHANGED ────────────────────────────────────────────────
+  // ── PATCH /:id ────────────────────────────────────────────────────────────
   .patch(
     "/:id",
     clerkMiddleware(),
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().optional(),
-      })
-    ),
-    zValidator(
-      "json",
-      insertTransactionSchema.omit({
-        id: true,
-      })
-    ),
+    zValidator("param", z.object({ id: z.string().optional() })),
+    zValidator("json", insertTransactionSchema.omit({ id: true })),
     async (ctx) => {
-      const auth = getAuth(ctx);
+      const auth   = getAuth(ctx);
       const { id } = ctx.req.valid("param");
       const values = ctx.req.valid("json");
 
-      if (!id) {
-        return ctx.json({ error: "Missing id." }, 400);
-      }
+      if (!id)           return ctx.json({ error: "Missing id." }, 400);
+      if (!auth?.userId) return ctx.json({ error: "Unauthorized." }, 401);
 
-      if (!auth?.userId) {
-        return ctx.json({ error: "Unauthorized." }, 401);
-      }
-
-      const transactionsToUpdate = db.$with("transactions_to_update").as(
-        db
-          .select({ id: transactions.id })
-          .from(transactions)
-          .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-          .where(and(eq(transactions.id, id), eq(accounts.userId, auth.userId)))
-      );
-
-      const [data] = await db
-        .with(transactionsToUpdate)
-        .update(transactions)
-        .set(values)
-        .where(
-          inArray(
-            transactions.id,
-            sql`(select id from ${transactionsToUpdate})`
-          )
-        )
-        .returning();
-
-      if (!data) {
-        return ctx.json({ error: "Not found." }, 404);
-      }
+      const data = await editTransaction(id, auth.userId, values);
+      if (!data) return ctx.json({ error: "Not found." }, 404);
 
       return ctx.json({ data });
     }
   )
 
-  // ── DELETE /:id — UNCHANGED ───────────────────────────────────────────────
+  // ── DELETE /:id ───────────────────────────────────────────────────────────
   .delete(
     "/:id",
     clerkMiddleware(),
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().optional(),
-      })
-    ),
+    zValidator("param", z.object({ id: z.string().optional() })),
     async (ctx) => {
       const auth = getAuth(ctx);
       const { id } = ctx.req.valid("param");
 
-      if (!id) {
-        return ctx.json({ error: "Missing id." }, 400);
-      }
+      if (!id)           return ctx.json({ error: "Missing id." }, 400);
+      if (!auth?.userId) return ctx.json({ error: "Unauthorized." }, 401);
 
-      if (!auth?.userId) {
-        return ctx.json({ error: "Unauthorized." }, 401);
-      }
-
-      const transactionsToDelete = db.$with("transactions_to_delete").as(
-        db
-          .select({ id: transactions.id })
-          .from(transactions)
-          .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-          .where(and(eq(transactions.id, id), eq(accounts.userId, auth.userId)))
-      );
-
-      const [data] = await db
-        .with(transactionsToDelete)
-        .delete(transactions)
-        .where(
-          inArray(
-            transactions.id,
-            sql`(select id from ${transactionsToDelete})`
-          )
-        )
-        .returning({
-          id: transactions.id,
-        });
-
-      if (!data) {
-        return ctx.json({ error: "Not found." }, 404);
-      }
+      const data = await removeTransaction(id, auth.userId);
+      if (!data) return ctx.json({ error: "Not found." }, 404);
 
       return ctx.json({ data });
     }

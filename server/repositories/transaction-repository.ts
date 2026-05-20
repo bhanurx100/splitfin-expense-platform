@@ -1,290 +1,186 @@
 /**
  * server/repositories/transaction-repository.ts
  *
- * DATA ACCESS LAYER — owns all raw DB operations for transactions.
- *
- * Rules for this file:
- *  ✅ Direct drizzle queries
- *  ✅ SQL filtering, ordering, joining
- *  ✅ Returns raw DB row shapes
- *  ❌ NO business logic
- *  ❌ NO validation
- *  ❌ NO formatting / unit conversion
- *  ❌ NO grouping / analytics
- *  ❌ NO toast / error UI
- *
- * MIGRATION NOTE:
- *   Current API routes (app/api/[[...route]]/transactions.ts) contain
- *   inline drizzle queries. This repository mirrors that logic so routes
- *   can be migrated one at a time to call the service layer instead.
- *   Until migration, both patterns coexist safely.
+ * Raw database access for transactions.
+ * - No auth logic here — callers pass userId already verified.
+ * - No orchestration — one responsibility per function.
+ * - Returns raw DB rows; service layer handles shaping if needed.
  */
 
+import { createId } from "@paralleldrive/cuid2";
 import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+
 import { db } from "@/db/drizzle";
-import { accounts, categories, transactions } from "@/db/schema";
+import {
+  accounts,
+  categories,
+  insertTransactionSchema,
+  transactions,
+} from "@/db/schema";
 
-// ─── Input types ───────────────────────────────────────────────────────────────
+import type { z } from "zod";
 
-export type GetTransactionsParams = {
+// ── Shared select shape (matches existing API response exactly) ────────────────
+
+const TX_SELECT = {
+  id:         transactions.id,
+  date:       transactions.date,
+  category:   categories.name,
+  categoryId: transactions.categoryId,
+  payee:      transactions.payee,
+  amount:     transactions.amount,
+  notes:      transactions.notes,
+  account:    accounts.name,
+  accountId:  transactions.accountId,
+} as const;
+
+const TX_SELECT_DETAIL = {
+  id:         transactions.id,
+  date:       transactions.date,
+  categoryId: transactions.categoryId,
+  payee:      transactions.payee,
+  amount:     transactions.amount,
+  notes:      transactions.notes,
+  accountId:  transactions.accountId,
+} as const;
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type InsertValues = z.infer<typeof insertTransactionSchema> & { id: string };
+
+export type ListFilters = {
   userId: string;
   accountId?: string;
   startDate: Date;
   endDate: Date;
 };
 
-export type CreateTransactionParams = {
-  id: string;
-  accountId: string;
-  categoryId?: string | null;
-  payee: string;
-  amount: number; // milliunits — unit conversion is the service's responsibility
-  date: Date;
-  notes?: string | null;
-};
+// ── Read ──────────────────────────────────────────────────────────────────────
 
-export type UpdateTransactionParams = Partial<
-  Omit<CreateTransactionParams, "id">
->;
+export async function listTransactions(filters: ListFilters) {
+  const { userId, accountId, startDate, endDate } = filters;
 
-export type BulkDeleteParams = {
-  userId: string;
-  ids: string[];
-};
+  return db
+    .select(TX_SELECT)
+    .from(transactions)
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .leftJoin(categories, eq(transactions.categoryId, categories.id))
+    .where(
+      and(
+        accountId ? eq(transactions.accountId, accountId) : undefined,
+        eq(accounts.userId, userId),
+        gte(transactions.date, startDate),
+        lte(transactions.date, endDate),
+      )
+    )
+    .orderBy(desc(transactions.date));
+}
 
-export type BulkCreateParams = {
-  rows: CreateTransactionParams[];
-};
+export async function getTransactionById(id: string, userId: string) {
+  const [row] = await db
+    .select(TX_SELECT_DETAIL)
+    .from(transactions)
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .where(
+      and(
+        eq(transactions.id, id),
+        eq(accounts.userId, userId),
+      )
+    );
 
-// ─── Return types ──────────────────────────────────────────────────────────────
+  return row ?? null;
+}
 
-/** Shape returned by the list query — includes joined account/category names. */
-export type TransactionRow = {
-  id: string;
-  date: Date;
-  category: string | null;
-  categoryId: string | null;
-  payee: string;
-  amount: number;
-  notes: string | null;
-  account: string;
-  accountId: string;
-};
+// ── Write ─────────────────────────────────────────────────────────────────────
 
-/** Shape returned by the detail query — no joined names. */
-export type TransactionDetailRow = {
-  id: string;
-  date: Date;
-  categoryId: string | null;
-  payee: string;
-  amount: number;
-  notes: string | null;
-  accountId: string;
-};
+export async function insertTransaction(
+  values: Omit<InsertValues, "id">
+): Promise<typeof transactions.$inferSelect> {
+  const [row] = await db
+    .insert(transactions)
+    .values({ id: createId(), ...values })
+    .returning();
 
-// ─── Repository ────────────────────────────────────────────────────────────────
+  return row;
+}
 
-export const transactionRepository = {
+export async function insertManyTransactions(
+  rows: Omit<InsertValues, "id">[]
+): Promise<(typeof transactions.$inferSelect)[]> {
+  return db
+    .insert(transactions)
+    .values(rows.map((r) => ({ id: createId(), ...r })))
+    .returning();
+}
 
-  /**
-   * List transactions for a user within a date range.
-   * Optionally scoped to a single account.
-   * Returns rows with joined account + category names.
-   *
-   * MIRRORS: inline query in GET /api/transactions
-   */
-  async getTransactions(
-    params: GetTransactionsParams
-  ): Promise<TransactionRow[]> {
-    const { userId, accountId, startDate, endDate } = params;
+// ── Update (auth-safe CTE — only rows owned by userId) ────────────────────────
 
-    return db
-      .select({
-        id:         transactions.id,
-        date:       transactions.date,
-        category:   categories.name,
-        categoryId: transactions.categoryId,
-        payee:      transactions.payee,
-        amount:     transactions.amount,
-        notes:      transactions.notes,
-        account:    accounts.name,
-        accountId:  transactions.accountId,
-      })
+export async function updateTransaction(
+  id: string,
+  userId: string,
+  values: Omit<InsertValues, "id">
+): Promise<typeof transactions.$inferSelect | null> {
+  const cte = db.$with("tx_to_update").as(
+    db
+      .select({ id: transactions.id })
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-      .leftJoin(categories, eq(transactions.categoryId, categories.id))
+      .where(and(eq(transactions.id, id), eq(accounts.userId, userId)))
+  );
+
+  const [row] = await db
+    .with(cte)
+    .update(transactions)
+    .set(values)
+    .where(inArray(transactions.id, sql`(select id from ${cte})`))
+    .returning();
+
+  return row ?? null;
+}
+
+// ── Delete (auth-safe CTE) ────────────────────────────────────────────────────
+
+export async function deleteTransaction(
+  id: string,
+  userId: string
+): Promise<{ id: string } | null> {
+  const cte = db.$with("tx_to_delete").as(
+    db
+      .select({ id: transactions.id })
+      .from(transactions)
+      .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+      .where(and(eq(transactions.id, id), eq(accounts.userId, userId)))
+  );
+
+  const [row] = await db
+    .with(cte)
+    .delete(transactions)
+    .where(inArray(transactions.id, sql`(select id from ${cte})`))
+    .returning({ id: transactions.id });
+
+  return row ?? null;
+}
+
+export async function deleteManyTransactions(
+  ids: string[],
+  userId: string
+): Promise<{ id: string }[]> {
+  const cte = db.$with("txs_to_delete").as(
+    db
+      .select({ id: transactions.id })
+      .from(transactions)
+      .innerJoin(accounts, eq(transactions.accountId, accounts.id))
       .where(
         and(
-          accountId ? eq(transactions.accountId, accountId) : undefined,
+          inArray(transactions.id, ids),
           eq(accounts.userId, userId),
-          gte(transactions.date, startDate),
-          lte(transactions.date, endDate)
         )
       )
-      .orderBy(desc(transactions.date));
-  },
+  );
 
-  /**
-   * Fetch a single transaction by ID, scoped to a user (via account join).
-   *
-   * MIRRORS: inline query in GET /api/transactions/:id
-   */
-  async getTransactionById(
-    id: string,
-    userId: string
-  ): Promise<TransactionDetailRow | null> {
-    const [row] = await db
-      .select({
-        id:         transactions.id,
-        date:       transactions.date,
-        categoryId: transactions.categoryId,
-        payee:      transactions.payee,
-        amount:     transactions.amount,
-        notes:      transactions.notes,
-        accountId:  transactions.accountId,
-      })
-      .from(transactions)
-      .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-      .where(
-        and(
-          eq(transactions.id, id),
-          eq(accounts.userId, userId)
-        )
-      );
-
-    return row ?? null;
-  },
-
-  /**
-   * Insert a new transaction row.
-   * Caller is responsible for generating the id (createId()) and
-   * converting amount to milliunits before calling this.
-   *
-   * MIRRORS: inline insert in POST /api/transactions
-   */
-  async createTransaction(
-    params: CreateTransactionParams
-  ): Promise<TransactionDetailRow> {
-    const [row] = await db
-      .insert(transactions)
-      .values({
-        id:         params.id,
-        accountId:  params.accountId,
-        categoryId: params.categoryId ?? null,
-        payee:      params.payee,
-        amount:     params.amount,
-        date:       params.date,
-        notes:      params.notes ?? null,
-      })
-      .returning();
-
-    return row as TransactionDetailRow;
-  },
-
-  /**
-   * Bulk-insert transactions (used by CSV import).
-   *
-   * MIRRORS: inline insert in POST /api/transactions/bulk-create
-   */
-  async bulkCreateTransactions(
-    params: BulkCreateParams
-  ): Promise<TransactionDetailRow[]> {
-    const rows = await db
-      .insert(transactions)
-      .values(params.rows.map((r) => ({ ...r, notes: r.notes ?? null })))
-      .returning();
-
-    return rows as TransactionDetailRow[];
-  },
-
-  /**
-   * Update a transaction. Scoped to a user via a CTE join on accounts.
-   * Returns null if the transaction doesn't belong to the user.
-   *
-   * MIRRORS: inline update in PATCH /api/transactions/:id
-   */
-  async updateTransaction(
-    id: string,
-    userId: string,
-    patch: UpdateTransactionParams
-  ): Promise<TransactionDetailRow | null> {
-    // CTE to ensure the transaction belongs to this user
-    const toUpdate = db.$with("tx_to_update").as(
-      db
-        .select({ id: transactions.id })
-        .from(transactions)
-        .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-        .where(
-          and(eq(transactions.id, id), eq(accounts.userId, userId))
-        )
-    );
-
-    const [row] = await db
-      .with(toUpdate)
-      .update(transactions)
-      .set(patch)
-      .where(inArray(transactions.id, sql`(select id from ${toUpdate})`))
-      .returning();
-
-    return (row as TransactionDetailRow) ?? null;
-  },
-
-  /**
-   * Delete a single transaction. Scoped to a user via CTE.
-   * Returns null if not found / not owned by user.
-   *
-   * MIRRORS: inline delete in DELETE /api/transactions/:id
-   */
-  async deleteTransaction(
-    id: string,
-    userId: string
-  ): Promise<{ id: string } | null> {
-    const toDelete = db.$with("tx_to_delete").as(
-      db
-        .select({ id: transactions.id })
-        .from(transactions)
-        .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-        .where(
-          and(eq(transactions.id, id), eq(accounts.userId, userId))
-        )
-    );
-
-    const [row] = await db
-      .with(toDelete)
-      .delete(transactions)
-      .where(inArray(transactions.id, sql`(select id from ${toDelete})`))
-      .returning({ id: transactions.id });
-
-    return row ?? null;
-  },
-
-  /**
-   * Bulk-delete transactions by IDs, scoped to a user.
-   *
-   * MIRRORS: inline delete in POST /api/transactions/bulk-delete
-   */
-  async bulkDeleteTransactions(
-    params: BulkDeleteParams
-  ): Promise<{ id: string }[]> {
-    const { userId, ids } = params;
-
-    const toDelete = db.$with("tx_to_delete").as(
-      db
-        .select({ id: transactions.id })
-        .from(transactions)
-        .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-        .where(
-          and(
-            inArray(transactions.id, ids),
-            eq(accounts.userId, userId)
-          )
-        )
-    );
-
-    return db
-      .with(toDelete)
-      .delete(transactions)
-      .where(inArray(transactions.id, sql`(select id from ${toDelete})`))
-      .returning({ id: transactions.id });
-  },
-};
+  return db
+    .with(cte)
+    .delete(transactions)
+    .where(inArray(transactions.id, sql`(select id from ${cte})`))
+    .returning({ id: transactions.id });
+}
