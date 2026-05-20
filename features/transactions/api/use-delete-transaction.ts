@@ -3,32 +3,38 @@ import { InferResponseType } from "hono";
 import { toast } from "sonner";
 
 import { client } from "@/lib/hono";
+import { transactionKeys, summaryKeys } from "@/lib/query-keys";
 
-type ResponseType = InferResponseType<
+// ── Response type (preserved — used by callers) ───────────────────────────────
+
+export type DeleteTransactionResponse = InferResponseType<
   (typeof client.api.transactions)[":id"]["$delete"]
 >;
+
+// ── Mutation function ─────────────────────────────────────────────────────────
+
+async function deleteTransaction(id: string): Promise<DeleteTransactionResponse> {
+  const response = await client.api.transactions[":id"]["$delete"]({
+    param: { id },
+  });
+  return response.json();
+}
+
+// ── Hook ──────────────────────────────────────────────────────────────────────
 
 export const useDeleteTransaction = (id?: string) => {
   const queryClient = useQueryClient();
 
-  const mutation = useMutation<ResponseType, Error>({
-    mutationFn: async () => {
-      const response = await client.api.transactions[":id"]["$delete"]({
-        param: { id },
-      });
-
-      return await response.json();
-    },
+  return useMutation<DeleteTransactionResponse, Error>({
+    mutationFn: () => deleteTransaction(id!),
     onSuccess: () => {
       toast.success("Transaction deleted.");
-      queryClient.invalidateQueries({ queryKey: ["transaction", { id }] });
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["summary"] });
+      queryClient.invalidateQueries({ queryKey: transactionKeys.detail(id!) });
+      queryClient.invalidateQueries({ queryKey: transactionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: summaryKeys.all });
     },
     onError: () => {
       toast.error("Failed to delete transaction.");
     },
   });
-
-  return mutation;
 };

@@ -3,30 +3,40 @@ import { InferRequestType, InferResponseType } from "hono";
 import { toast } from "sonner";
 
 import { client } from "@/lib/hono";
+import { transactionKeys, summaryKeys } from "@/lib/query-keys";
 
-type ResponseType = InferResponseType<typeof client.api.transactions.$post>;
-type RequestType = InferRequestType<
+// ── Types (preserved — callers infer from these) ──────────────────────────────
+
+export type CreateTransactionResponse = InferResponseType<
+  typeof client.api.transactions.$post
+>;
+export type CreateTransactionRequest = InferRequestType<
   typeof client.api.transactions.$post
 >["json"];
+
+// ── Mutation function ─────────────────────────────────────────────────────────
+
+async function createTransaction(
+  json: CreateTransactionRequest
+): Promise<CreateTransactionResponse> {
+  const response = await client.api.transactions.$post({ json });
+  return response.json();
+}
+
+// ── Hook ──────────────────────────────────────────────────────────────────────
 
 export const useCreateTransaction = () => {
   const queryClient = useQueryClient();
 
-  const mutation = useMutation<ResponseType, Error, RequestType>({
-    mutationFn: async (json) => {
-      const response = await client.api.transactions.$post({ json });
-
-      return await response.json();
-    },
+  return useMutation<CreateTransactionResponse, Error, CreateTransactionRequest>({
+    mutationFn: createTransaction,
     onSuccess: () => {
       toast.success("Transaction created.");
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["summary"] });
+      queryClient.invalidateQueries({ queryKey: transactionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: summaryKeys.all });
     },
     onError: () => {
       toast.error("Failed to create transaction.");
     },
   });
-
-  return mutation;
 };
