@@ -1,200 +1,129 @@
+/**
+ * app/api/[[...route]]/accounts.ts
+ *
+ * Migration status:
+ *   GET /          ✅ delegated to account-service
+ *   GET /:id       ✅ delegated to account-service
+ *   POST /         ✅ delegated to account-service
+ *   POST /bulk-delete ✅ delegated to account-service
+ *   PATCH /:id     ✅ delegated to account-service
+ *   DELETE /:id    ✅ delegated to account-service
+ *
+ * All response shapes preserved exactly.
+ */
+
 import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import { zValidator } from "@hono/zod-validator";
-import { createId } from "@paralleldrive/cuid2";
-import { and, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { db } from "@/db/drizzle";
-import { accounts, insertAccountSchema } from "@/db/schema";
+import { insertAccountSchema } from "@/db/schema";
+import {
+  getAccounts,
+  getAccount,
+  createAccount,
+  editAccount,
+  removeAccount,
+  removeManyAccounts,
+} from "@/server/services/account-service";
 
 const app = new Hono()
+
+  // ── GET / ──────────────────────────────────────────────────────────────────
   .get("/", clerkMiddleware(), async (ctx) => {
     const auth = getAuth(ctx);
+    if (!auth?.userId) return ctx.json({ error: "Unauthorized." }, 401);
 
-    if (!auth?.userId) {
-      return ctx.json({ error: "Unauthorized." }, 401);
-    }
-
-    const data = await db
-      .select({
-        id: accounts.id,
-        name: accounts.name,
-      })
-      .from(accounts)
-      .where(eq(accounts.userId, auth.userId));
-
+    const data = await getAccounts(auth.userId);
     return ctx.json({ data });
   })
+
+  // ── GET /:id ───────────────────────────────────────────────────────────────
   .get(
     "/:id",
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().optional(),
-      })
-    ),
+    zValidator("param", z.object({ id: z.string().optional() })),
     clerkMiddleware(),
     async (ctx) => {
       const auth = getAuth(ctx);
       const { id } = ctx.req.valid("param");
 
-      if (!id) {
-        return ctx.json({ error: "Missing id." }, 400);
-      }
+      if (!id)           return ctx.json({ error: "Missing id." }, 400);
+      if (!auth?.userId) return ctx.json({ error: "Unauthorized." }, 401);
 
-      if (!auth?.userId) {
-        return ctx.json({ error: "Unauthorized." }, 401);
-      }
-
-      const [data] = await db
-        .select({
-          id: accounts.id,
-          name: accounts.name,
-        })
-        .from(accounts)
-        .where(and(eq(accounts.userId, auth.userId), eq(accounts.id, id)));
-
-      if (!data) {
-        return ctx.json({ error: "Not found." }, 404);
-      }
+      const data = await getAccount(id, auth.userId);
+      if (!data) return ctx.json({ error: "Not found." }, 404);
 
       return ctx.json({ data });
     }
   )
+
+  // ── POST / ─────────────────────────────────────────────────────────────────
   .post(
     "/",
     clerkMiddleware(),
-    zValidator(
-      "json",
-      insertAccountSchema.pick({
-        name: true,
-      })
-    ),
+    zValidator("json", insertAccountSchema.pick({ name: true })),
     async (ctx) => {
-      const auth = getAuth(ctx);
+      const auth   = getAuth(ctx);
       const values = ctx.req.valid("json");
 
-      if (!auth?.userId) {
-        return ctx.json({ error: "Unauthorized." }, 401);
-      }
+      if (!auth?.userId) return ctx.json({ error: "Unauthorized." }, 401);
 
-      const [data] = await db
-        .insert(accounts)
-        .values({
-          id: createId(),
-          userId: auth.userId,
-          ...values,
-        })
-        .returning();
-
+      const data = await createAccount(auth.userId, values);
       return ctx.json({ data });
     }
   )
+
+  // ── POST /bulk-delete ──────────────────────────────────────────────────────
   .post(
     "/bulk-delete",
     clerkMiddleware(),
-    zValidator(
-      "json",
-      z.object({
-        ids: z.array(z.string()),
-      })
-    ),
+    zValidator("json", z.object({ ids: z.array(z.string()) })),
     async (ctx) => {
-      const auth = getAuth(ctx);
+      const auth   = getAuth(ctx);
       const values = ctx.req.valid("json");
 
-      if (!auth?.userId) {
-        return ctx.json({ error: "Unauthorized." }, 401);
-      }
+      if (!auth?.userId) return ctx.json({ error: "Unauthorized." }, 401);
 
-      const data = await db
-        .delete(accounts)
-        .where(
-          and(
-            eq(accounts.userId, auth.userId),
-            inArray(accounts.id, values.ids)
-          )
-        )
-        .returning({
-          id: accounts.id,
-        });
-
+      const data = await removeManyAccounts(values.ids, auth.userId);
       return ctx.json({ data });
     }
   )
+
+  // ── PATCH /:id ─────────────────────────────────────────────────────────────
   .patch(
     "/:id",
     clerkMiddleware(),
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().optional(),
-      })
-    ),
-    zValidator(
-      "json",
-      insertAccountSchema.pick({
-        name: true,
-      })
-    ),
+    zValidator("param", z.object({ id: z.string().optional() })),
+    zValidator("json", insertAccountSchema.pick({ name: true })),
     async (ctx) => {
-      const auth = getAuth(ctx);
+      const auth   = getAuth(ctx);
       const { id } = ctx.req.valid("param");
       const values = ctx.req.valid("json");
 
-      if (!id) {
-        return ctx.json({ error: "Missing id." }, 400);
-      }
+      if (!id)           return ctx.json({ error: "Missing id." }, 400);
+      if (!auth?.userId) return ctx.json({ error: "Unauthorized." }, 401);
 
-      if (!auth?.userId) {
-        return ctx.json({ error: "Unauthorized." }, 401);
-      }
-
-      const [data] = await db
-        .update(accounts)
-        .set(values)
-        .where(and(eq(accounts.userId, auth.userId), eq(accounts.id, id)))
-        .returning();
-
-      if (!data) {
-        return ctx.json({ error: "Not found." }, 404);
-      }
+      const data = await editAccount(id, auth.userId, values);
+      if (!data) return ctx.json({ error: "Not found." }, 404);
 
       return ctx.json({ data });
     }
   )
+
+  // ── DELETE /:id ────────────────────────────────────────────────────────────
   .delete(
     "/:id",
     clerkMiddleware(),
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().optional(),
-      })
-    ),
+    zValidator("param", z.object({ id: z.string().optional() })),
     async (ctx) => {
       const auth = getAuth(ctx);
       const { id } = ctx.req.valid("param");
 
-      if (!id) {
-        return ctx.json({ error: "Missing id." }, 400);
-      }
+      if (!id)           return ctx.json({ error: "Missing id." }, 400);
+      if (!auth?.userId) return ctx.json({ error: "Unauthorized." }, 401);
 
-      if (!auth?.userId) {
-        return ctx.json({ error: "Unauthorized." }, 401);
-      }
-
-      const [data] = await db
-        .delete(accounts)
-        .where(and(eq(accounts.userId, auth.userId), eq(accounts.id, id)))
-        .returning({
-          id: accounts.id,
-        });
-
-      if (!data) {
-        return ctx.json({ error: "Not found." }, 404);
-      }
+      const data = await removeAccount(id, auth.userId);
+      if (!data) return ctx.json({ error: "Not found." }, 404);
 
       return ctx.json({ data });
     }
