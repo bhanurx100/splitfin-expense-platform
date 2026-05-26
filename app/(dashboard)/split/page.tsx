@@ -19,17 +19,17 @@
  *   - SplitSettlementSection (SettleTab)
  */
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
-  Plus, Trash2, Percent, Scale, Users, Receipt, Info, Sparkles,
+  Percent, Scale, Users, Receipt, Info,
 } from "lucide-react";
 
-import type { Group, Expense, SplitMethod } from "@/types/splitpay";
+import type { Group, SplitMethod } from "@/types/splitpay";
 import { useGroupStore }   from "@/hooks/splitpay/useGroupStore";
 import { useExpenseForm }  from "@/hooks/splitpay/useExpenseForm";
-import { computeExpenseShares } from "@/features/splitpay/lib/calculations";
+//import { computeExpenseShares } from "@/features/splitpay/lib/calculations";
 import { Avatar, Card, EmptyBlock, ParticipantChip, inr } from "@/components/splitpay/ui";
-import { EditExpenseModal } from "@/components/splitpay/EditExpenseModal";
+//import { EditExpenseModal } from "@/components/splitpay/EditExpenseModal";
 import { cn } from "@/lib/utils";
 
 import { SplitHeader }           from "@/features/splitpay/sections/split-header";
