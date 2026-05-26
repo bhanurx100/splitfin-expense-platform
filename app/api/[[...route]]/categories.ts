@@ -1,200 +1,123 @@
+/**
+ * app/api/[[...route]]/categories.ts
+ *
+ * Route handlers only — auth, input validation, ctx.json().
+ * All DB access delegated to the service layer.
+ * All response shapes preserved exactly.
+ */
+
 import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import { zValidator } from "@hono/zod-validator";
-import { createId } from "@paralleldrive/cuid2";
-import { and, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { db } from "@/db/drizzle";
-import { categories, insertCategorySchema } from "@/db/schema";
+import { insertCategorySchema } from "@/db/schema";
+import {
+  getCategories,
+  getCategory,
+  createCategory,
+  editCategory,
+  removeCategory,
+  removeManyCategories,
+} from "@/server/services/category-service";
 
 const app = new Hono()
+
+  // ── GET / ──────────────────────────────────────────────────────────────────
   .get("/", clerkMiddleware(), async (ctx) => {
     const auth = getAuth(ctx);
+    if (!auth?.userId) return ctx.json({ error: "Unauthorized." }, 401);
 
-    if (!auth?.userId) {
-      return ctx.json({ error: "Unauthorized." }, 401);
-    }
-
-    const data = await db
-      .select({
-        id: categories.id,
-        name: categories.name,
-      })
-      .from(categories)
-      .where(eq(categories.userId, auth.userId));
-
+    const data = await getCategories(auth.userId);
     return ctx.json({ data });
   })
+
+  // ── GET /:id ───────────────────────────────────────────────────────────────
   .get(
     "/:id",
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().optional(),
-      })
-    ),
+    zValidator("param", z.object({ id: z.string().optional() })),
     clerkMiddleware(),
     async (ctx) => {
       const auth = getAuth(ctx);
       const { id } = ctx.req.valid("param");
 
-      if (!id) {
-        return ctx.json({ error: "Missing id." }, 400);
-      }
+      if (!id)           return ctx.json({ error: "Missing id." }, 400);
+      if (!auth?.userId) return ctx.json({ error: "Unauthorized." }, 401);
 
-      if (!auth?.userId) {
-        return ctx.json({ error: "Unauthorized." }, 401);
-      }
-
-      const [data] = await db
-        .select({
-          id: categories.id,
-          name: categories.name,
-        })
-        .from(categories)
-        .where(and(eq(categories.userId, auth.userId), eq(categories.id, id)));
-
-      if (!data) {
-        return ctx.json({ error: "Not found." }, 404);
-      }
+      const data = await getCategory(id, auth.userId);
+      if (!data) return ctx.json({ error: "Not found." }, 404);
 
       return ctx.json({ data });
     }
   )
+
+  // ── POST / ─────────────────────────────────────────────────────────────────
   .post(
     "/",
     clerkMiddleware(),
-    zValidator(
-      "json",
-      insertCategorySchema.pick({
-        name: true,
-      })
-    ),
+    zValidator("json", insertCategorySchema.pick({ name: true })),
     async (ctx) => {
-      const auth = getAuth(ctx);
+      const auth   = getAuth(ctx);
       const values = ctx.req.valid("json");
 
-      if (!auth?.userId) {
-        return ctx.json({ error: "Unauthorized." }, 401);
-      }
+      if (!auth?.userId) return ctx.json({ error: "Unauthorized." }, 401);
 
-      const [data] = await db
-        .insert(categories)
-        .values({
-          id: createId(),
-          userId: auth.userId,
-          ...values,
-        })
-        .returning();
-
+      const data = await createCategory(auth.userId, values);
       return ctx.json({ data });
     }
   )
+
+  // ── POST /bulk-delete ──────────────────────────────────────────────────────
   .post(
     "/bulk-delete",
     clerkMiddleware(),
-    zValidator(
-      "json",
-      z.object({
-        ids: z.array(z.string()),
-      })
-    ),
+    zValidator("json", z.object({ ids: z.array(z.string()) })),
     async (ctx) => {
-      const auth = getAuth(ctx);
+      const auth   = getAuth(ctx);
       const values = ctx.req.valid("json");
 
-      if (!auth?.userId) {
-        return ctx.json({ error: "Unauthorized." }, 401);
-      }
+      if (!auth?.userId) return ctx.json({ error: "Unauthorized." }, 401);
 
-      const data = await db
-        .delete(categories)
-        .where(
-          and(
-            eq(categories.userId, auth.userId),
-            inArray(categories.id, values.ids)
-          )
-        )
-        .returning({
-          id: categories.id,
-        });
-
+      const data = await removeManyCategories(values.ids, auth.userId);
       return ctx.json({ data });
     }
   )
+
+  // ── PATCH /:id ─────────────────────────────────────────────────────────────
   .patch(
     "/:id",
     clerkMiddleware(),
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().optional(),
-      })
-    ),
-    zValidator(
-      "json",
-      insertCategorySchema.pick({
-        name: true,
-      })
-    ),
+    zValidator("param", z.object({ id: z.string().optional() })),
+    zValidator("json", insertCategorySchema.pick({ name: true })),
     async (ctx) => {
-      const auth = getAuth(ctx);
+      const auth   = getAuth(ctx);
       const { id } = ctx.req.valid("param");
       const values = ctx.req.valid("json");
 
-      if (!id) {
-        return ctx.json({ error: "Missing id." }, 400);
-      }
+      if (!id)           return ctx.json({ error: "Missing id." }, 400);
+      if (!auth?.userId) return ctx.json({ error: "Unauthorized." }, 401);
 
-      if (!auth?.userId) {
-        return ctx.json({ error: "Unauthorized." }, 401);
-      }
-
-      const [data] = await db
-        .update(categories)
-        .set(values)
-        .where(and(eq(categories.userId, auth.userId), eq(categories.id, id)))
-        .returning();
-
-      if (!data) {
-        return ctx.json({ error: "Not found." }, 404);
-      }
+      const data = await editCategory(id, auth.userId, values);
+      if (!data) return ctx.json({ error: "Not found." }, 404);
 
       return ctx.json({ data });
     }
   )
+
+  // ── DELETE /:id ────────────────────────────────────────────────────────────
   .delete(
     "/:id",
     clerkMiddleware(),
-    zValidator(
-      "param",
-      z.object({
-        id: z.string().optional(),
-      })
-    ),
+    zValidator("param", z.object({ id: z.string().optional() })),
     async (ctx) => {
       const auth = getAuth(ctx);
       const { id } = ctx.req.valid("param");
 
-      if (!id) {
-        return ctx.json({ error: "Missing id." }, 400);
-      }
+      if (!id)           return ctx.json({ error: "Missing id." }, 400);
+      if (!auth?.userId) return ctx.json({ error: "Unauthorized." }, 401);
 
-      if (!auth?.userId) {
-        return ctx.json({ error: "Unauthorized." }, 401);
-      }
-
-      const [data] = await db
-        .delete(categories)
-        .where(and(eq(categories.userId, auth.userId), eq(categories.id, id)))
-        .returning({
-          id: categories.id,
-        });
-
-      if (!data) {
-        return ctx.json({ error: "Not found." }, 404);
-      }
+      const data = await removeCategory(id, auth.userId);
+      if (!data) return ctx.json({ error: "Not found." }, 404);
 
       return ctx.json({ data });
     }
