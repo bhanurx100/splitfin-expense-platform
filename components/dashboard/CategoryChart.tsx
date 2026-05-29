@@ -10,7 +10,6 @@ import { useGetSummary } from "@/features/summary/api/use-get-summary";
 import { useGetTransactions } from "@/features/transactions/api/use-get-transactions";
 import { formatINR} from "@/features/transactions/lib/formatters";
 import {categoryColor,categoryIcon} from "@/features/transactions/lib/categories";
-import { CategorySkeleton } from "./Skeletons";
 
 type ChartEntry = { name: string; value: number; color: string; icon: string };
 
@@ -74,7 +73,7 @@ export function CategoryChart() {
     [transactions]
   );
 
-  if (isLoading) return <CategorySkeleton />;
+
 
   const data = activeType === "Expenses" ? expenseData : incomeData;
   const total = data.reduce((s, c) => s + c.value, 0);
