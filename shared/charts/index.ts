@@ -9,9 +9,9 @@
  */
 
 // Area/bar/line wrappers (existing components/*)
-export { AreaVariant }   from "@/components/area-variant";
-export { BarVariant }    from "@/components/bar-variant";
-export { LineVariant }   from "@/components/line-variant";
+export { AreaVariant } from "@/features/dashboard/components/area-variant";
+export { BarVariant } from "@/features/dashboard/components/bar-variant";
+export { LineVariant } from "@/features/dashboard/components/line-variant";
 
 // Feature-level chart cards (self-fetching, page-sized)
 // These stay in features/dashboard/sections/ — just re-exported here
