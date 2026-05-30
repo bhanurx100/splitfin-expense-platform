@@ -17,7 +17,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useGetAccounts } from "@/features/accounts/api/use-get-accounts";
 import { useNewAccount }  from "@/features/accounts/hooks/use-new-account";
-import { AccountInsights } from "@/components/dashboard/AccountInsights";
+import { AccountInsights } from "@/features/accounts/sections/AccountInsights";
 import { PageContainer }   from "@/shared/navigation/PageContainer";
 import { AccountGrid }      from "@/features/accounts/sections/AccountGrid";
 import { AccountEmptyState } from "@/features/accounts/sections/AccountEmptyState";
