@@ -9,7 +9,7 @@
 
 import { TrendingUp, Loader2 } from "lucide-react";
 import { ClerkLoaded, ClerkLoading, UserButton } from "@clerk/nextjs";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/shared/components/theme-toggle";
 
 export function MobileHeader() {
   return (
@@ -30,7 +30,10 @@ export function MobileHeader() {
         >
           <TrendingUp className="h-3.5 w-3.5 text-white" strokeWidth={2.5} />
         </div>
-        <span className="text-[15px] font-bold tracking-tight" style={{ color: "var(--sf-text-primary)" }}>
+        <span
+          className="text-[15px] font-bold tracking-tight"
+          style={{ color: "var(--sf-text-primary)" }}
+        >
           Split<span style={{ color: "#6C5CE7" }}>Fin</span>
         </span>
       </div>
@@ -42,7 +45,10 @@ export function MobileHeader() {
           <UserButton afterSignOutUrl="/" />
         </ClerkLoaded>
         <ClerkLoading>
-          <Loader2 className="h-4 w-4 animate-spin" style={{ color: "var(--sf-text-muted)" }} />
+          <Loader2
+            className="h-4 w-4 animate-spin"
+            style={{ color: "var(--sf-text-muted)" }}
+          />
         </ClerkLoading>
       </div>
     </header>
