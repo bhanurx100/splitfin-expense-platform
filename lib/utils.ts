@@ -14,7 +14,7 @@
 
 import { type ClassValue, clsx } from "clsx";
 import { twMerge }               from "tailwind-merge";
-import { eachDayOfInterval, isSameDay, subDays } from "date-fns";
+import { eachDayOfInterval, isSameDay } from "date-fns";
 
 // ── Class name helper ──────────────────────────────────────────────────────────
 
