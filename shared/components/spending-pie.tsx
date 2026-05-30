@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { PieVariant } from "./pie-variant";
+import { PieVariant } from "../../features/dashboard/components/pie-variant";
 import { RadarVariant } from "../../features/dashboard/components/radar-variant";
 import { RadialVariant } from "../../features/dashboard/components/radial-variant";
 
