@@ -7,8 +7,8 @@
  * Both children are self-fetching (they call their own hooks).
  */
 
-import { CategoryChart }       from "@/components/dashboard/CategoryChart";
-import { CategorySummaryList } from "@/components/dashboard/CategorySummaryList";
+import { CategoryChart }       from "@/features/categories/components/CategoryChart";
+import { CategorySummaryList } from "@/features/categories/components/CategorySummaryList";
 
 export function CategoryStatsRow() {
   return (

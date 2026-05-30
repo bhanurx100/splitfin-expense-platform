@@ -8,7 +8,7 @@
 
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/data-table";
+import { DataTable } from "@/shared/components/data-table";
 import { columns } from "@/app/(dashboard)/categories/columns";
 
 type Category = { id: string; name: string };
