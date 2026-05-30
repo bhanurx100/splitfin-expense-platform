@@ -10,38 +10,38 @@
 import { useState, useMemo } from "react";
 import { Receipt, Pencil, Trash2 } from "lucide-react";
 
-import { useGroupStore }          from "@/hooks/splitpay/useGroupStore";
-import { computeExpenseShares }   from "@/features/splitpay/lib/calculations";
-import { EditExpenseModal }        from "@/components/splitpay/EditExpenseModal";
-import { Avatar, inr }            from "@/components/splitpay/ui";
-import { cn }                     from "@/lib/utils";
+import { useGroupStore } from "@/hooks/splitpay/useGroupStore";
+import { computeExpenseShares } from "@/features/splitpay/lib/calculations";
+import { EditExpenseModal } from "@/features/splitpay/components/EditExpenseModal";
+import { Avatar, inr } from "@/features/splitpay/components/ui";
+import { cn } from "@/lib/utils";
 import type { Expense, Group, SplitMethod } from "@/types/splitpay";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const METHOD_LABEL: Record<SplitMethod, string> = {
-  equal:   "Equal",
-  exact:   "Exact",
+  equal: "Equal",
+  exact: "Exact",
   percent: "Percent",
-  shares:  "Shares",
+  shares: "Shares",
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 type Props = {
   expense: Expense;
-  group:   Group;
+  group: Group;
 };
 
 export function ExpenseCard({ expense, group }: Props) {
   const { removeExpense } = useGroupStore();
   const [editing, setEditing] = useState(false);
 
-  const payer  = group.members.find((m) => m.id === expense.paidBy);
+  const payer = group.members.find((m) => m.id === expense.paidBy);
   const shares = useMemo(() => computeExpenseShares(expense), [expense]);
 
   const visibleParticipants = expense.participants.slice(0, 4);
-  const overflow            = expense.participants.length - 4;
+  const overflow = expense.participants.length - 4;
 
   return (
     <>
@@ -60,14 +60,14 @@ export function ExpenseCard({ expense, group }: Props) {
           // Dark hover
           "dark:hover:border-slate-600/70 dark:hover:bg-slate-800/80",
           // Motion
-          "transition-all duration-150",
+          "transition-all duration-150"
         )}
       >
         {/* Icon cell */}
         <div
           className={cn(
             "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
-            "bg-slate-100 dark:bg-slate-700/80",
+            "bg-slate-100 dark:bg-slate-700/80"
           )}
         >
           <Receipt className="h-4 w-4 text-slate-400 dark:text-slate-500" />
@@ -76,7 +76,6 @@ export function ExpenseCard({ expense, group }: Props) {
         <div className="min-w-0 flex-1">
           {/* Top row: title + amount */}
           <div className="flex items-start justify-between gap-2">
-
             {/* Left: title + meta */}
             <div className="min-w-0 flex-1">
               <p className="truncate text-[14px] font-semibold leading-snug text-slate-800 dark:text-slate-100">
@@ -100,7 +99,7 @@ export function ExpenseCard({ expense, group }: Props) {
                   className={cn(
                     "rounded-md px-1.5 py-px text-[10px] font-semibold",
                     "bg-slate-100 text-slate-500",
-                    "dark:bg-slate-700 dark:text-slate-400",
+                    "dark:bg-slate-700 dark:text-slate-400"
                   )}
                 >
                   {METHOD_LABEL[expense.splitMethod]}
@@ -123,7 +122,7 @@ export function ExpenseCard({ expense, group }: Props) {
                   className={cn(
                     "flex h-6 w-6 items-center justify-center rounded-lg transition",
                     "text-slate-400 hover:bg-blue-50 hover:text-blue-500",
-                    "dark:text-slate-500 dark:hover:bg-blue-950/40 dark:hover:text-blue-400",
+                    "dark:text-slate-500 dark:hover:bg-blue-950/40 dark:hover:text-blue-400"
                   )}
                 >
                   <Pencil className="h-3 w-3" />
@@ -135,7 +134,7 @@ export function ExpenseCard({ expense, group }: Props) {
                   className={cn(
                     "flex h-6 w-6 items-center justify-center rounded-lg transition",
                     "text-slate-400 hover:bg-red-50 hover:text-red-400",
-                    "dark:text-slate-500 dark:hover:bg-red-950/30 dark:hover:text-red-400",
+                    "dark:text-slate-500 dark:hover:bg-red-950/30 dark:hover:text-red-400"
                   )}
                 >
                   <Trash2 className="h-3 w-3" />
@@ -156,7 +155,7 @@ export function ExpenseCard({ expense, group }: Props) {
                     className={cn(
                       "flex items-center gap-1 rounded-full px-2 py-0.5",
                       "bg-slate-50 text-[11px] text-slate-600",
-                      "dark:bg-slate-700/50 dark:text-slate-300",
+                      "dark:bg-slate-700/50 dark:text-slate-300"
                     )}
                   >
                     <Avatar name={member.name} color={member.color} size={14} />
@@ -171,7 +170,7 @@ export function ExpenseCard({ expense, group }: Props) {
                 <div
                   className={cn(
                     "rounded-full px-2 py-0.5 text-[11px] text-slate-400",
-                    "bg-slate-50 dark:bg-slate-700/50 dark:text-slate-500",
+                    "bg-slate-50 dark:bg-slate-700/50 dark:text-slate-500"
                   )}
                 >
                   +{overflow} more

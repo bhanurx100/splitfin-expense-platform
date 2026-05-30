@@ -17,13 +17,24 @@
  */
 
 import { useState } from "react";
-import { Plus, Trash2, ChevronRight, RefreshCw, Sparkles, Users } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  ChevronRight,
+  RefreshCw,
+  Sparkles,
+  Users,
+} from "lucide-react";
 
 import { useGroupStore } from "@/hooks/splitpay/useGroupStore";
 import { computeGroupBalances } from "@/features/splitpay/lib/calculations";
 import { DEMO_GROUPS } from "@/data/splitpay/demo";
-import { CreateGroupSheet } from "@/components/splitpay/GroupPanel";
-import { EmptyBlock, SectionLabel, inr } from "@/components/splitpay/ui";
+import { CreateGroupSheet } from "@/features/splitpay/components/GroupPanel";
+import {
+  EmptyBlock,
+  SectionLabel,
+  inr,
+} from "@/features/splitpay/components/ui";
 import { cn } from "@/lib/utils";
 import type { Group, Expense } from "@/types/splitpay";
 
@@ -37,8 +48,8 @@ export function SplitGroupsSection({ onSelectGroup }: Props) {
   const { groups, activeGroupId, setActiveGroup, resetToDemo, deleteGroup } =
     useGroupStore();
 
-  const [showCreate,    setShowCreate]    = useState(false);
-  const [confirmReset,  setConfirmReset]  = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   function handleSelect(id: string) {
     setActiveGroup(id);
@@ -68,7 +79,7 @@ export function SplitGroupsSection({ onSelectGroup }: Props) {
             className={cn(
               "flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-bold transition",
               confirmReset
-                ? "border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:border-amber-700 dark:text-amber-400"
+                ? "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
                 : "border-slate-200 bg-white text-slate-400 hover:border-slate-300 hover:text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500 dark:hover:border-slate-600 dark:hover:text-slate-300"
             )}
           >
@@ -104,11 +115,14 @@ export function SplitGroupsSection({ onSelectGroup }: Props) {
       ) : (
         <div className="space-y-2">
           {groups.map((g: Group) => {
-            const active     = g.id === activeGroupId;
-            const isDemo     = DEMO_IDS.has(g.id);
-            const totalSpend = g.expenses.reduce((s: number, e: Expense) => s + e.amount, 0);
-            const balances   = computeGroupBalances(g);
-            const debtors    = balances.filter((b) => b.netBalance < -0.01).length;
+            const active = g.id === activeGroupId;
+            const isDemo = DEMO_IDS.has(g.id);
+            const totalSpend = g.expenses.reduce(
+              (s: number, e: Expense) => s + e.amount,
+              0
+            );
+            const balances = computeGroupBalances(g);
+            const debtors = balances.filter((b) => b.netBalance < -0.01).length;
 
             return (
               <button
@@ -172,7 +186,7 @@ export function SplitGroupsSection({ onSelectGroup }: Props) {
                       e.stopPropagation();
                       deleteGroup(g.id);
                     }}
-                    className="rounded-lg p-1.5 text-slate-300 opacity-0 transition group-hover:opacity-100 hover:bg-red-50 hover:text-red-400 dark:text-slate-600 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+                    className="rounded-lg p-1.5 text-slate-300 opacity-0 transition hover:bg-red-50 hover:text-red-400 group-hover:opacity-100 dark:text-slate-600 dark:hover:bg-red-950/30 dark:hover:text-red-400"
                     aria-label="Delete group"
                   >
                     <Trash2 className="h-3.5 w-3.5" />

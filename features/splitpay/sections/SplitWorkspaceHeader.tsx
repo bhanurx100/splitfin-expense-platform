@@ -13,28 +13,33 @@
 
 import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { inr } from "@/components/splitpay/ui";
+import { inr } from "@/features/splitpay/components/ui";
 import type { Group } from "@/types/splitpay";
 
 type DetailTab = "members" | "expenses" | "settle";
 
 type Props = {
-  group:          Group;
-  activeTab:      DetailTab;
-  onTabChange:    (tab: DetailTab) => void;
-  onBack:         () => void;
+  group: Group;
+  activeTab: DetailTab;
+  onTabChange: (tab: DetailTab) => void;
+  onBack: () => void;
   showBackButton: boolean;
-  pendingCount:   number; // settlements pending — badge on settle tab
+  pendingCount: number; // settlements pending — badge on settle tab
 };
 
 const TABS: { key: DetailTab; label: string }[] = [
-  { key: "members",  label: "Members"  },
+  { key: "members", label: "Members" },
   { key: "expenses", label: "Expenses" },
-  { key: "settle",   label: "Settle"   },
+  { key: "settle", label: "Settle" },
 ];
 
 export function SplitWorkspaceHeader({
-  group, activeTab, onTabChange, onBack, showBackButton, pendingCount,
+  group,
+  activeTab,
+  onTabChange,
+  onBack,
+  showBackButton,
+  pendingCount,
 }: Props) {
   const totalSpend = group.expenses.reduce((s, e) => s + e.amount, 0);
 
@@ -50,7 +55,7 @@ export function SplitWorkspaceHeader({
               "flex shrink-0 items-center gap-1 rounded-xl border px-2.5 py-1.5 lg:hidden",
               "text-[12px] font-semibold transition",
               "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
-              "dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
+              "dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
             )}
           >
             <ChevronLeft className="h-3.5 w-3.5" /> Back
@@ -66,7 +71,14 @@ export function SplitWorkspaceHeader({
             <p className="text-[12px] text-slate-400 dark:text-slate-500">
               {group.members.length} members · {group.expenses.length} expenses
               {group.expenses.length > 0 && (
-                <> · <span className="font-medium text-slate-600 dark:text-slate-300">{inr(totalSpend, 0)}</span> total</>
+                <>
+                  {" "}
+                  ·{" "}
+                  <span className="font-medium text-slate-600 dark:text-slate-300">
+                    {inr(totalSpend, 0)}
+                  </span>{" "}
+                  total
+                </>
               )}
             </p>
           </div>
@@ -74,10 +86,12 @@ export function SplitWorkspaceHeader({
       </div>
 
       {/* Tab strip */}
-      <div className={cn(
-        "flex gap-1 rounded-2xl p-1",
-        "bg-slate-100/80 dark:bg-slate-800/80",
-      )}>
+      <div
+        className={cn(
+          "flex gap-1 rounded-2xl p-1",
+          "bg-slate-100/80 dark:bg-slate-800/80"
+        )}
+      >
         {TABS.map(({ key, label }) => (
           <button
             key={key}
@@ -88,15 +102,17 @@ export function SplitWorkspaceHeader({
               "text-[13px] font-semibold capitalize transition-all duration-150",
               activeTab === key
                 ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-slate-100"
-                : "text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300",
+                : "text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
             )}
           >
             {label}
             {key === "settle" && pendingCount > 0 && (
-              <span className={cn(
-                "rounded-full px-1.5 py-0.5 text-[9px] font-bold leading-none text-white",
-                activeTab === "settle" ? "bg-red-400" : "bg-red-500",
-              )}>
+              <span
+                className={cn(
+                  "rounded-full px-1.5 py-0.5 text-[9px] font-bold leading-none text-white",
+                  activeTab === "settle" ? "bg-red-400" : "bg-red-500"
+                )}
+              >
                 {pendingCount}
               </span>
             )}

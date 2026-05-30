@@ -19,12 +19,18 @@ import {
   resolveUpi,
   buildUpiLink,
 } from "@/features/splitpay/lib/calculations";
-import { Avatar, Card, EmptyBlock, SectionLabel, inr } from "@/components/splitpay/ui";
+import {
+  Avatar,
+  Card,
+  EmptyBlock,
+  SectionLabel,
+  inr,
+} from "@/features/splitpay/components/ui";
 import { cn } from "@/lib/utils";
 import type { Group } from "@/types/splitpay";
 
 type Props = {
-  group:      Group;
+  group: Group;
   settlement: ReturnType<typeof computeGroupSettlement>;
 };
 
@@ -57,7 +63,7 @@ export function SplitSettlementSection({ group, settlement }: Props) {
   return (
     <div className="space-y-4">
       {/* ── Balances card ──────────────────────────────────────────────────── */}
-      <Card className="p-4 lg:p-5 dark:border-slate-700 dark:bg-slate-800/60">
+      <Card className="p-4 dark:border-slate-700 dark:bg-slate-800/60 lg:p-5">
         <div className="mb-4 flex items-center justify-between">
           <SectionLabel>Balances</SectionLabel>
           <button
@@ -65,9 +71,11 @@ export function SplitSettlementSection({ group, settlement }: Props) {
             onClick={copy}
             className="flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 transition hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
           >
-            {copied
-              ? <Check className="h-3 w-3 text-emerald-600" />
-              : <Copy className="h-3 w-3" />}
+            {copied ? (
+              <Check className="h-3 w-3 text-emerald-600" />
+            ) : (
+              <Copy className="h-3 w-3" />
+            )}
             {copied ? "Copied!" : "Copy"}
           </button>
         </div>
@@ -93,8 +101,8 @@ export function SplitSettlementSection({ group, settlement }: Props) {
                     b.netBalance > 0
                       ? "text-emerald-600 dark:text-emerald-400"
                       : b.netBalance < 0
-                      ? "text-red-500 dark:text-red-400"
-                      : "text-slate-400"
+                        ? "text-red-500 dark:text-red-400"
+                        : "text-slate-400"
                   )}
                 >
                   {b.netBalance > 0 ? "+" : ""}
@@ -107,12 +115,12 @@ export function SplitSettlementSection({ group, settlement }: Props) {
       </Card>
 
       {/* ── Settlement plan card ────────────────────────────────────────────── */}
-      <Card className="p-4 lg:p-5 dark:border-slate-700 dark:bg-slate-800/60">
+      <Card className="p-4 dark:border-slate-700 dark:bg-slate-800/60 lg:p-5">
         <SectionLabel>Settlement Plan</SectionLabel>
         <div className="space-y-4">
           {settlement.settlements.map((s, i) => {
             const from = memberMap[s.fromId];
-            const to   = memberMap[s.toId];
+            const to = memberMap[s.toId];
             if (!from || !to) return null;
 
             return (
@@ -125,7 +133,9 @@ export function SplitSettlementSection({ group, settlement }: Props) {
                   </span>
                   <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                   <Avatar name={to.name} color={to.color} size={26} />
-                  <span className="text-slate-600 dark:text-slate-300">{to.name}</span>
+                  <span className="text-slate-600 dark:text-slate-300">
+                    {to.name}
+                  </span>
                   <span className="ml-auto font-bold text-red-500 dark:text-red-400">
                     {inr(s.amount, 0)}
                   </span>
@@ -152,7 +162,9 @@ export function SplitSettlementSection({ group, settlement }: Props) {
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-1.5">
-                    <span className="text-[13px] font-bold">{inr(s.amount, 0)}</span>
+                    <span className="text-[13px] font-bold">
+                      {inr(s.amount, 0)}
+                    </span>
                     <ExternalLink className="h-3.5 w-3.5 text-blue-200" />
                   </div>
                 </a>
