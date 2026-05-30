@@ -1,8 +1,6 @@
 "use client";
 
 /**
- * features/dashboard/sections/dashboard-header.tsx
- *
  * Top bar: period label · account picker · hide/bell actions.
  * Pure presentational — all state lives in page.tsx.
  */
