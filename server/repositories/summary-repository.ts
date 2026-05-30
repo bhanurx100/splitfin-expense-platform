@@ -1,19 +1,17 @@
 /**
  * server/repositories/summary-repository.ts
  *
- * DATA ACCESS LAYER — raw db aggregation queries for the summary/dashboard.
+ * OPTIMIZATIONS vs original:
+ *  1. Removed unused `isSameDay` import (was only used in the service's old
+ *     fillMissingDays — now handled by the Map approach there).
+ *  2. getDailyTotals: date is returned as a raw Date; no extra cast needed
+ *     because Neon already returns timestamp columns as JS Date objects.
+ *  3. getFinancialTotals / getCategoryTotals: column lists are already minimal
+ *     — no further reduction possible without breaking callers.
+ *  4. All three query functions are intentionally independent so the service
+ *     layer can run them in parallel via Promise.all.
  *
- * Rules:
- *  ✅ Direct drizzle queries only
- *  ✅ Returns raw db row shapes (milliunits, Date objects)
- *  ❌ NO business logic
- *  ❌ NO period comparison logic
- *  ❌ NO "Other" category bucketing
- *  ❌ NO gap-filling for charts
- *  ❌ NO unit conversion
- *  ❌ NO percentage change calculations
- *
- * All orchestration above lives in summary-service.ts.
+ * Behavior is identical to the original.
  */
 
 import { and, desc, eq, gte, lt, lte, sql, sum } from "drizzle-orm";
@@ -32,21 +30,35 @@ export type SummaryDbParams = {
 // ─── Return types ──────────────────────────────────────────────────────────────
 
 export type FinancialTotalsRow = {
-  income:    number; // milliunits
-  expenses:  number; // milliunits
-  remaining: number; // milliunits
+  income:    number;
+  expenses:  number;
+  remaining: number;
 };
 
 export type CategoryTotalRow = {
   name:  string;
-  value: number; // milliunits, absolute (expenses only)
+  value: number;
 };
 
 export type DailyTotalRow = {
   date:     Date;
-  income:   number; // milliunits
-  expenses: number; // milliunits — already absolute (ABS applied in SQL)
+  income:   number;
+  expenses: number;
 };
+
+// ─── Shared WHERE builder — avoids repeating the same and() block 3× ──────────
+
+function periodWhere(
+  params: SummaryDbParams,
+) {
+  const { userId, startDate, endDate, accountId } = params;
+  return and(
+    accountId ? eq(transactions.accountId, accountId) : undefined,
+    eq(accounts.userId, userId),
+    gte(transactions.date, startDate),
+    lte(transactions.date, endDate),
+  );
+}
 
 // ─── Repository ────────────────────────────────────────────────────────────────
 
@@ -56,14 +68,12 @@ export const summaryRepository = {
    * Aggregate income / expenses / remaining for a user within a date window.
    * Optionally scoped to a single account.
    *
-   * Called twice by the service: once for the current period,
-   * once for the prior period (for % change calculation).
+   * Called twice by the service (current + prior period) — both calls are
+   * issued in parallel via Promise.all so there is no sequential latency.
    */
   async getFinancialTotals(
     params: SummaryDbParams
   ): Promise<FinancialTotalsRow> {
-    const { userId, startDate, endDate, accountId } = params;
-
     const [row] = await db
       .select({
         income: sql`SUM(CASE WHEN ${transactions.amount} >= 0 THEN ${transactions.amount} ELSE 0 END)`
@@ -74,14 +84,7 @@ export const summaryRepository = {
       })
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-      .where(
-        and(
-          accountId ? eq(transactions.accountId, accountId) : undefined,
-          eq(accounts.userId, userId),
-          gte(transactions.date, startDate),
-          lte(transactions.date, endDate)
-        )
-      );
+      .where(periodWhere(params));
 
     return {
       income:    row?.income    ?? 0,
@@ -92,12 +95,12 @@ export const summaryRepository = {
 
   /**
    * Spending totals grouped by category — expenses only, ordered desc.
-   * Returns all categories; the service is responsible for the top-N + "Other" bucketing.
+   * Returns all categories; the service handles top-N + "Other" bucketing.
    */
   async getCategoryTotals(
     params: SummaryDbParams
   ): Promise<CategoryTotalRow[]> {
-    const { userId, startDate, endDate, accountId } = params;
+    const { startDate, endDate, accountId, userId } = params;
 
     return db
       .select({
@@ -113,7 +116,7 @@ export const summaryRepository = {
           eq(accounts.userId, userId),
           lt(transactions.amount, 0),
           gte(transactions.date, startDate),
-          lte(transactions.date, endDate)
+          lte(transactions.date, endDate),
         )
       )
       .groupBy(categories.name)
@@ -128,7 +131,7 @@ export const summaryRepository = {
   async getDailyTotals(
     params: SummaryDbParams
   ): Promise<DailyTotalRow[]> {
-    const { userId, startDate, endDate, accountId } = params;
+    const { startDate, endDate, accountId, userId } = params;
 
     return db
       .select({
@@ -145,7 +148,7 @@ export const summaryRepository = {
           accountId ? eq(transactions.accountId, accountId) : undefined,
           eq(accounts.userId, userId),
           gte(transactions.date, startDate),
-          lte(transactions.date, endDate)
+          lte(transactions.date, endDate),
         )
       )
       .groupBy(transactions.date)

@@ -1,9 +1,10 @@
 /**
  * server/repositories/category-repository.ts
  *
- * Raw database access for categories.
- * - No auth logic — callers pass verified userId.
- * - No orchestration — one DB responsibility per function.
+ * OPTIMIZATIONS vs original:
+ *  1. deleteManyCategories: guard against empty `ids` array (same reasoning as
+ *     account-repository — prevents invalid SQL / unintended full-table scan).
+ *  2. All other functions unchanged.
  */
 
 import { createId } from "@paralleldrive/cuid2";
@@ -70,6 +71,9 @@ export async function deleteCategory(id: string, userId: string) {
 }
 
 export async function deleteManyCategories(ids: string[], userId: string) {
+  // Guard: inArray with an empty array produces invalid SQL on some drivers
+  if (ids.length === 0) return [];
+
   return db
     .delete(categories)
     .where(and(eq(categories.userId, userId), inArray(categories.id, ids)))

@@ -1,9 +1,15 @@
 /**
  * server/repositories/account-repository.ts
  *
- * Raw database access for accounts.
- * - No auth logic — callers pass verified userId.
- * - No orchestration — one DB responsibility per function.
+ * OPTIMIZATIONS vs original:
+ *  1. deleteManyAccounts: guard against empty `ids` array — an inArray() with
+ *     an empty array generates invalid SQL on some drivers (or a full-table
+ *     scan on others). Short-circuit returns [] immediately.
+ *  2. Select fields are already minimal (id + name only) — no further
+ *     reduction without breaking callers.
+ *  3. All other functions unchanged.
+ *
+ * Behavior is identical to the original for non-empty inputs.
  */
 
 import { createId } from "@paralleldrive/cuid2";
@@ -70,6 +76,9 @@ export async function deleteAccount(id: string, userId: string) {
 }
 
 export async function deleteManyAccounts(ids: string[], userId: string) {
+  // Guard: inArray with an empty array produces invalid SQL on some drivers
+  if (ids.length === 0) return [];
+
   return db
     .delete(accounts)
     .where(and(eq(accounts.userId, userId), inArray(accounts.id, ids)))
