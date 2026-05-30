@@ -13,7 +13,7 @@ import "./globals.css";
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#3b82f6" },
-    { media: "(prefers-color-scheme: dark)",  color: "#1e3a8a" },
+    { media: "(prefers-color-scheme: dark)", color: "#1e3a8a" },
   ],
 };
 
@@ -23,13 +23,13 @@ const RootLayout = ({ children }: Readonly<PropsWithChildren>) => {
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
-        <body className="antialiased bg-[var(--surface-base)] text-[var(--text-primary)]">
+        <body className="bg-[var(--surface-base)] text-[var(--text-primary)] antialiased">
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange={false}
-            storageKey="spendwise-theme"
+            storageKey="splitfin-theme"
           >
             <QueryProviders>
               <SheetProvider />

@@ -46,10 +46,10 @@ export const siteConfig: Metadata = {
   ] as Array<string>,
   authors: {
     name: "Bhanuprasad",
-    url: "https://github.com/bhanurx100/spendwise-expense-platform",
+    url: "https://github.com/bhanurx100/splitfin-expense-platform",
   },
 } as const;
 
 export const links = {
-  sourceCode: "https://github.com/bhanurx100/spendwise-expense-platform",
+  sourceCode: "https://github.com/bhanurx100/splitfin-expense-platform",
 } as const;

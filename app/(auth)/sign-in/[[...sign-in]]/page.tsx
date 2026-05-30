@@ -5,8 +5,8 @@ import { Loader2, Sparkles, Zap } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
-const DEMO_EMAIL = "splitfindemo@gmail.com";
-const DEMO_PASSWORD = "Splitfin@demo";
+const DEMO_EMAIL = "your email";
+const DEMO_PASSWORD = "your password";
 
 function fillClerkField(selector: string, value: string): boolean {
   const input = document.querySelector<HTMLInputElement>(selector);
