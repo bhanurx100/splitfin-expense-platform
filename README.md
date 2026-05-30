@@ -24,7 +24,7 @@ Spendwise is a full-stack personal finance management dashboard built with Next.
 ## 📁 File Structure
 
 ```
-spendwise-expense-platform/
+splitfin-expense-platform/
 ├── app/                     # Next.js 14 App Router
 │   ├── (auth)/              # Auth routes
 │   ├── (dashboard)/         # Protected dashboard routes
@@ -106,8 +106,8 @@ Full deps in `package.json`.
 2. **Clone & Install**:
 
    ```bash
-   git clone <repo> spendwise-expense-platform
-   cd spendwise-expense-platform
+   git clone <repo> splitfin-expense-platform
+   cd splitfin-expense-platform
    bun install  # or npm install
    ```
 
@@ -145,7 +145,7 @@ Use [Turso](https://turso.tech) libSQL or Docker Postgres:
 
 ```bash
 docker run -p 5432:5432 -e POSTGRES_PASSWORD=pass -d postgres
-DATABASE_URL=postgresql://postgres:pass@localhost:5432/spendwise
+DATABASE_URL=postgresql://postgres:pass@localhost:5432/splitfin
 ```
 
 ## ☁️ Deployment
