@@ -8,7 +8,7 @@
  */
 
 import { motion, AnimatePresence } from "framer-motion";
-import { AccountCard } from "@/components/dashboard/AccountCard";
+import { AccountCard } from "@/features/accounts/components/AccountCard";
 
 type Account = { id: string; name: string };
 
