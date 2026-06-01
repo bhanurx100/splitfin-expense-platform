@@ -1,23 +1,20 @@
 /**
  * shared/charts/index.ts
  *
- * Re-exports chart primitives that are used across features.
- * The underlying implementations remain in features/dashboard/sections/
- * and components/dashboard/ until those are migrated.
+ * Barrel for all shared chart components.
+ * Import from "@/shared/charts" for any generic chart primitive.
  *
- * Import from here in new code — insulates against future moves.
+ * ChartContainer, AreaTrendChart, CategoryRingChart already exist in this folder.
+ * This file makes them importable as a single entry point.
+ *
+ * Feature-level chart cards (CashFlowChart, CategoryPieCard, TopSpendingCard)
+ * live in features/dashboard/sections/dashboard-charts.tsx — import them
+ * directly from there, not from this barrel.
  */
 
-// Area/bar/line wrappers (existing components/*)
-export { AreaVariant } from "@/features/dashboard/components/area-variant";
-export { BarVariant } from "@/features/dashboard/components/bar-variant";
-export { LineVariant } from "@/features/dashboard/components/line-variant";
+// ── Layout wrapper ─────────────────────────────────────────────────────────────
+export { ChartContainer } from "./ChartContainer";
 
-// Feature-level chart cards (self-fetching, page-sized)
-// These stay in features/dashboard/sections/ — just re-exported here
-// for discoverability. Import directly from feature if you need tree-shaking.
-export {
-  CashFlowChart,
-  CategoryPieCard,
-  TopSpendingCard,
-} from "@/features/dashboard/sections/dashboard-charts";
+// ── Chart primitives ───────────────────────────────────────────────────────────
+export { AreaTrendChart }    from "./AreaTrendChart";
+export { CategoryRingChart } from "./CategoryRingChart";
