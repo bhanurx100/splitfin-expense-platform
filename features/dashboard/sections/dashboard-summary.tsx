@@ -16,6 +16,7 @@ import { TrendingUp, TrendingDown, Eye, EyeOff } from "lucide-react";
 import { GlowCard }   from "@/shared/cards";
 import { MetricCard } from "@/shared/cards";
 import { ActionCard } from "@/shared/cards";
+import type { MetricAccent, MetricDelta } from "@/shared/cards";
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 
@@ -97,9 +98,22 @@ const QuickActions = memo(function QuickActions({ onAddTx }: { onAddTx: () => vo
 type PillAccent = "income" | "expense" | "neutral";
 
 function pillProps(accent: PillAccent) {
-  if (accent === "income")  return { variant: "income"  as const };
-  if (accent === "expense") return { variant: "expense" as const };
-  return { variant: "neutral" as const };
+  const metricAccent: Record<PillAccent, MetricAccent> = {
+    income: "emerald",
+    expense: "rose",
+    neutral: "blue",
+  };
+
+  return { accent: metricAccent[accent] };
+}
+
+function metricDelta(change?: number): MetricDelta | undefined {
+  if (change === undefined) return undefined;
+
+  return {
+    value: `${change > 0 ? "+" : ""}${change}%`,
+    direction: change > 0 ? "up" : change < 0 ? "down" : "neutral",
+  };
 }
 
 // ── Hero card — now GlowCard ──────────────────────────────────────────────────
@@ -205,13 +219,13 @@ export function DashboardSummary({
         <MetricCard
           label="Income"
           value={hidden ? "••••" : fmt(income)}
-          delta={summary?.incomeChange}
+          delta={metricDelta(summary?.incomeChange)}
           {...pillProps("income")}
         />
         <MetricCard
           label="Expenses"
           value={hidden ? "••••" : fmt(Math.abs(expenses))}
-          delta={summary?.expensesChange}
+          delta={metricDelta(summary?.expensesChange)}
           {...pillProps("expense")}
         />
         <MetricCard
