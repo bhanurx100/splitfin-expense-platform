@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * features/dashboard/sections/DashboardSkeleton.tsx
+ *
+ * Loading skeleton for the home/dashboard page.
+ * Extracted from app/(dashboard)/page.tsx HomeSkeleton function.
+ */
+
 export function DashboardSkeleton() {
   return (
     <div className="mx-auto w-full max-w-screen-xl px-4 pb-20 pt-5 sm:px-6 lg:px-8 lg:pb-10 lg:pt-7 space-y-4">
