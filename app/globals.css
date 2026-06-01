@@ -39,6 +39,18 @@
     --input:                220 14% 89%;
     --ring:                 221 83% 53%;
     --radius:               0.75rem;
+    --acct-bg:            #F5F7FB;   /* page background light */
+    --acct-card-bg:       #FFFFFF;
+    --acct-divider:       #E7EAF0;
+    --acct-text-primary:  #0D1220;
+    --acct-text-secondary:#64748B;
+    --acct-text-muted:    #94A3B8;
+    --acct-border:        #E7EAF0;
+    --acct-purple:        #6C5CE7;
+    --acct-purple-end:    #A78BFA;
+    --acct-pill-idle-bg:  #FFFFFF;
+    --acct-pill-idle-border: #E2E8F0;
+    --acct-pill-idle-text:   #64748B;
 
     /* ═══════════════════════════════════════════════════════════════════════
        SEMANTIC SURFACE STACK — 5-level elevation system
@@ -168,6 +180,16 @@
     --border:               224 20% 20%;
     --input:                224 20% 20%;
     --ring:                 213 90% 65%;
+    --acct-bg:            #060B1A;
+    --acct-card-bg:       #0F172A;
+    --acct-divider:       rgba(255,255,255,0.07);
+    --acct-text-primary:  #E6E8F0;
+    --acct-text-secondary:#94A3BB;
+    --acct-text-muted:    #64748B;
+    --acct-border:        rgba(255,255,255,0.08);
+    --acct-pill-idle-bg:  #0F172A;
+    --acct-pill-idle-border: rgba(255,255,255,0.10);
+    --acct-pill-idle-text:   #94A3BB;
 
     /* ═══════════════════════════════════════════════════════════════════════
        DARK SURFACE STACK — navy-dark layering, NOT flat black
@@ -678,4 +700,313 @@
   }
 
   .count-pop { animation: countPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+}
+/* ─── Screen wrapper ─────────────────────────────────────────────────────────── */
+.acct-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 16px 100px; /* 100px bottom clears the dock */
+  background: var(--acct-bg);
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 480px;  /* caps at phone width */
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+ 
+/* ─── 1. Header ──────────────────────────────────────────────────────────────── */
+.acct-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 4px 0 0;
+}
+ 
+.acct-header__left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+ 
+.acct-header__title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--acct-text-primary);
+  letter-spacing: -0.3px;
+  margin: 0;
+}
+ 
+.acct-header__title-plus {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--acct-purple);
+}
+ 
+.acct-header__sub {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--acct-text-secondary);
+  line-height: 1.4;
+  margin: 0;
+}
+ 
+/* Add Account button — small, not CTA sized */
+.acct-header__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 13px;
+  height: 32px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #6C5CE7 0%, #845EF7 55%, #A78BFA 100%);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(108, 92, 231, 0.35);
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.acct-header__btn:active { opacity: 0.85; transform: scale(0.97); }
+ 
+.acct-header__btn-icon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+ 
+/* ─── 2. Hero Balance Card ───────────────────────────────────────────────────── */
+.acct-hero {
+  position: relative;
+  height: 132px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #6C5CE7 0%, #845EF7 45%, #A78BFA 100%);
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(108, 92, 231, 0.38);
+}
+ 
+/* noise grain — subtle texture */
+.acct-hero__noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  pointer-events: none;
+}
+ 
+/* ambient blobs */
+.acct-hero__blob {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.acct-hero__blob--tr {
+  width: 100px;
+  height: 100px;
+  top: -28px;
+  right: -18px;
+  background: rgba(255, 255, 255, 0.14);
+  filter: blur(24px);
+}
+.acct-hero__blob--bl {
+  width: 80px;
+  height: 80px;
+  bottom: -20px;
+  left: 60px;
+  background: rgba(108, 92, 231, 0.4);
+  filter: blur(20px);
+}
+ 
+/* top highlight line */
+.acct-hero__shine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.28);
+  pointer-events: none;
+}
+ 
+/* content row inside card */
+.acct-hero__body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 100%;
+  padding: 18px 20px 18px 20px;
+}
+ 
+.acct-hero__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+ 
+.acct-hero__label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0;
+}
+ 
+.acct-hero__amount {
+  font-size: 30px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+ 
+.acct-hero__meta {
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 4px 0 0;
+}
+ 
+/* wave sits on the right side, bottom-aligned */
+.acct-hero__wave {
+  width: 130px;
+  height: 56px;
+  flex-shrink: 0;
+  align-self: flex-end;
+  margin-bottom: 2px;
+  opacity: 0.9;
+}
+ 
+/* ─── 3. Filter pills ────────────────────────────────────────────────────────── */
+.acct-pills {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+ 
+.acct-pill {
+  flex: 1;
+  height: 34px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  border: none;
+}
+ 
+.acct-pill--active {
+  background: linear-gradient(135deg, #6C5CE7 0%, #845EF7 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(108, 92, 231, 0.32);
+}
+ 
+.acct-pill--idle {
+  background: var(--acct-pill-idle-bg);
+  color: var(--acct-pill-idle-text);
+  border: 1px solid var(--acct-pill-idle-border);
+}
+.acct-pill--idle:active {
+  background: rgba(108, 92, 231, 0.08);
+}
+ 
+/* ─── 4. Account list card ───────────────────────────────────────────────────── */
+.acct-list-card {
+  background: var(--acct-card-bg);
+  border-radius: 16px;
+  border: 1px solid var(--acct-border);
+  overflow: hidden;
+}
+ 
+.acct-list-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+}
+ 
+.acct-list-empty__text {
+  font-size: 13px;
+  color: var(--acct-text-muted);
+  margin: 0;
+}
+ 
+/* ─── Account row ────────────────────────────────────────────────────────────── */
+.acct-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  height: 60px;
+  width: 100%;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.12s;
+  box-sizing: border-box;
+}
+ 
+.acct-row:active {
+  background: rgba(108, 92, 231, 0.04);
+}
+ 
+/* colored icon circle */
+.acct-row__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+ 
+/* name + type stack */
+.acct-row__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+ 
+.acct-row__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--acct-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.25;
+}
+ 
+.acct-row__type {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--acct-text-muted);
+  line-height: 1.2;
+}
+ 
+/* balance — right aligned */
+.acct-row__balance {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--acct-text-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
