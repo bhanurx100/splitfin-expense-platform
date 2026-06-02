@@ -1010,3 +1010,162 @@
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }
+
+/* Accounts home visual refinement against the mobile reference. */
+.acct-screen {
+  gap: 16px;
+  padding: 24px 16px calc(88px + env(safe-area-inset-bottom, 24px));
+}
+
+.acct-header {
+  padding: 0;
+}
+
+.acct-header__title {
+  font-size: 32px;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.acct-header__title-plus {
+  font-size: 20px;
+}
+
+.acct-header__sub {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.acct-header__btn {
+  gap: 7px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 9999px;
+  background: #6C5CE7;
+  font-size: 13px;
+  box-shadow: 0 6px 18px rgba(108, 92, 231, 0.28);
+}
+
+.acct-header__btn-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.acct-hero {
+  height: 156px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #6C5CE7 0%, #7C5AF5 45%, #A78BFA 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.24),
+    inset 0 -28px 60px rgba(255,255,255,0.10),
+    0 14px 34px rgba(108, 92, 231, 0.30);
+}
+
+.dark .acct-hero {
+  background: linear-gradient(135deg, #4C1D95 0%, #6C2BD9 40%, #8B5CF6 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.18),
+    inset 0 -28px 64px rgba(255,255,255,0.08),
+    0 14px 34px rgba(76, 29, 149, 0.34);
+}
+
+.acct-hero__inner-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 24% 0%, rgba(255,255,255,0.20), transparent 34%),
+    linear-gradient(180deg, rgba(255,255,255,0.14), transparent 42%);
+  pointer-events: none;
+}
+
+.acct-hero__body {
+  align-items: center;
+  justify-content: flex-start;
+  padding: 24px;
+}
+
+.acct-hero__text {
+  gap: 4px;
+}
+
+.acct-hero__label {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.acct-hero__amount {
+  font-size: 44px;
+  letter-spacing: 0;
+}
+
+.acct-hero__meta {
+  margin: 0;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.acct-hero__wave {
+  position: absolute;
+  right: 12px;
+  bottom: 14px;
+  z-index: 0;
+  width: 45%;
+  height: 70px;
+  margin: 0;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.acct-hero__wave-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.acct-pill {
+  height: 36px;
+}
+
+.acct-pill--active {
+  background: #6C5CE7;
+  box-shadow: none;
+}
+
+.acct-pill--idle {
+  background: transparent;
+}
+
+.acct-list-card {
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.acct-row {
+  height: 64px;
+}
+
+.acct-row__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.22);
+}
+
+.acct-row__icon-svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2.4;
+}
+
+.acct-row__name {
+  font-size: 16px;
+}
+
+.acct-row__type {
+  font-size: 12px;
+}
+
+.acct-row__balance {
+  font-size: 18px;
+}

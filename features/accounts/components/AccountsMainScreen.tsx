@@ -37,31 +37,19 @@ function formatINR(value: number): string {
 function HeroWave() {
   return (
     <svg
-      viewBox="0 0 220 56"
+      viewBox="0 0 180 64"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      style={{ width: "100%", height: "100%", display: "block" }}
-      preserveAspectRatio="none"
+      className="acct-hero__wave-svg"
+      preserveAspectRatio="xMidYMid meet"
       aria-hidden="true"
     >
-      <defs>
-        <linearGradient id="wfill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.22" />
-          <stop offset="100%" stopColor="#ffffff" stopOpacity="0.0" />
-        </linearGradient>
-      </defs>
-      {/* filled area */}
       <path
-        d="M0 36 C18 22 36 44 60 30 C84 16 98 42 124 28 C150 14 168 40 192 26 C202 20 212 30 220 26 L220 56 L0 56 Z"
-        fill="url(#wfill)"
-      />
-      {/* stroke */}
-      <path
-        d="M0 36 C18 22 36 44 60 30 C84 16 98 42 124 28 C150 14 168 40 192 26 C202 20 212 30 220 26"
-        stroke="white"
-        strokeOpacity="0.6"
-        strokeWidth="1.8"
+        d="M2 43 C20 25 35 25 52 43 S84 61 102 43 S134 25 152 43 S171 60 178 50"
+        stroke="rgba(255,255,255,.4)"
+        strokeWidth="2.5"
         strokeLinecap="round"
+        strokeLinejoin="round"
         fill="none"
       />
     </svg>
@@ -72,27 +60,18 @@ function HeroWave() {
 function HeroCard({ accounts }: { accounts: DemoAccount[] }) {
   return (
     <div className="acct-hero">
-      {/* noise grain overlay */}
-      <div className="acct-hero__noise" aria-hidden="true" />
-      {/* ambient blobs */}
-      <div className="acct-hero__blob acct-hero__blob--tr" aria-hidden="true" />
-      <div className="acct-hero__blob acct-hero__blob--bl" aria-hidden="true" />
-      {/* top shine */}
-      <div className="acct-hero__shine" aria-hidden="true" />
+      <div className="acct-hero__inner-glow" aria-hidden="true" />
+      <div className="acct-hero__wave" aria-hidden="true">
+        <HeroWave />
+      </div>
 
       <div className="acct-hero__body">
-        {/* left text */}
         <div className="acct-hero__text">
           <p className="acct-hero__label">TOTAL BALANCE</p>
           <p className="acct-hero__amount">{formatINR(DEMO_TOTAL_BALANCE)}</p>
           <p className="acct-hero__meta">
             Across {accounts.length} Accounts
           </p>
-        </div>
-
-        {/* right wave */}
-        <div className="acct-hero__wave" aria-hidden="true">
-          <HeroWave />
         </div>
       </div>
     </div>

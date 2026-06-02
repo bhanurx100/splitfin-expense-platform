@@ -149,7 +149,7 @@ const DesktopSidebar = memo(function DesktopSidebar() {
 function MobileHeader() {
   return (
     <header
-      className="sticky top-0 z-30 flex h-14 flex-shrink-0 items-center justify-between px-4 lg:hidden"
+      className="sticky top-0 z-30 flex h-16 flex-shrink-0 items-center justify-between px-4 lg:hidden"
       style={{
         background: "var(--sf-card,var(--surface-card))",
         borderBottom: "1px solid var(--sf-border-subtle,var(--border-subtle))",
@@ -208,16 +208,16 @@ const MobileDock = memo(function MobileDock() {
             <Link
               key={href}
               href={href}
-              className="-mt-4 flex flex-col items-center gap-0.5 pb-1"
+              className="-mt-3 flex flex-col items-center gap-0.5 pb-1"
             >
               <div
-                className="flex h-12 w-12 items-center justify-center rounded-full transition-transform active:scale-90"
+                className="flex h-[41px] w-[41px] items-center justify-center rounded-full transition-transform active:scale-90"
                 style={{
                   background: "linear-gradient(135deg,#6C5CE7,#A29BFE)",
-                  boxShadow: "0 4px 18px rgba(108,92,231,0.50)",
+                  boxShadow: "0 3px 14px rgba(108,92,231,0.38)",
                 }}
               >
-                <Icon className="h-5 w-5 text-white" strokeWidth={2.5} />
+                <Icon className="h-[18px] w-[18px] text-white" strokeWidth={2.5} />
               </div>
               <span
                 className="text-[10px] font-semibold"

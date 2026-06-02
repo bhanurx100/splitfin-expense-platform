@@ -8,6 +8,7 @@
  */
 
 import type { DemoAccount } from "@/features/accounts/dev/accounts-demo-data";
+import { Banknote, Landmark, Wallet } from "lucide-react";
 
 interface Props {
   account: DemoAccount;
@@ -24,11 +25,10 @@ function formatINR(value: number): string {
   }).format(value);
 }
 
-/** Two-letter initials from account name */
-function initials(name: string): string {
-  const words = name.trim().split(/\s+/);
-  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
-  return (words[0][0] + words[1][0]).toUpperCase();
+function AccountIcon({ type }: { type: DemoAccount["type"] }) {
+  if (type === "Wallet") return <Wallet className="acct-row__icon-svg" />;
+  if (type === "Cash") return <Banknote className="acct-row__icon-svg" />;
+  return <Landmark className="acct-row__icon-svg" />;
 }
 
 export function AccountRow({ account, isLast }: Props) {
@@ -45,7 +45,7 @@ export function AccountRow({ account, isLast }: Props) {
         style={{ background: account.iconColor }}
         aria-hidden="true"
       >
-        {initials(account.name)}
+        <AccountIcon type={account.type} />
       </div>
 
       {/* Name + type */}
