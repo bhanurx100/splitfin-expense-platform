@@ -701,88 +701,104 @@
 
   .count-pop { animation: countPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
 }
-/* ─── Screen wrapper ─────────────────────────────────────────────────────────── */
+/* ─── Accounts Screen ─────────────────────────────────────────────────────── */
 .acct-screen {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px 16px 100px; /* 100px bottom clears the dock */
+  gap: 16px;
+  padding: 24px 16px calc(88px + env(safe-area-inset-bottom, 24px));
   background: var(--acct-bg);
   min-height: 100dvh;
   width: 100%;
-  max-width: 480px;  /* caps at phone width */
+  max-width: 1400px;
   margin: 0 auto;
   box-sizing: border-box;
 }
- 
+
+@media (min-width: 1024px) {
+  .acct-screen {
+    padding: 32px 32px 48px;
+  }
+}
+
 /* ─── 1. Header ──────────────────────────────────────────────────────────────── */
 .acct-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 4px 0 0;
+  padding: 0;
 }
- 
+
 .acct-header__left {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
- 
+
 .acct-header__title {
-  font-size: 20px;
+  position: relative;
+  display: inline-flex;
+  font-size: 32px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.05;
   color: var(--acct-text-primary);
-  letter-spacing: -0.3px;
+  letter-spacing: 0;
   margin: 0;
 }
- 
-.acct-header__title-plus {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--acct-purple);
+
+@media (min-width: 1024px) {
+  .acct-header__title {
+    font-size: 40px;
+  }
 }
- 
+
+.acct-header__title-sparkle {
+  position: absolute;
+  top: 1px;
+  right: -13px;
+  font-size: 10px;
+  line-height: 1;
+  color: #F472B6;
+}
+
 .acct-header__sub {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 400;
   color: var(--acct-text-secondary);
-  line-height: 1.4;
+  line-height: 1.35;
   margin: 0;
 }
- 
-/* Add Account button — small, not CTA sized */
+
 .acct-header__btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 0 13px;
-  height: 32px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #6C5CE7 0%, #845EF7 55%, #A78BFA 100%);
+  gap: 7px;
+  padding: 0 18px;
+  height: 40px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #F472B6 0%, #FBBF24 100%);
   color: #ffffff;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   border: none;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 0 3px 10px rgba(108, 92, 231, 0.35);
+  box-shadow: 0 4px 14px rgba(244, 114, 182, 0.3);
   transition: opacity 0.15s;
   flex-shrink: 0;
 }
 .acct-header__btn:active { opacity: 0.85; transform: scale(0.97); }
- 
+
 .acct-header__btn-icon {
-  width: 13px;
-  height: 13px;
+  width: 15px;
+  height: 15px;
   flex-shrink: 0;
 }
- 
-/* ─── Hero card shell ────────────────────────────────────────────────────────── */
+
+/* ─── Hero card ──────────────────────────────────────────────────────────────── */
 .acct-hero {
   position: relative;
-  height: 156px;
+  height: 180px;
   width: 100%;
   border-radius: 24px;
   background: none;
@@ -790,12 +806,20 @@
   box-shadow: none;
   flex-shrink: 0;
 }
- 
+
+@media (min-width: 768px) {
+  .acct-hero { height: 200px; }
+}
+
+@media (min-width: 1024px) {
+  .acct-hero { height: 240px; }
+}
+
 .dark .acct-hero {
   background: none;
   box-shadow: none;
 }
- 
+
 .acct-hero__image {
   object-fit: cover;
   object-position: center;
@@ -817,23 +841,18 @@
   position: absolute;
   inset: 0;
   z-index: 5;
-  background: linear-gradient(
-    180deg,
-    rgba(255,255,255,.02),
-    rgba(255,255,255,.08)
-  );
+  background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.08));
   pointer-events: none;
 }
 
 .dark .acct-hero__overlay {
-  background: linear-gradient(
-    180deg,
-    rgba(0,0,0,.08),
-    rgba(0,0,0,.18)
-  );
+  background: linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.18));
 }
- 
-/* ─── Content body ────────────────────────────────────────────────────────────── */
+
+.acct-hero__inner-glow {
+  display: none;
+}
+
 .acct-hero__body {
   position: relative;
   z-index: 10;
@@ -843,257 +862,43 @@
   height: 100%;
   padding: 24px;
 }
- 
-/* ─── Text stack ──────────────────────────────────────────────────────────────── */
+
 .acct-hero__text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-}
- 
-.acct-hero__label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.72);
-  margin: 0;
-  line-height: 1.2;
-}
- 
-.acct-hero__amount {
-  font-size: 32px;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: -0.5px;
-  line-height: 1.1;
-  margin: 0;
-  font-variant-numeric: tabular-nums;
-}
- 
-.acct-hero__meta {
-  font-size: 12px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.72);
-  margin: 2px 0 0;
-  line-height: 1.2;
-}
- 
-/* ─── 3. Filter pills ────────────────────────────────────────────────────────── */
-.acct-pills {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
- 
-.acct-pill {
-  flex: 1;
-  height: 34px;
-  border-radius: 9999px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-  border: none;
-}
- 
-.acct-pill--active {
-  background: linear-gradient(135deg, #6C5CE7 0%, #845EF7 100%);
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(108, 92, 231, 0.32);
-}
- 
-.acct-pill--idle {
-  background: var(--acct-pill-idle-bg);
-  color: var(--acct-pill-idle-text);
-  border: 1px solid var(--acct-pill-idle-border);
-}
-.acct-pill--idle:active {
-  background: rgba(108, 92, 231, 0.08);
-}
- 
-/* ─── 4. Account list card ───────────────────────────────────────────────────── */
-.acct-list-card {
-  background: var(--acct-card-bg);
-  border-radius: 16px;
-  border: 1px solid var(--acct-border);
-  overflow: hidden;
-}
- 
-.acct-list-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 16px;
-}
- 
-.acct-list-empty__text {
-  font-size: 13px;
-  color: var(--acct-text-muted);
-  margin: 0;
-}
- 
-/* ─── Account row ────────────────────────────────────────────────────────────── */
-.acct-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 16px;
-  height: 60px;
-  width: 100%;
-  background: transparent;
-  cursor: pointer;
-  transition: background 0.12s;
-  box-sizing: border-box;
-}
- 
-.acct-row:active {
-  background: rgba(108, 92, 231, 0.04);
-}
- 
-/* colored icon circle */
-.acct-row__icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  color: #ffffff;
-  flex-shrink: 0;
-  letter-spacing: 0.02em;
-}
- 
-/* name + type stack */
-.acct-row__info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-  text-align: left;
-}
- 
-.acct-row__name {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--acct-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.25;
-}
- 
-.acct-row__type {
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--acct-text-muted);
-  line-height: 1.2;
-}
- 
-/* balance — right aligned */
-.acct-row__balance {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--acct-text-primary);
-  white-space: nowrap;
-  flex-shrink: 0;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Accounts home visual refinement against the mobile reference. */
-.acct-screen {
-  gap: 16px;
-  padding: 24px 16px calc(88px + env(safe-area-inset-bottom, 24px));
-}
-
-.acct-header {
-  padding: 0;
-}
-
-.acct-header__title {
-  position: relative;
-  display: inline-flex;
-  font-size: 32px;
-  line-height: 1.05;
-  letter-spacing: 0;
-}
-
-.acct-header__title-sparkle {
-  position: absolute;
-  top: 1px;
-  right: -13px;
-  font-size: 10px;
-  line-height: 1;
-  color: #6C5CE7;
-}
-
-.acct-header__sub {
-  font-size: 14px;
-  line-height: 1.35;
-}
-
-.acct-header__btn {
-  gap: 7px;
-  height: 44px;
-  padding: 0 18px;
-  border-radius: 9999px;
-  background: #6C5CE7;
-  font-size: 14px;
-  font-weight: 600;
-  box-shadow: 0 6px 18px rgba(108, 92, 231, 0.28);
-}
-
-.acct-header__btn-icon {
-  width: 15px;
-  height: 15px;
-}
-
-.acct-hero {
-  height: 156px;
-  border-radius: 24px;
-  background: none;
-  box-shadow: none;
-}
-
-.dark .acct-hero {
-  background: none;
-  box-shadow: none;
-}
-
-.acct-hero__inner-glow {
-  display: none;
-}
-
-.acct-hero__body {
-  align-items: center;
-  justify-content: flex-start;
-  padding: 24px;
-}
-
-.acct-hero__text {
   gap: 4px;
 }
 
 .acct-hero__label {
   font-size: 12px;
+  font-weight: 600;
   letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: #312E81;
+  margin: 0;
+  line-height: 1.2;
 }
 
 .acct-hero__amount {
   font-size: 44px;
-  letter-spacing: 0;
+  font-weight: 700;
   color: #111827;
+  letter-spacing: 0;
+  line-height: 1.1;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 1024px) {
+  .acct-hero__amount { font-size: 56px; }
 }
 
 .acct-hero__meta {
-  margin: 0;
-  font-size: 15px;
+  font-size: 14px;
+  font-weight: 500;
   color: #374151;
+  margin: 0;
+  line-height: 1.2;
 }
 
 .dark .acct-hero__label {
@@ -1108,40 +913,101 @@
   color: rgba(255,255,255,.9);
 }
 
+/* ─── 3. Filter pills ────────────────────────────────────────────────────────── */
+.acct-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .acct-pill {
+  flex: 1;
+  min-width: 60px;
   height: 36px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  border: none;
 }
 
 .acct-pill--active {
-  background: #6C5CE7;
-  box-shadow: none;
+  background: linear-gradient(135deg, #F472B6 0%, #FBBF24 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(244, 114, 182, 0.3);
 }
 
 .acct-pill--idle {
   background: transparent;
-  border: 1px solid #E7EAF0;
+  color: var(--acct-pill-idle-text);
+  border: 1px solid var(--acct-pill-idle-border);
+}
+.acct-pill--idle:active {
+  background: rgba(244, 114, 182, 0.08);
 }
 
 .dark .acct-pill--idle {
   border-color: rgba(255,255,255,.08);
 }
 
+/* ─── 4. Account list card ───────────────────────────────────────────────────── */
 .acct-list-card {
+  background: var(--acct-card-bg);
   border-radius: 20px;
+  border: 1px solid var(--acct-border);
+  overflow: hidden;
   box-shadow: none;
 }
 
+.acct-list-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+.acct-list-empty__text {
+  font-size: 13px;
+  color: var(--acct-text-muted);
+  margin: 0;
+}
+
+/* ─── Account row ────────────────────────────────────────────────────────────── */
 .acct-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
   height: 64px;
+  width: 100%;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.12s;
+  box-sizing: border-box;
   border: 0;
   font: inherit;
   text-align: inherit;
+}
+
+.acct-row:active {
+  background: rgba(244, 114, 182, 0.04);
 }
 
 .acct-row__icon {
   width: 40px;
   height: 40px;
   border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.22);
 }
 
@@ -1151,14 +1017,37 @@
   stroke-width: 2.4;
 }
 
+.acct-row__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
 .acct-row__name {
   font-size: 16px;
+  font-weight: 600;
+  color: var(--acct-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.25;
 }
 
 .acct-row__type {
   font-size: 12px;
+  font-weight: 400;
+  color: var(--acct-text-muted);
+  line-height: 1.2;
 }
 
 .acct-row__balance {
-  font-size: 18px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--acct-text-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
