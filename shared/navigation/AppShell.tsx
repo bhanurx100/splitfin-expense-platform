@@ -149,7 +149,7 @@ const DesktopSidebar = memo(function DesktopSidebar() {
 function MobileHeader() {
   return (
     <header
-      className="sticky top-0 z-30 flex h-16 flex-shrink-0 items-center justify-between px-4 lg:hidden"
+      className="sticky top-0 z-50 flex h-[60px] flex-shrink-0 items-center justify-between px-4 lg:hidden"
       style={{
         background: "var(--sf-card,var(--surface-card))",
         borderBottom: "1px solid var(--sf-border-subtle,var(--border-subtle))",
@@ -157,20 +157,14 @@ function MobileHeader() {
         WebkitBackdropFilter: "blur(16px)",
       }}
     >
-      <div className="flex items-center gap-2.5">
-        <div
-          className="flex h-7 w-7 items-center justify-center rounded-xl"
-          style={{ background: "linear-gradient(135deg,#6C5CE7,#A29BFE)" }}
-        >
-          <TrendingUp className="h-3.5 w-3.5 text-white" strokeWidth={2.5} />
-        </div>
+      <Link href="/" className="flex items-center">
         <span
           className="text-[15px] font-bold tracking-tight"
           style={{ color: "var(--sf-text-primary,var(--text-primary))" }}
         >
           Split<span style={{ color: "#6C5CE7" }}>Fin</span>
         </span>
-      </div>
+      </Link>
       <div className="flex items-center gap-2">
         <ThemeToggle />
         <ClerkLoaded>
@@ -214,7 +208,7 @@ const MobileDock = memo(function MobileDock() {
                 className="flex h-[41px] w-[41px] items-center justify-center rounded-full transition-transform active:scale-90"
                 style={{
                   background: "linear-gradient(135deg,#6C5CE7,#A29BFE)",
-                  boxShadow: "0 3px 14px rgba(108,92,231,0.38)",
+                  boxShadow: "0 3px 14px rgba(108,92,231,0.30)",
                 }}
               >
                 <Icon className="h-[18px] w-[18px] text-white" strokeWidth={2.5} />

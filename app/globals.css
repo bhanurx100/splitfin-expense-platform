@@ -779,71 +779,72 @@
   flex-shrink: 0;
 }
  
-/* ─── 2. Hero Balance Card ───────────────────────────────────────────────────── */
+/* ─── Hero card shell ────────────────────────────────────────────────────────── */
 .acct-hero {
   position: relative;
-  height: 132px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #6C5CE7 0%, #845EF7 45%, #A78BFA 100%);
+  height: 156px;
+  width: 100%;
+  border-radius: 24px;
+  background: none;
   overflow: hidden;
-  box-shadow: 0 8px 28px rgba(108, 92, 231, 0.38);
+  box-shadow: none;
+  flex-shrink: 0;
 }
  
-/* noise grain — subtle texture */
-.acct-hero__noise {
+.dark .acct-hero {
+  background: none;
+  box-shadow: none;
+}
+ 
+.acct-hero__image {
+  object-fit: cover;
+  object-position: center;
+}
+
+.acct-hero__image--dark {
+  display: none;
+}
+
+.dark .acct-hero__image--light {
+  display: none;
+}
+
+.dark .acct-hero__image--dark {
+  display: block;
+}
+
+.acct-hero__overlay {
   position: absolute;
   inset: 0;
-  opacity: 0.04;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 180px 180px;
+  z-index: 5;
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,.02),
+    rgba(255,255,255,.08)
+  );
   pointer-events: none;
 }
- 
-/* ambient blobs */
-.acct-hero__blob {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-}
-.acct-hero__blob--tr {
-  width: 100px;
-  height: 100px;
-  top: -28px;
-  right: -18px;
-  background: rgba(255, 255, 255, 0.14);
-  filter: blur(24px);
-}
-.acct-hero__blob--bl {
-  width: 80px;
-  height: 80px;
-  bottom: -20px;
-  left: 60px;
-  background: rgba(108, 92, 231, 0.4);
-  filter: blur(20px);
+
+.dark .acct-hero__overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(0,0,0,.08),
+    rgba(0,0,0,.18)
+  );
 }
  
-/* top highlight line */
-.acct-hero__shine {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.28);
-  pointer-events: none;
-}
- 
-/* content row inside card */
+/* ─── Content body ────────────────────────────────────────────────────────────── */
 .acct-hero__body {
   position: relative;
-  z-index: 1;
+  z-index: 10;
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: flex-start;
   height: 100%;
-  padding: 18px 20px 18px 20px;
+  padding: 24px;
 }
  
+/* ─── Text stack ──────────────────────────────────────────────────────────────── */
 .acct-hero__text {
   display: flex;
   flex-direction: column;
@@ -853,15 +854,16 @@
 .acct-hero__label {
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.72);
   margin: 0;
+  line-height: 1.2;
 }
  
 .acct-hero__amount {
-  font-size: 30px;
-  font-weight: 800;
+  font-size: 32px;
+  font-weight: 700;
   color: #ffffff;
   letter-spacing: -0.5px;
   line-height: 1.1;
@@ -870,20 +872,11 @@
 }
  
 .acct-hero__meta {
-  font-size: 11px;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.6);
-  margin: 4px 0 0;
-}
- 
-/* wave sits on the right side, bottom-aligned */
-.acct-hero__wave {
-  width: 130px;
-  height: 56px;
-  flex-shrink: 0;
-  align-self: flex-end;
-  margin-bottom: 2px;
-  opacity: 0.9;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.72);
+  margin: 2px 0 0;
+  line-height: 1.2;
 }
  
 /* ─── 3. Filter pills ────────────────────────────────────────────────────────── */
@@ -1022,13 +1015,20 @@
 }
 
 .acct-header__title {
+  position: relative;
+  display: inline-flex;
   font-size: 32px;
   line-height: 1.05;
   letter-spacing: 0;
 }
 
-.acct-header__title-plus {
-  font-size: 20px;
+.acct-header__title-sparkle {
+  position: absolute;
+  top: 1px;
+  right: -13px;
+  font-size: 10px;
+  line-height: 1;
+  color: #6C5CE7;
 }
 
 .acct-header__sub {
@@ -1039,10 +1039,11 @@
 .acct-header__btn {
   gap: 7px;
   height: 44px;
-  padding: 0 20px;
+  padding: 0 18px;
   border-radius: 9999px;
   background: #6C5CE7;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 600;
   box-shadow: 0 6px 18px rgba(108, 92, 231, 0.28);
 }
 
@@ -1054,28 +1055,17 @@
 .acct-hero {
   height: 156px;
   border-radius: 24px;
-  background: linear-gradient(135deg, #6C5CE7 0%, #7C5AF5 45%, #A78BFA 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.24),
-    inset 0 -28px 60px rgba(255,255,255,0.10),
-    0 14px 34px rgba(108, 92, 231, 0.30);
+  background: none;
+  box-shadow: none;
 }
 
 .dark .acct-hero {
-  background: linear-gradient(135deg, #4C1D95 0%, #6C2BD9 40%, #8B5CF6 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.18),
-    inset 0 -28px 64px rgba(255,255,255,0.08),
-    0 14px 34px rgba(76, 29, 149, 0.34);
+  background: none;
+  box-shadow: none;
 }
 
 .acct-hero__inner-glow {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 24% 0%, rgba(255,255,255,0.20), transparent 34%),
-    linear-gradient(180deg, rgba(255,255,255,0.14), transparent 42%);
-  pointer-events: none;
+  display: none;
 }
 
 .acct-hero__body {
@@ -1091,36 +1081,31 @@
 .acct-hero__label {
   font-size: 12px;
   letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.72);
+  color: #312E81;
 }
 
 .acct-hero__amount {
   font-size: 44px;
   letter-spacing: 0;
+  color: #111827;
 }
 
 .acct-hero__meta {
   margin: 0;
   font-size: 15px;
-  color: rgba(255, 255, 255, 0.76);
+  color: #374151;
 }
 
-.acct-hero__wave {
-  position: absolute;
-  right: 12px;
-  bottom: 14px;
-  z-index: 0;
-  width: 45%;
-  height: 70px;
-  margin: 0;
-  opacity: 0.35;
-  pointer-events: none;
+.dark .acct-hero__label {
+  color: rgba(255,255,255,.8);
 }
 
-.acct-hero__wave-svg {
-  display: block;
-  width: 100%;
-  height: 100%;
+.dark .acct-hero__amount {
+  color: #FFFFFF;
+}
+
+.dark .acct-hero__meta {
+  color: rgba(255,255,255,.9);
 }
 
 .acct-pill {
@@ -1134,15 +1119,23 @@
 
 .acct-pill--idle {
   background: transparent;
+  border: 1px solid #E7EAF0;
+}
+
+.dark .acct-pill--idle {
+  border-color: rgba(255,255,255,.08);
 }
 
 .acct-list-card {
   border-radius: 20px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  box-shadow: none;
 }
 
 .acct-row {
   height: 64px;
+  border: 0;
+  font: inherit;
+  text-align: inherit;
 }
 
 .acct-row__icon {

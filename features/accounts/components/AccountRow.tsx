@@ -8,7 +8,8 @@
  */
 
 import type { DemoAccount } from "@/features/accounts/dev/accounts-demo-data";
-import { Banknote, Landmark, Wallet } from "lucide-react";
+import { BadgeIndianRupee, Landmark, Wallet } from "lucide-react";
+import { useOpenAccount } from "@/features/accounts/hooks/use-open-account";
 
 interface Props {
   account: DemoAccount;
@@ -27,14 +28,18 @@ function formatINR(value: number): string {
 
 function AccountIcon({ type }: { type: DemoAccount["type"] }) {
   if (type === "Wallet") return <Wallet className="acct-row__icon-svg" />;
-  if (type === "Cash") return <Banknote className="acct-row__icon-svg" />;
+  if (type === "Cash") return <BadgeIndianRupee className="acct-row__icon-svg" />;
   return <Landmark className="acct-row__icon-svg" />;
 }
 
 export function AccountRow({ account, isLast }: Props) {
+  const openAccount = useOpenAccount((state) => state.onOpen);
+
   return (
-    <div
+    <button
+      type="button"
       className="acct-row"
+      onClick={() => openAccount(account.id)}
       style={{
         borderBottom: isLast ? "none" : "1px solid var(--acct-divider)",
       }}
@@ -56,6 +61,6 @@ export function AccountRow({ account, isLast }: Props) {
 
       {/* Balance */}
       <span className="acct-row__balance">{formatINR(account.balance)}</span>
-    </div>
+    </button>
   );
 }
