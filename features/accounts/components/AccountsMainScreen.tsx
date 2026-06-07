@@ -73,6 +73,7 @@ function AccountListCard({ accounts }: { accounts: AccountData[] }) {
             name: acc.name,
             type: "Bank Account",
             balance: acc.balance,
+            iconColor: "#6C5CE7",
           }}
           isLast={i === accounts.length - 1}
         />
