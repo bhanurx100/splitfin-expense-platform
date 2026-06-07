@@ -197,16 +197,16 @@
        ═══════════════════════════════════════════════════════════════════════ */
 
     /* Page canvas — deep navy, not pure black */
-    --surface-bg:           #080d1a;
+    --surface-bg:           #050b1d;
 
     /* Sidebar — clearly distinct from page */
-    --surface-sidebar:      #0d1424;
+    --surface-sidebar:      #0a1120;
 
     /* Cards — visible against both bg and sidebar */
-    --surface-card:         #121b30;
+    --surface-card:         #101c39;
 
     /* Elevated elements — popover, dropdown, modal */
-    --surface-raised:       #1a2540;
+    --surface-raised:       #162544;
 
     /* Overlay */
     --surface-overlay:      rgba(0, 0, 0, 0.65);
@@ -699,7 +699,19 @@
     100% { transform: scale(1); }
   }
 
+  @keyframes drawLine {
+    from {
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+    }
+    to {
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 0;
+    }
+  }
+
   .count-pop { animation: countPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .draw-line { animation: drawLine 1.5s ease-in-out forwards; }
 }
 /* ─── Accounts Screen ─────────────────────────────────────────────────────── */
 .acct-screen {
