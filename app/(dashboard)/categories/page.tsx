@@ -2,21 +2,19 @@
 /**
  * app/(dashboard)/categories/page.tsx — TARGET COMPOSITION
  *
- * Before: ~100 lines inline (skeleton + chart grid + table + mobile card)
- * After:  ~45 lines, imports only
- *
- * TO ACTIVATE: copy over app/(dashboard)/categories/page.tsx
+ * Categories derived from CSV data as single source of truth.
  */
 
+import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useBulkDeleteCategories } from "@/features/categories/api/use-bulk-delete-categories";
-import { useGetCategories }        from "@/features/categories/api/use-get-categories";
-import { useNewCategory }          from "@/features/categories/hooks/use-new-category";
-import { PageContainer }           from "@/shared/navigation/PageContainer";
+import { useNewCategory } from "@/features/categories/hooks/use-new-category";
+import { PageContainer } from "@/shared/navigation/PageContainer";
 import { SkeletonPageHeader, SkeletonGrid } from "@/shared/skeletons";
-import {CategoryStatsRow} from "@/features/categories/sections/CategoryStatsRow";
+import { CategoryStatsRow } from "@/features/categories/sections/CategoryStatsRow";
 import { CategoryTableSection } from "@/features/categories/sections/CategoryTableSection";
+import { loadTransactions } from "@/features/dashboard/lib/csvParser";
+import { calculateCategoryData, type CategoryData } from "@/features/dashboard/lib/overviewSelectors";
 
 function CategoriesSkeleton() {
   return (
@@ -28,13 +26,35 @@ function CategoriesSkeleton() {
 }
 
 export default function CategoriesPage() {
-  const newCategory      = useNewCategory();
-  const deleteCategories = useBulkDeleteCategories();
-  const categoriesQuery  = useGetCategories();
-  const categories       = categoriesQuery.data ?? [];
-  const isDisabled       = categoriesQuery.isLoading || deleteCategories.isPending;
+  const [categories, setCategories] = useState<CategoryData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const newCategory = useNewCategory();
 
-  if (categoriesQuery.isLoading) return <CategoriesSkeleton />;
+  useEffect(() => {
+    async function loadCategoryData() {
+      try {
+        const transactions = await loadTransactions();
+        const categoryData = calculateCategoryData(transactions);
+        setCategories(categoryData);
+      } catch (error) {
+        console.error("Error loading category data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadCategoryData();
+  }, []);
+
+  if (isLoading) return <CategoriesSkeleton />;
+
+  // Convert CategoryData to the format expected by CategoryTableSection
+  const tableCategories = categories.map(cat => ({
+    id: cat.name,
+    name: cat.name,
+    totalSpent: cat.totalSpent,
+    transactionCount: cat.transactionCount,
+    percentage: cat.percentage,
+  }));
 
   return (
     <PageContainer>
@@ -52,10 +72,10 @@ export default function CategoriesPage() {
       <div className="space-y-6 lg:space-y-8">
         <CategoryStatsRow />
         <CategoryTableSection
-          categories={categories}
-          onDelete={(ids) => deleteCategories.mutate({ ids })}
+          categories={tableCategories}
+          onDelete={() => {}} // No delete for CSV-derived categories
           onAdd={newCategory.onOpen}
-          isDisabled={isDisabled}
+          isDisabled={false}
         />
       </div>
     </PageContainer>
