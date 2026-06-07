@@ -1,115 +1,107 @@
 "use client";
 
 /**
- * app/(dashboard)/page.tsx  — Dashboard Home
+ * app/(dashboard)/page.tsx  — SplitFin Overview/Home Page
  *
- * Composition root only:
- *   - URL search params
- *   - Local state (hidden, chartPeriod)
- *   - Query hooks (summary, accounts)
- *   - Derived values (chartData, savingsRate, etc.)
- *   - Section composition
+ * Production-quality implementation with:
+ * - Hero Balance Card with CSV data
+ * - Quick Actions (3 buttons)
+ * - Cash Flow Section with dynamic wave chart
+ * - Spending Overview with donut chart
+ * - Goals & Progress section (Upcoming Feature)
  *
- * All rendering delegated to features/dashboard/sections/ and components/.
+ * All data comes from data.csv - no hardcoded values.
  */
 
-import { useMemo, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import qs from "query-string";
-
-import { useGetAccounts }    from "@/features/accounts/api/use-get-accounts";
-import { useGetSummary }     from "@/features/summary/api/use-get-summary";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { useNewTransaction } from "@/features/transactions/hooks/use-new-transaction";
-import { formatMonthYear }   from "@/features/transactions/lib/formatters";
 
-import { buildChartData }           from "@/features/dashboard/lib/build-chart-data";
-import type { ChartPeriod }         from "@/features/dashboard/lib/build-chart-data";
-import { DashboardSkeleton }        from "@/features/dashboard/sections/DashboardSkeleton";
-import { DashboardHeroSection }     from "@/features/dashboard/sections/DashboardHeroSection";
-import { DashboardChartsSection }   from "@/features/dashboard/sections/DashboardChartsSection";
-import { DashboardSidebarSection }  from "@/features/dashboard/sections/DashboardSidebarSection";
+import { HeroCard } from "@/features/dashboard/sections/HeroCard";
+import { QuickActions } from "@/features/dashboard/sections/QuickActions";
+import { CashFlow } from "@/features/dashboard/sections/CashFlow";
+import { SpendingOverview } from "@/features/dashboard/sections/SpendingOverview";
+import { GoalsCard } from "@/features/dashboard/sections/GoalsCard";
+
+import { loadTransactions } from "@/features/dashboard/lib/csvParser";
+import { calculateOverviewData } from "@/features/dashboard/lib/overviewSelectors";
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function HomePage() {
-  const pathname     = usePathname();
-  const router       = useRouter();
-  const searchParams = useSearchParams();
+export default function OverviewPage() {
+  const router = useRouter();
+  const { theme, systemTheme } = useTheme();
+  const currentTheme = theme === "system" ? systemTheme : theme;
+  const isDark = currentTheme === "dark";
 
-  const [hidden,      setHidden]      = useState(false);
-  const [chartPeriod, setChartPeriod] = useState<ChartPeriod>("M");
-
-  const from          = searchParams.get("from")      || "";
-  const to            = searchParams.get("to")        || "";
-  const selectedAccId = searchParams.get("accountId") || "";
-
-  const { data: summary,  isLoading: sumLoading } = useGetSummary();
-  const { data: accounts = [], isLoading: accLoading } = useGetAccounts();
+  const [overviewData, setOverviewData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { onOpen: openNewTx } = useNewTransaction();
 
-  const accName = accounts.find((a) => a.id === selectedAccId)?.name ?? "All Accounts";
-  const period  = formatMonthYear(new Date());
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const transactions = await loadTransactions();
+        const data = calculateOverviewData(transactions);
+        setOverviewData(data);
+      } catch (error) {
+        console.error("Error loading overview data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
-  const chartData = useMemo(
-    () => buildChartData(summary?.days ?? [], chartPeriod),
-    [summary?.days, chartPeriod],
-  );
-
-  const income      = summary?.incomeAmount    ?? 0;
-  const expenses    = summary?.expensesAmount  ?? 0;
-  const remaining   = summary?.remainingAmount ?? 0;
-  const categories  = summary?.categories      ?? [];
-  const savingsRate = income > 0
-    ? Math.max(0, Math.round(((income - Math.abs(expenses)) / income) * 100))
-    : 0;
-
-  const onAccChange = (acc: { id: string; name: string }) => {
-    router.push(
-      qs.stringifyUrl(
-        { url: pathname, query: { accountId: acc.id, from, to } },
-        { skipEmptyString: true, skipNull: true },
-      ),
+  if (isLoading) {
+    return (
+      <div className="min-h-screen p-4 lg:p-8" style={{ background: "var(--surface-bg)" }}>
+        <div className="mx-auto max-w-7xl space-y-6">
+          <div className="h-64 animate-pulse rounded-3xl" style={{ background: "var(--surface-card)" }} />
+          <div className="grid grid-cols-3 gap-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-32 animate-pulse rounded-2xl" style={{ background: "var(--surface-card)" }} />
+            ))}
+          </div>
+          <div className="h-80 animate-pulse rounded-3xl" style={{ background: "var(--surface-card)" }} />
+        </div>
+      </div>
     );
-  };
-
-  if (sumLoading || accLoading) return <DashboardSkeleton />;
+  }
 
   return (
     <div className="min-h-screen" style={{ background: "var(--surface-bg)" }}>
-      <div className="mx-auto w-full max-w-screen-xl px-4 pb-24 pt-5 sm:px-6 lg:px-8 lg:pb-10 lg:pt-7">
+      <div className="mx-auto w-full max-w-7xl px-4 pb-24 pt-4 sm:px-6 md:px-6 lg:px-8 lg:pb-10 lg:pt-8">
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px] lg:gap-6 xl:grid-cols-[1fr_380px]">
+        {/* Hero Balance Card */}
+        <HeroCard
+          totalBalance={overviewData?.totalBalance ?? 0}
+          accountCount={overviewData?.accountCount ?? 0}
+          monthlyChange={overviewData?.monthlyChange ?? 0}
+          isDark={isDark}
+        />
 
-          {/* Left column — hero + charts */}
-          <div className="space-y-4 lg:space-y-5">
-            <DashboardHeroSection
-              period={period}
-              accounts={accounts}
-              selectedId={selectedAccId}
-              accName={accName}
-              isLoading={accLoading}
-              onAccChange={onAccChange}
-              income={income}
-              expenses={expenses}
-              remaining={remaining}
-              savingsRate={savingsRate}
-              hidden={hidden}
-              onHide={() => setHidden((h) => !h)}
-              onAddTx={openNewTx}
-              summary={summary}
-            />
+        {/* Quick Actions */}
+        <QuickActions onOpenNewTransaction={openNewTx} />
 
-            <DashboardChartsSection
-              chartData={chartData}
-              chartPeriod={chartPeriod}
-              categories={categories}
-              onPeriod={setChartPeriod}
-            />
-          </div>
+        {/* Cash Flow Section */}
+        <CashFlow
+          cashFlowData={overviewData?.cashFlowData ?? []}
+          isDark={isDark}
+        />
 
-          {/* Right column — desktop sidebar */}
-          <DashboardSidebarSection categories={categories} />
+        <div className="grid grid-cols-1 gap-8 lg:gap-8 lg:grid-cols-2">
+          {/* Spending Overview */}
+          <SpendingOverview
+            categoryBreakdown={overviewData?.categoryBreakdown ?? []}
+            isDark={isDark}
+          />
+
+          {/* Goals Card */}
+          <GoalsCard isDark={isDark} />
         </div>
+
       </div>
     </div>
   );
