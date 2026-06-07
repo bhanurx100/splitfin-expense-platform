@@ -1,17 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Image from "next/image";
 import { Plus } from "lucide-react";
-import {
-  DEMO_ACCOUNTS,
-  type DemoAccount,
-} from "@/features/accounts/dev/accounts-demo-data";
 import { AccountRow } from "@/features/accounts/components/AccountRow";
 import { useNewAccount } from "@/features/accounts/hooks/use-new-account";
-
-type Tab = "All" | "Bank" | "Wallet" | "Cash";
-const TABS: Tab[] = ["All", "Bank", "Wallet", "Cash"];
+import { loadTransactions } from "@/features/dashboard/lib/csvParser";
+import { calculateAccountData, type AccountData } from "@/features/dashboard/lib/overviewSelectors";
 
 function formatINR(value: number): string {
   return new Intl.NumberFormat("en-IN", {
@@ -22,7 +17,7 @@ function formatINR(value: number): string {
   }).format(value);
 }
 
-function HeroCard({ accounts }: { accounts: DemoAccount[] }) {
+function HeroCard({ accounts }: { accounts: AccountData[] }) {
   const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
   const accountCount = accounts.length;
 
@@ -59,32 +54,7 @@ function HeroCard({ accounts }: { accounts: DemoAccount[] }) {
   );
 }
 
-function FilterPills({
-  active,
-  onChange,
-}: {
-  active: Tab;
-  onChange: (t: Tab) => void;
-}) {
-  return (
-    <div className="acct-pills">
-      {TABS.map((tab) => (
-        <button
-          key={tab}
-          type="button"
-          onClick={() => onChange(tab)}
-          className={
-            tab === active ? "acct-pill acct-pill--active" : "acct-pill acct-pill--idle"
-          }
-        >
-          {tab}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function AccountListCard({ accounts }: { accounts: DemoAccount[] }) {
+function AccountListCard({ accounts }: { accounts: AccountData[] }) {
   if (accounts.length === 0) {
     return (
       <div className="acct-list-card acct-list-empty">
@@ -97,8 +67,13 @@ function AccountListCard({ accounts }: { accounts: DemoAccount[] }) {
     <div className="acct-list-card">
       {accounts.map((acc, i) => (
         <AccountRow
-          key={acc.id}
-          account={acc}
+          key={acc.name}
+          account={{
+            id: acc.name,
+            name: acc.name,
+            type: "Bank Account",
+            balance: acc.balance,
+          }}
           isLast={i === accounts.length - 1}
         />
       ))}
@@ -107,18 +82,50 @@ function AccountListCard({ accounts }: { accounts: DemoAccount[] }) {
 }
 
 export function AccountsMainScreen() {
-  const [activeTab, setActiveTab] = useState<Tab>("All");
+  const [accounts, setAccounts] = useState<AccountData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const newAccount = useNewAccount();
 
-  const filtered = useMemo<DemoAccount[]>(() => {
-    if (activeTab === "All") return DEMO_ACCOUNTS;
-    return DEMO_ACCOUNTS.filter((a) => {
-      if (activeTab === "Bank") return a.type === "Bank Account";
-      if (activeTab === "Wallet") return a.type === "Wallet";
-      if (activeTab === "Cash") return a.type === "Cash";
-      return true;
-    });
-  }, [activeTab]);
+  useEffect(() => {
+    async function loadAccountData() {
+      try {
+        const transactions = await loadTransactions();
+        const accountData = calculateAccountData(transactions);
+        setAccounts(accountData);
+      } catch (error) {
+        console.error("Error loading account data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadAccountData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="acct-screen">
+        <div className="acct-header">
+          <div className="acct-header__left">
+            <h1 className="acct-header__title">
+              Accounts
+              <span className="acct-header__title-sparkle" aria-hidden="true">
+                ✦
+              </span>
+            </h1>
+            <p className="acct-header__sub">Manage your money, all in one place.</p>
+          </div>
+          <button type="button" className="acct-header__btn" onClick={newAccount.onOpen}>
+            <Plus className="acct-header__btn-icon" aria-hidden="true" />
+            <span>Add Account</span>
+          </button>
+        </div>
+        <div className="acct-list-card">
+          <div className="animate-pulse h-20 rounded-xl" style={{ background: "var(--surface-card)" }} />
+          <div className="animate-pulse h-20 rounded-xl" style={{ background: "var(--surface-card)" }} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="acct-screen">
@@ -138,9 +145,8 @@ export function AccountsMainScreen() {
         </button>
       </div>
 
-      <HeroCard accounts={DEMO_ACCOUNTS} />
-      <FilterPills active={activeTab} onChange={setActiveTab} />
-      <AccountListCard accounts={filtered} />
+      <HeroCard accounts={accounts} />
+      <AccountListCard accounts={accounts} />
     </div>
   );
 }
