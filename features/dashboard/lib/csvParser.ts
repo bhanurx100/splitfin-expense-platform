@@ -1,12 +1,28 @@
-export interface Transaction {
-  type: 'Credit' | 'Debit' | 'Transfer';
-  date: string;
-  description: string;
-  category: string;
-  amount: number;
-  account: string;
+import { Transaction } from '@/types/transaction';
+import { createId } from '@paralleldrive/cuid2';
+
+function normalizeTransactionType(type: string): Transaction['type'] {
+  const normalized = type.trim().toLowerCase();
+  
+  // Normalize to income/expense/transfer
+  if (normalized === 'credit' || normalized === 'income') {
+    return 'income';
+  }
+  if (normalized === 'debit' || normalized === 'expense') {
+    return 'expense';
+  }
+  return 'transfer';
 }
 
+/**
+ * Parse CSV content and return canonical Transaction[]
+ * 
+ * CSV format expected:
+ * Type,Date,Description,Category,Amount,Account
+ * 
+ * This function ONLY parses CSV to Transaction[].
+ * It does NOT fetch data, does NOT calculate anything else.
+ */
 export function parseCSV(csvContent: string): Transaction[] {
   const lines = csvContent.trim().split('\n');
   const headers = lines[0].split(',');
@@ -17,27 +33,18 @@ export function parseCSV(csvContent: string): Transaction[] {
     const values = lines[i].split(',');
     if (values.length === headers.length) {
       const transaction: Transaction = {
-        type: values[0] as Transaction['type'],
-        date: values[1],
-        description: values[2],
-        category: values[3],
+        id: createId(),
+        type: normalizeTransactionType(values[0]),
+        date: new Date(values[1].trim()),
+        description: values[2].trim(),
+        category: values[3].trim(),
         amount: parseFloat(values[4]),
-        account: values[5],
+        account: values[5].trim(),
+        source: 'csv',
       };
       transactions.push(transaction);
     }
   }
   
   return transactions;
-}
-
-export async function loadTransactions(): Promise<Transaction[]> {
-  try {
-    const response = await fetch('/data.csv');
-    const csvContent = await response.text();
-    return parseCSV(csvContent);
-  } catch (error) {
-    console.error('Error loading CSV:', error);
-    return [];
-  }
 }
