@@ -39,7 +39,7 @@ export function QuickActions({ onOpenNewTransaction }: QuickActionsProps) {
   ];
 
   return (
-    <div className="mb-8 grid grid-cols-3 gap-5">
+    <div className="mb-8 flex items-center justify-center gap-8 lg:gap-12">
       {actions.map((action) => (
         <button
           key={action.label}
@@ -48,20 +48,21 @@ export function QuickActions({ onOpenNewTransaction }: QuickActionsProps) {
           className="group flex flex-col items-center justify-center gap-3 transition-all duration-300 hover:scale-105"
         >
           <div
-            className="relative flex h-14 w-14 items-center justify-center transition-transform duration-300 group-hover:scale-110"
+            className="relative flex h-11 w-11 items-center justify-center transition-transform duration-300 group-hover:scale-110 lg:h-[44px] lg:w-[44px]"
             style={{
               background: action.gradient,
             }}
           >
             <Icon
               icon={action.icon}
-              width={56}
-              height={56}
+              width={44}
+              height={44}
+              className="lg:w-[44px] lg:h-[44px]"
               style={{ color: action.iconColor }}
             />
           </div>
           <span
-            className="text-[15px] font-semibold"
+            className="text-[13px] font-semibold lg:text-[14px]"
             style={{
               color: isDark ? "#ffffff" : "#111827",
             }}

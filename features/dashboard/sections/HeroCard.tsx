@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "../lib/overviewSelectors";
+import { formatCurrency } from "@/lib/transaction-selectors";
 
 interface HeroCardProps {
   totalBalance: number;
@@ -17,7 +17,7 @@ export function HeroCard({ totalBalance, accountCount, monthlyChange, isDark }: 
 
   return (
     <div
-      className="relative mb-8 h-[180px] overflow-hidden rounded-[28px] p-6 md:h-[200px] lg:h-[220px] lg:p-8"
+      className="relative mb-8 h-[225px] overflow-hidden rounded-[28px] p-6 md:h-[250px] lg:h-[275px] lg:p-8"
       style={{
         backgroundImage: isDark
           ? "url('/images/home/home-theme-dark.png')"

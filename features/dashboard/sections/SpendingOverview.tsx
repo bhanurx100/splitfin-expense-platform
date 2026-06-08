@@ -1,7 +1,7 @@
 "use client";
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { formatCurrency } from "../lib/overviewSelectors";
+import { formatCurrency } from "@/lib/transaction-selectors";
 
 interface SpendingOverviewProps {
   categoryBreakdown: Array<{
@@ -115,27 +115,27 @@ export function SpendingOverview({ categoryBreakdown, isDark }: SpendingOverview
             </div>
           </div>
 
-          {/* Clean Legend - No borders/cards */}
+          {/* Clean Legend - Simple two-column layout */}
           <div className="w-full lg:w-1/2">
-            <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-x-8 gap-y-2">
               {categoryBreakdown.map((category) => (
                 <div
                   key={category.name}
-                  className="flex items-center gap-3"
+                  className="flex items-center gap-2"
                 >
                   <div
-                    className="h-3 w-3 rounded-full flex-shrink-0"
+                    className="h-2.5 w-2.5 rounded-full flex-shrink-0"
                     style={{ backgroundColor: getColor(category.name) }}
                   />
-                  <div className="flex min-w-0 flex-1 items-center justify-between">
+                  <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
                     <span
-                      className="text-sm font-medium"
+                      className="text-sm font-medium truncate"
                       style={{ color: isDark ? "#ffffff" : "#111827" }}
                     >
                       {category.name}
                     </span>
                     <span
-                      className="text-sm font-semibold"
+                      className="text-sm font-semibold whitespace-nowrap"
                       style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.8)" }}
                     >
                       {formatCurrency(category.value)}
