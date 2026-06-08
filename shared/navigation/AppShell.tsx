@@ -47,7 +47,7 @@ function isActive(href: string, exact: boolean, pathname: string) {
   return exact ? pathname === href : pathname.startsWith(href);
 }
 
-const ACTIVE_GRADIENT = "linear-gradient(135deg, #F472B6, #FBBF24)";
+const ACTIVE_GRADIENT = "linear-gradient(135deg, #10B981, #059669)";
 const INACTIVE_COLOR = "rgba(148,163,184,0.85)";
 
 // ── Desktop sidebar ───────────────────────────────────────────────────────────
@@ -81,7 +81,7 @@ const DesktopSidebar = memo(function DesktopSidebar({
       >
         <div
           className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl"
-          style={{ background: "linear-gradient(135deg,#F472B6,#FBBF24)" }}
+          style={{ background: "linear-gradient(135deg,#10B981,#059669)" }}
         >
           <TrendingUp className="h-4 w-4 text-white" strokeWidth={2.5} />
         </div>
@@ -90,7 +90,7 @@ const DesktopSidebar = memo(function DesktopSidebar({
             className="ml-3 text-[18px] font-bold tracking-tight"
             style={{ color: "var(--sf-text-primary,var(--text-primary))" }}
           >
-            Split<span style={{ color: "#F472B6" }}>Fin</span>
+            Split<span style={{ color: "#10B981" }}>Fin</span>
           </span>
         )}
       </div>
@@ -107,7 +107,7 @@ const DesktopSidebar = memo(function DesktopSidebar({
                 "flex h-[40px] items-center rounded-xl px-3 transition-all duration-150",
                 collapsed ? "justify-center" : "gap-[12px]",
                 active
-                  ? "bg-[rgba(244,114,182,0.08)] font-semibold"
+                  ? "bg-[rgba(16,185,129,0.08)] font-semibold"
                   : "font-medium hover:bg-[rgba(148,163,184,0.06)]"
               )}
               style={{ marginBottom: "2px" }}
@@ -135,7 +135,7 @@ const DesktopSidebar = memo(function DesktopSidebar({
                   className="text-[13px] font-medium whitespace-nowrap"
                   style={{
                     color: active
-                      ? "#F472B6"
+                      ? "#10B981"
                       : "var(--sf-text-muted,var(--text-muted))",
                   }}
                 >
@@ -213,7 +213,7 @@ function MobileHeader() {
       <Link href="/" className="flex items-center gap-2">
         <div
           className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
-          style={{ background: "linear-gradient(135deg,#F472B6,#FBBF24)" }}
+          style={{ background: "linear-gradient(135deg,#10B981,#059669)" }}
         >
           <TrendingUp className="h-3.5 w-3.5 text-white" strokeWidth={2.5} />
         </div>
@@ -221,7 +221,7 @@ function MobileHeader() {
           className="text-[18px] font-bold tracking-tight"
           style={{ color: "var(--sf-text-primary,var(--text-primary))" }}
         >
-          Split<span style={{ color: "#F472B6" }}>Fin</span>
+          Split<span style={{ color: "#10B981" }}>Fin</span>
         </span>
       </Link>
       <div className="flex items-center gap-2">
@@ -287,7 +287,7 @@ const MobileDock = memo(function MobileDock() {
                 className="mt-0.5 text-[11px] font-medium leading-tight"
                 style={{
                   whiteSpace: "nowrap",
-                  color: active ? "#F472B6" : INACTIVE_COLOR,
+                  color: active ? "#10B981" : INACTIVE_COLOR,
                 }}
               >
                 {label}

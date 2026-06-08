@@ -4,19 +4,20 @@
  * app/(dashboard)/page.tsx  — SplitFin Overview/Home Page
  *
  * Production-quality implementation with:
- * - Hero Balance Card with CSV data
+ * - Hero Balance Card with Transaction data
  * - Quick Actions (3 buttons)
  * - Cash Flow Section with dynamic wave chart
  * - Spending Overview with donut chart
  * - Goals & Progress section (Upcoming Feature)
  *
- * All data comes from data.csv - no hardcoded values.
+ * All data comes from canonical Transaction[] - no hardcoded values.
  */
 
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useNewTransaction } from "@/features/transactions/hooks/use-new-transaction";
+import { useTransactions } from "@/hooks/use-transactions";
 
 import { HeroCard } from "@/features/dashboard/sections/HeroCard";
 import { QuickActions } from "@/features/dashboard/sections/QuickActions";
@@ -24,8 +25,11 @@ import { CashFlow } from "@/features/dashboard/sections/CashFlow";
 import { SpendingOverview } from "@/features/dashboard/sections/SpendingOverview";
 import { GoalsCard } from "@/features/dashboard/sections/GoalsCard";
 
-import { loadTransactions } from "@/features/dashboard/lib/csvParser";
-import { calculateOverviewData } from "@/features/dashboard/lib/overviewSelectors";
+import { 
+  getHeroSummary, 
+  getSpendingOverview, 
+  getCashFlow
+} from "@/lib/transaction-selectors";
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -35,24 +39,24 @@ export default function OverviewPage() {
   const currentTheme = theme === "system" ? systemTheme : theme;
   const isDark = currentTheme === "dark";
 
-  const [overviewData, setOverviewData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const { onOpen: openNewTx } = useNewTransaction();
+  const { data: transactions, isLoading } = useTransactions();
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const transactions = await loadTransactions();
-        const data = calculateOverviewData(transactions);
-        setOverviewData(data);
-      } catch (error) {
-        console.error("Error loading overview data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadData();
-  }, []);
+  const overviewData = useMemo(() => {
+    if (!transactions || transactions.length === 0) return null;
+
+    const heroSummary = getHeroSummary(transactions);
+    const spendingOverview = getSpendingOverview(transactions);
+    const cashFlowData = getCashFlow(transactions);
+
+    return {
+      totalBalance: heroSummary.totalBalance,
+      accountCount: heroSummary.accountCount,
+      monthlyChange: heroSummary.monthlyChange,
+      categoryBreakdown: spendingOverview,
+      cashFlowData,
+    };
+  }, [transactions]);
 
   if (isLoading) {
     return (
