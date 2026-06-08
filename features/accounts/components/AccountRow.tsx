@@ -7,12 +7,12 @@
  * Height: 60px. Icon: 36px. No shadow. Subtle bottom divider.
  */
 
-import type { DemoAccount } from "@/features/accounts/dev/accounts-demo-data";
+import type { AccountData } from "@/lib/transaction-selectors";
 import { BadgeIndianRupee, Landmark, Wallet } from "lucide-react";
 import { useOpenAccount } from "@/features/accounts/hooks/use-open-account";
 
 interface Props {
-  account: DemoAccount;
+  account: AccountData;
   isLast: boolean;
 }
 
@@ -26,9 +26,15 @@ function formatINR(value: number): string {
   }).format(value);
 }
 
-function AccountIcon({ type }: { type: DemoAccount["type"] }) {
-  if (type === "Wallet") return <Wallet className="acct-row__icon-svg" />;
-  if (type === "Cash") return <BadgeIndianRupee className="acct-row__icon-svg" />;
+function AccountIcon({ account }: { account: AccountData }) {
+  // Determine icon type based on account name
+  const lowerName = account.name.toLowerCase();
+  if (lowerName.includes("wallet") || lowerName.includes("paytm") || lowerName.includes("phonepe")) {
+    return <Wallet className="acct-row__icon-svg" />;
+  }
+  if (lowerName.includes("cash")) {
+    return <BadgeIndianRupee className="acct-row__icon-svg" />;
+  }
   return <Landmark className="acct-row__icon-svg" />;
 }
 
@@ -39,7 +45,7 @@ export function AccountRow({ account, isLast }: Props) {
     <button
       type="button"
       className="acct-row"
-      onClick={() => openAccount(account.id)}
+      onClick={() => openAccount(account.name)}
       style={{
         borderBottom: isLast ? "none" : "1px solid var(--acct-divider)",
       }}
@@ -47,16 +53,16 @@ export function AccountRow({ account, isLast }: Props) {
       {/* Icon */}
       <div
         className="acct-row__icon"
-        style={{ background: account.iconColor }}
+        style={{ background: "#6C5CE7" }}
         aria-hidden="true"
       >
-        <AccountIcon type={account.type} />
+        <AccountIcon account={account} />
       </div>
 
-      {/* Name + type */}
+      {/* Name + transaction count */}
       <div className="acct-row__info">
         <span className="acct-row__name">{account.name}</span>
-        <span className="acct-row__type">{account.type}</span>
+        <span className="acct-row__type">{account.transactionCount} transactions</span>
       </div>
 
       {/* Balance */}

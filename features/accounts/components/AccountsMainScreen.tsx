@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import { Plus } from "lucide-react";
 import { AccountRow } from "@/features/accounts/components/AccountRow";
 import { useNewAccount } from "@/features/accounts/hooks/use-new-account";
-import { loadTransactions } from "@/features/dashboard/lib/csvParser";
-import { calculateAccountData, type AccountData } from "@/features/dashboard/lib/overviewSelectors";
+import { useTransactions } from "@/hooks/use-transactions";
+import { getAccounts, type AccountData } from "@/lib/transaction-selectors";
 
 function formatINR(value: number): string {
   return new Intl.NumberFormat("en-IN", {
@@ -68,13 +68,7 @@ function AccountListCard({ accounts }: { accounts: AccountData[] }) {
       {accounts.map((acc, i) => (
         <AccountRow
           key={acc.name}
-          account={{
-            id: acc.name,
-            name: acc.name,
-            type: "Bank Account",
-            balance: acc.balance,
-            iconColor: "#6C5CE7",
-          }}
+          account={acc}
           isLast={i === accounts.length - 1}
         />
       ))}
@@ -83,24 +77,13 @@ function AccountListCard({ accounts }: { accounts: AccountData[] }) {
 }
 
 export function AccountsMainScreen() {
-  const [accounts, setAccounts] = useState<AccountData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: transactions, isLoading } = useTransactions();
   const newAccount = useNewAccount();
 
-  useEffect(() => {
-    async function loadAccountData() {
-      try {
-        const transactions = await loadTransactions();
-        const accountData = calculateAccountData(transactions);
-        setAccounts(accountData);
-      } catch (error) {
-        console.error("Error loading account data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadAccountData();
-  }, []);
+  const accounts = useMemo(() => {
+    if (!transactions) return [];
+    return getAccounts(transactions);
+  }, [transactions]);
 
   if (isLoading) {
     return (
