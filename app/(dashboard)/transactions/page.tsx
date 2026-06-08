@@ -5,10 +5,10 @@
  *
  * Composition root — no inline UI.
  * All logic and rendering delegated to feature sections.
- * Reads transactions from CSV as single source of truth.
+ * Uses canonical Transaction[] as single source of truth.
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { toast } from "sonner";
 
 import { transactions as transactionSchema } from "@/db/schema";
@@ -24,7 +24,6 @@ import { ImportCard } from "./import-card";
 import { TransactionsSkeleton } from "@/features/transactions/sections/TransactionsSkeleton";
 import { DesktopTransactionsSection } from "@/features/transactions/sections/DesktopTransactionsSection";
 import { MobileTransactionsSection } from "@/features/transactions/sections/MobileTransactionsSection";
-import { loadTransactions } from "@/features/dashboard/lib/csvParser";
 
 enum VIEW {
   LIST = "LIST",
@@ -34,33 +33,13 @@ enum VIEW {
 export default function TransactionsPage() {
   const [view, setView] = useState<VIEW>(VIEW.LIST);
   const [importData, setImportData] = useState(INITIAL_IMPORT);
-  const [csvTransactions, setCsvTransactions] = useState<any[]>([]);
-  const [isLoadingCsv, setIsLoadingCsv] = useState(true);
   const [AccountDialog, confirmAccount] = useSelectAccount();
   const newTx = useNewTransaction();
   const bulkCreate = useBulkCreateTransactions();
   const bulkDelete = useBulkDeleteTransactions();
   const txQuery = useGetTransactions();
-  const dbTransactions = (txQuery.data ?? []) as Tx[];
-  
-  // Use CSV transactions as single source of truth
-  const transactions = csvTransactions.length > 0 ? csvTransactions : dbTransactions;
-  const isDisabled = isLoadingCsv || txQuery.isLoading || bulkDelete.isPending;
-
-  useEffect(() => {
-    async function loadCsvData() {
-      try {
-        const csvData = await loadTransactions();
-        setCsvTransactions(csvData);
-      } catch (error) {
-        console.error("Error loading CSV transactions:", error);
-        // Fall back to database if CSV fails
-      } finally {
-        setIsLoadingCsv(false);
-      }
-    }
-    loadCsvData();
-  }, []);
+  const transactions = (txQuery.data ?? []) as Tx[];
+  const isDisabled = txQuery.isLoading || bulkDelete.isPending;
 
   const onUpload = useCallback((r: typeof INITIAL_IMPORT) => {
     setImportData(r);
@@ -100,7 +79,7 @@ export default function TransactionsPage() {
     );
   }
 
-  if (isLoadingCsv) return <TransactionsSkeleton />;
+  if (txQuery.isLoading) return <TransactionsSkeleton />;
 
   return (
     <>
