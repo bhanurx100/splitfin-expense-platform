@@ -2,10 +2,10 @@
 /**
  * app/(dashboard)/categories/page.tsx — TARGET COMPOSITION
  *
- * Categories derived from CSV data as single source of truth.
+ * Categories derived from transactions as single source of truth.
  */
 
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNewCategory } from "@/features/categories/hooks/use-new-category";
@@ -13,8 +13,8 @@ import { PageContainer } from "@/shared/navigation/PageContainer";
 import { SkeletonPageHeader, SkeletonGrid } from "@/shared/skeletons";
 import { CategoryStatsRow } from "@/features/categories/sections/CategoryStatsRow";
 import { CategoryTableSection } from "@/features/categories/sections/CategoryTableSection";
-import { loadTransactions } from "@/features/dashboard/lib/csvParser";
-import { calculateCategoryData, type CategoryData } from "@/features/dashboard/lib/overviewSelectors";
+import { useTransactions } from "@/hooks/use-transactions";
+import { getCategories } from "@/lib/transaction-selectors";
 
 function CategoriesSkeleton() {
   return (
@@ -26,24 +26,13 @@ function CategoriesSkeleton() {
 }
 
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState<CategoryData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: transactions, isLoading } = useTransactions();
   const newCategory = useNewCategory();
 
-  useEffect(() => {
-    async function loadCategoryData() {
-      try {
-        const transactions = await loadTransactions();
-        const categoryData = calculateCategoryData(transactions);
-        setCategories(categoryData);
-      } catch (error) {
-        console.error("Error loading category data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadCategoryData();
-  }, []);
+  const categories = useMemo(() => {
+    if (!transactions) return [];
+    return getCategories(transactions);
+  }, [transactions]);
 
   if (isLoading) return <CategoriesSkeleton />;
 
