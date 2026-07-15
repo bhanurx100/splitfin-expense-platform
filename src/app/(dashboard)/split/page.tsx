@@ -3,34 +3,35 @@
 import { useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { useGroupData }           from "@/src/features/splitpay/hooks/use-group-data"
-import { GroupHeader }            from "@/src/features/splitpay/components/group/group-header"
-import { GroupSummaryCard }       from "@/src/features/splitpay/components/group/group-summary-card"
-import { GroupActions }           from "@/src/features/splitpay/components/group/group-actions"
-import { GroupTabs }              from "@/src/features/splitpay/components/group/group-tabs"
-import { TimelineSection }        from "@/src/features/splitpay/components/group/timeline-section"
-import { MemberList }             from "@/src/features/splitpay/components/group/member-list"
-import { MemberActionsSheet }     from "@/src/features/splitpay/components/group/member-actions-sheet"
-import { BackgroundParticles }    from "@/src/features/splitpay/components/group/background-particles"
-import { pageFadeUp }             from "@/src/features/splitpay/motions/motion"
-import type { GroupTab, GroupMember } from "@/src/features/splitpay/types/group"
+import { useGroupData } from "@/src/features/splitpay/hooks/use-group-data"
+import { GroupHeader } from "@/src/features/splitpay/components/group/group-header"
+import { GroupSummaryCard } from "@/src/features/splitpay/components/group/group-summary-card"
+import { GroupActions } from "@/src/features/splitpay/components/group/group-actions"
+import { GroupTabs } from "@/src/features/splitpay/components/group/group-tabs"
+import { TimelineSection } from "@/src/features/splitpay/components/timeline/timeline-section"
+import { MemberList } from "@/src/features/splitpay/components/member/member-list"
+import { MemberActionsSheet } from "@/src/features/splitpay/components/member/member-actions-sheet"
+import { BackgroundParticles } from "@/src/features/splitpay/components/timeline/background-particles"
+import { pageFadeUp } from "@/src/features/splitpay/motions/motion"
+import type { GroupTab } from "@/src/features/splitpay/types/group"
+import type { GroupPageMember } from "@/src/features/splitpay/types/group"
 
 export default function GroupPage() {
-  const params   = useParams<{ groupId: string }>()
-  const router   = useRouter()
-  const groupId  = params?.groupId ?? "group_goa"
+  const params = useParams<{ groupId: string }>()
+  const router = useRouter()
+  const groupId = params?.groupId ?? null
 
   const { data, isLoading } = useGroupData(groupId)
 
-  const [activeTab,        setActiveTab]        = useState<GroupTab>("timeline")
-  const [actionMember,     setActionMember]     = useState<GroupMember | null>(null)
-  const [memberSheetOpen,  setMemberSheetOpen]  = useState(false)
+  const [activeTab, setActiveTab] = useState<GroupTab>("timeline")
+  const [actionMember, setActionMember] = useState<GroupPageMember | null>(null)
+  const [memberSheetOpen, setMemberSheetOpen] = useState(false)
 
   if (isLoading) return null
 
   const { summary, members, timeline, currentUserId } = data
 
-  function handleMemberAction(member: GroupMember) {
+  function handleMemberAction(member: GroupPageMember) {
     if (member.isYou) return
     setActionMember(member)
     setMemberSheetOpen(true)
@@ -48,9 +49,9 @@ export default function GroupPage() {
         animate="animate"
         className="relative flex flex-col min-h-dvh max-w-[430px] mx-auto"
         style={{
-          background:   "#050816",
-          zIndex:       1,
-          paddingBottom:"32px",
+          background: "#050816",
+          zIndex: 1,
+          paddingBottom: "32px",
         }}
       >
         {/* 1. Header */}
@@ -68,7 +69,7 @@ export default function GroupPage() {
           {/* 3. Action Buttons */}
           <GroupActions
             onAddExpense={() => console.log("add expense")}
-            onSettleUp={()   => console.log("settle up")}
+            onSettleUp={() => console.log("settle up")}
           />
 
           {/* 4. Segmented Tabs */}
@@ -81,7 +82,7 @@ export default function GroupPage() {
                 key="timeline"
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{    opacity: 0, y: -8 }}
+                exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
               >
                 <TimelineSection cards={timeline} />
@@ -91,13 +92,13 @@ export default function GroupPage() {
                 key="members"
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{    opacity: 0, y: -8 }}
+                exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
               >
                 <MemberList
                   members={members}
                   currencySymbol={summary.currencySymbol}
-                  onAddMember={()              => console.log("add member")}
+                  onAddMember={() => console.log("add member")}
                   onMemberAction={handleMemberAction}
                 />
               </motion.div>

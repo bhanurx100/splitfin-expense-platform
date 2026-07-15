@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Image from "next/image";
 import { Plus } from "lucide-react";
 import { AccountRow } from "@/src/features/accounts/components/AccountRow";

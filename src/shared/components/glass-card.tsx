@@ -7,60 +7,60 @@ import { cn } from "@/src/lib/utils"
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type GlassVariant = "default" | "elevated" | "inset" | "highlight"
-type GlassBorder  = "none" | "subtle" | "default" | "strong" | "pink" | "purple" | "cyan" | "gradient"
-type GlassGlow    = "none" | "pink" | "purple" | "cyan"
+type GlassBorder = "none" | "subtle" | "default" | "strong" | "pink" | "purple" | "cyan" | "gradient"
+type GlassGlow = "none" | "pink" | "purple" | "cyan"
 
 interface GlassCardProps extends Omit<HTMLMotionProps<"div">, "children"> {
-  variant?:   GlassVariant
-  border?:    GlassBorder
-  glow?:      GlassGlow
-  radius?:    "md" | "lg" | "xl" | "2xl" | "3xl"
-  padding?:   "none" | "sm" | "md" | "lg"
-  animated?:  boolean
+  variant?: GlassVariant
+  border?: GlassBorder
+  glow?: GlassGlow
+  radius?: "md" | "lg" | "xl" | "2xl" | "3xl"
+  padding?: "none" | "sm" | "md" | "lg"
+  animated?: boolean
   pressable?: boolean
-  children?:  React.ReactNode
+  children?: React.ReactNode
 }
 
 // ─── Style Maps ───────────────────────────────────────────────────────────────
 
 const variantStyles: Record<GlassVariant, string> = {
-  default:   "bg-[rgba(255,255,255,0.04)] backdrop-blur-[24px]",
-  elevated:  "bg-[rgba(255,255,255,0.07)] backdrop-blur-[40px]",
-  inset:     "bg-[rgba(0,0,0,0.25)] backdrop-blur-[16px]",
+  default: "bg-[rgba(255,255,255,0.04)] backdrop-blur-[24px]",
+  elevated: "bg-[rgba(255,255,255,0.07)] backdrop-blur-[40px]",
+  inset: "bg-[rgba(0,0,0,0.25)] backdrop-blur-[16px]",
   highlight: "bg-[rgba(255,255,255,0.09)] backdrop-blur-[32px]",
 }
 
 const borderStyles: Record<GlassBorder, string> = {
-  none:     "border-transparent",
-  subtle:   "border-[rgba(255,255,255,0.06)]",
-  default:  "border-[rgba(255,255,255,0.10)]",
-  strong:   "border-[rgba(255,255,255,0.18)]",
-  pink:     "border-[rgba(255,0,140,0.40)]",
-  purple:   "border-[rgba(124,58,237,0.40)]",
-  cyan:     "border-[rgba(0,255,208,0.35)]",
+  none: "border-transparent",
+  subtle: "border-[rgba(255,255,255,0.06)]",
+  default: "border-[rgba(255,255,255,0.10)]",
+  strong: "border-[rgba(255,255,255,0.18)]",
+  pink: "border-[rgba(255,0,140,0.40)]",
+  purple: "border-[rgba(124,58,237,0.40)]",
+  cyan: "border-[rgba(0,255,208,0.35)]",
   gradient: "border-transparent", // handled via ::before pseudo (see wrapper)
 }
 
 const glowStyles: Record<GlassGlow, React.CSSProperties> = {
-  none:   {},
-  pink:   { boxShadow: "0 0 24px rgba(255, 0, 140, 0.20), 0 4px 16px rgba(0,0,0,0.5)" },
+  none: {},
+  pink: { boxShadow: "0 0 24px rgba(255, 0, 140, 0.20), 0 4px 16px rgba(0,0,0,0.5)" },
   purple: { boxShadow: "0 0 24px rgba(124, 58, 237, 0.20), 0 4px 16px rgba(0,0,0,0.5)" },
-  cyan:   { boxShadow: "0 0 24px rgba(0, 255, 208, 0.16), 0 4px 16px rgba(0,0,0,0.5)" },
+  cyan: { boxShadow: "0 0 24px rgba(0, 255, 208, 0.16), 0 4px 16px rgba(0,0,0,0.5)" },
 }
 
 const radiusStyles: Record<NonNullable<GlassCardProps["radius"]>, string> = {
-  md:   "rounded-[10px]",
-  lg:   "rounded-[14px]",
-  xl:   "rounded-[18px]",
-  "2xl":"rounded-[24px]",
-  "3xl":"rounded-[32px]",
+  md: "rounded-[10px]",
+  lg: "rounded-[14px]",
+  xl: "rounded-[18px]",
+  "2xl": "rounded-[24px]",
+  "3xl": "rounded-[32px]",
 }
 
 const paddingStyles: Record<NonNullable<GlassCardProps["padding"]>, string> = {
   none: "p-0",
-  sm:   "p-3",
-  md:   "p-4",
-  lg:   "p-5",
+  sm: "p-3",
+  md: "p-4",
+  lg: "p-5",
 }
 
 // ─── Entrance Animation ───────────────────────────────────────────────────────
@@ -69,7 +69,7 @@ const entranceVariants = {
   initial: { opacity: 0, y: 12, scale: 0.98 },
   animate: {
     opacity: 1, y: 0, scale: 1,
-    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] }
+    transition: { duration: 0.4 }
   },
 }
 
@@ -90,12 +90,12 @@ const pressVariants = {
 export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
   (
     {
-      variant   = "default",
-      border    = "default",
-      glow      = "none",
-      radius    = "xl",
-      padding   = "md",
-      animated  = false,
+      variant = "default",
+      border = "default",
+      glow = "none",
+      radius = "xl",
+      padding = "md",
+      animated = false,
       pressable = false,
       children,
       className,
@@ -123,13 +123,13 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
       className
     )
 
-    const mergedStyle: React.CSSProperties = {
+    const mergedStyle = {
       ...glowStyles[glow],
       ...style,
     }
 
     const motionProps = {
-      ...(animated  ? entranceVariants     : {}),
+      ...(animated ? entranceVariants : {}),
       ...(pressable ? { whileTap: pressVariants.tap } : {}),
     }
 
@@ -172,11 +172,11 @@ GlassCard.displayName = "GlassCard"
 // ─── GlassCardHeader ─────────────────────────────────────────────────────────
 
 interface GlassCardHeaderProps {
-  title:       string
-  subtitle?:   string
-  icon?:       React.ReactNode
-  action?:     React.ReactNode
-  className?:  string
+  title: string
+  subtitle?: string
+  icon?: React.ReactNode
+  action?: React.ReactNode
+  className?: string
 }
 
 export function GlassCardHeader({
@@ -219,17 +219,17 @@ export function GlassCardDivider({ className }: { className?: string }) {
 // ─── GlassStatCard ───────────────────────────────────────────────────────────
 
 interface GlassStatCardProps {
-  label:     string
-  value:     string
+  label: string
+  value: string
   sublabel?: string
-  accent?:   "pink" | "cyan" | "purple" | "warning"
-  className?:string
+  accent?: "pink" | "cyan" | "purple" | "warning"
+  className?: string
 }
 
 const accentTextColors = {
-  pink:    "#FF4472",
-  cyan:    "#00D4AE",
-  purple:  "#9F6EF5",
+  pink: "#FF4472",
+  cyan: "#00D4AE",
+  purple: "#9F6EF5",
   warning: "#FFB800",
 }
 

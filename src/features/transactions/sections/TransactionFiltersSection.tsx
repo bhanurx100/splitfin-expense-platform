@@ -11,7 +11,6 @@
 
 import { memo } from "react";
 import { Search, Trash2, CheckSquare, X } from "lucide-react";
-import { cn } from "@/src/lib/utils";
 import type { TypeFilter } from "@/src/features/transactions/lib/filters";
 
 type Props = {

@@ -45,7 +45,7 @@ export function AccountRow({ account, isLast }: Props) {
     <button
       type="button"
       className="acct-row"
-      onClick={() => openAccount(account.name)}
+      onClick={() => openAccount(account.id)}
       style={{
         borderBottom: isLast ? "none" : "1px solid var(--acct-divider)",
       }}

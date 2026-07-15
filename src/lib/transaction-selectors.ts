@@ -13,6 +13,7 @@ import { Transaction } from '@/src/types/transaction';
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 export interface AccountData {
+  id: string;
   name: string;
   balance: number;
   credits: number;
@@ -22,6 +23,7 @@ export interface AccountData {
 }
 
 export interface CategoryData {
+  id: string;
   name: string;
   totalSpent: number;
   transactionCount: number;
@@ -87,6 +89,7 @@ export function getAccounts(transactions: Transaction[]): AccountData[] {
   });
 
   return Array.from(accountMap.entries()).map(([name, data]) => ({
+    id: name,
     name,
     balance: data.credits - data.debits,
     credits: data.credits,
@@ -133,6 +136,7 @@ export function getCategories(transactions: Transaction[]): CategoryData[] {
   ).size || 1;
 
   return Array.from(categoryMap.entries()).map(([name, data]) => ({
+    id: name,
     name,
     totalSpent: data.totalSpent,
     transactionCount: data.transactionCount,

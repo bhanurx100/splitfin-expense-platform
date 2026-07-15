@@ -270,7 +270,7 @@ export function PresenceTransition({
 
 // ─── NumberTransition (animated number counter) ───────────────────────────────
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import { animate } from "framer-motion"
 
 interface NumberTransitionProps {

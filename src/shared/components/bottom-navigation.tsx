@@ -10,19 +10,19 @@ import { cn } from "@/src/lib/utils"
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 interface NavItem {
-  id:     string
-  label:  string
-  href:   string
-  Icon:   React.FC<{ className?: string; strokeWidth?: number }>
+  id: string
+  label: string
+  href: string
+  Icon: React.ComponentType<any>
   isCta?: boolean
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: "home",     label: "Home",     href: "/",         Icon: Home },
+  { id: "home", label: "Home", href: "/", Icon: Home },
   { id: "activity", label: "Activity", href: "/activity", Icon: Activity },
-  { id: "add",      label: "Add",      href: "#",         Icon: Plus,  isCta: true },
-  { id: "groups",   label: "Groups",   href: "/groups",   Icon: Users },
-  { id: "profile",  label: "You",      href: "/profile",  Icon: User },
+  { id: "add", label: "Add", href: "#", Icon: Plus, isCta: true },
+  { id: "groups", label: "Groups", href: "/groups", Icon: Users },
+  { id: "profile", label: "You", href: "/profile", Icon: User },
 ]
 
 // ─── BottomNavigation ────────────────────────────────────────────────────────
@@ -53,20 +53,20 @@ export function BottomNavigation({ onAddPress }: BottomNavigationProps) {
         className="w-full max-w-[430px] pointer-events-auto"
         style={{
           paddingBottom: "env(safe-area-inset-bottom, 12px)",
-          paddingLeft:   "12px",
-          paddingRight:  "12px",
-          paddingTop:    "0px",
+          paddingLeft: "12px",
+          paddingRight: "12px",
+          paddingTop: "0px",
         }}
       >
         <div
           className="flex items-center justify-around rounded-[24px] relative overflow-hidden"
           style={{
-            height:              "64px",
-            background:          "rgba(3, 7, 18, 0.88)",
-            backdropFilter:      "blur(32px) saturate(180%)",
-            WebkitBackdropFilter:"blur(32px) saturate(180%)",
-            border:              "1px solid rgba(255, 255, 255, 0.08)",
-            boxShadow:           "0 -4px 24px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.04)",
+            height: "64px",
+            background: "rgba(3, 7, 18, 0.88)",
+            backdropFilter: "blur(32px) saturate(180%)",
+            WebkitBackdropFilter: "blur(32px) saturate(180%)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            boxShadow: "0 -4px 24px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.04)",
           }}
         >
           {/* Ambient gradient glow from active tab */}
@@ -123,14 +123,14 @@ function NavTab({ item, active }: { item: NavItem; active: boolean }) {
             layoutId="nav-active-bg"
             className="absolute top-2 left-1/2 -translate-x-1/2 rounded-[12px]"
             style={{
-              width:      "44px",
-              height:     "32px",
+              width: "44px",
+              height: "32px",
               background: "rgba(124, 58, 237, 0.18)",
-              border:     "1px solid rgba(124, 58, 237, 0.25)",
+              border: "1px solid rgba(124, 58, 237, 0.25)",
             }}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{    opacity: 0, scale: 0.8 }}
+            exit={{ opacity: 0, scale: 0.8 }}
             transition={{ type: "spring", stiffness: 380, damping: 30 }}
           />
         )}
@@ -139,9 +139,9 @@ function NavTab({ item, active }: { item: NavItem; active: boolean }) {
       {/* Icon */}
       <motion.div
         animate={{
-          color:    active ? "#9F6EF5" : "rgba(249,250,251,0.40)",
-          y:        active ? -1 : 0,
-          scale:    active ? 1.05 : 1,
+          color: active ? "#9F6EF5" : "rgba(249,250,251,0.40)",
+          y: active ? -1 : 0,
+          scale: active ? 1.05 : 1,
         }}
         transition={{ type: "spring", stiffness: 400, damping: 28 }}
         className="relative"
@@ -155,8 +155,8 @@ function NavTab({ item, active }: { item: NavItem; active: boolean }) {
       {/* Label */}
       <motion.span
         animate={{
-          color:    active ? "#9F6EF5" : "rgba(249,250,251,0.38)",
-          opacity:  active ? 1 : 0.8,
+          color: active ? "#9F6EF5" : "rgba(249,250,251,0.38)",
+          opacity: active ? 1 : 0.8,
         }}
         transition={{ duration: 0.2 }}
         className="text-[10px] font-medium leading-none tracking-wide relative"
@@ -172,7 +172,7 @@ function NavTab({ item, active }: { item: NavItem; active: boolean }) {
             style={{ background: "#7C3AED" }}
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{    opacity: 0, scale: 0 }}
+            exit={{ opacity: 0, scale: 0 }}
             transition={{ type: "spring", stiffness: 400, damping: 24 }}
           />
         )}
@@ -191,11 +191,11 @@ function CtaButton({ onPress }: { onPress?: () => void }) {
         onClick={onPress}
         className="relative flex items-center justify-center rounded-[16px] overflow-hidden"
         style={{
-          width:      "52px",
-          height:     "40px",
+          width: "52px",
+          height: "40px",
           background: "linear-gradient(135deg, #FF008C 0%, #7C3AED 100%)",
-          boxShadow:  "0 4px 20px rgba(180, 20, 160, 0.50), 0 2px 8px rgba(0,0,0,0.4)",
-          marginTop:  "-6px",
+          boxShadow: "0 4px 20px rgba(180, 20, 160, 0.50), 0 2px 8px rgba(0,0,0,0.4)",
+          marginTop: "-6px",
         }}
         whileTap={{ scale: 0.90 }}
         whileHover={{ scale: 1.06 }}

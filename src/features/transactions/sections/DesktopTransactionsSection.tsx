@@ -7,7 +7,6 @@
  */
 
 import { useState, useMemo, useCallback } from "react";
-import { TrendingUp, TrendingDown } from "lucide-react";
 
 import {
   filterTransactions,

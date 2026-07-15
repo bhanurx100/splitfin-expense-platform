@@ -9,6 +9,7 @@
 
 import { cn } from "@/src/lib/utils";
 import React from "react";
+import Image from "next/image";
 
 // ── Amount display ─────────────────────────────────────────────────────────────
 
@@ -87,7 +88,7 @@ export function SFAvatar({ name, color, size = 36, src, className }: AvatarProps
 
   if (src) {
     return (
-      <img
+      <Image
         src={src}
         alt={name}
         width={size}

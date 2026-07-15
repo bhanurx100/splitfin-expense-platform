@@ -45,7 +45,7 @@ export function EditMemberSheet({ groupId, member, onClose }: Props) {
 
   // Pre-fill with existing values
   const [name, setName] = useState(member.name);
-  const [phone, setPhone] = useState(member.phone);
+  const [phone, setPhone] = useState(member.phone ?? "");
   const [upiId, setUpiId] = useState(member.upiId ?? "");
   const [color, setColor] = useState(member.color);
   const [showUpi, setShowUpi] = useState(!!member.upiId);
@@ -55,7 +55,7 @@ export function EditMemberSheet({ groupId, member, onClose }: Props) {
   const phoneError = phone.length > 0 && !isValidPhone(phone);
   const hasChanges =
     name.trim() !== member.name ||
-    phone.trim() !== member.phone ||
+    phone.trim() !== (member.phone ?? "") ||
     upiId.trim() !== (member.upiId ?? "") ||
     color !== member.color;
 

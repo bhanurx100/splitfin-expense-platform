@@ -6,7 +6,9 @@ import { staggerContainer, staggerItem } from "@/src/features/splitpay/motions/m
 import { TimelineCard } from "./timeline-card"
 import { SettlementCard } from "./settlement-card"
 import { PaymentDetectedCard } from "./payment-detected-card"
-import type { TimelineCard as TimelineCardData } from "../../types"
+import type { TimelineCard as TimelineCardType } from "../../types"
+
+type TimelineCardData = TimelineCardType
 
 // ─── Date group label ─────────────────────────────────────────────────────────
 

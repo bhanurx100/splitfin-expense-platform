@@ -124,13 +124,29 @@ export function computeSettlements(balances: MemberBalance[]): Settlement[] {
 
   const settlements: Settlement[] = [];
   let ci = 0, di = 0;
+  let settlementIndex = 0;
 
   while (ci < credits.length && di < debts.length) {
     const credit = credits[ci];
     const debt   = debts[di];
     const amount = round2(Math.min(credit.amount, debt.amount));
 
-    if (amount > 0.005) settlements.push({ fromId: debt.id, toId: credit.id, amount });
+    if (amount > 0.005) {
+      settlements.push({
+        id: `settlement_${settlementIndex++}`,
+        groupId: "",
+        payerId: debt.id,
+        receiverId: credit.id,
+        amount,
+        currency: "INR",
+        status: "pending" as const,
+        createdAt: new Date().toISOString(),
+        payer: { id: debt.id, name: "", email: "", createdAt: "" },
+        receiver: { id: credit.id, name: "", email: "", createdAt: "" },
+        fromId: debt.id,
+        toId: credit.id,
+      });
+    }
 
     credit.amount = round2(credit.amount - amount);
     debt.amount   = round2(debt.amount   - amount);

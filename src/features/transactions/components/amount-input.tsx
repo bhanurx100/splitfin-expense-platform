@@ -12,7 +12,7 @@ import { cn } from "@/src/lib/utils";
 
 type AmountInputProps = {
   value: string;
-  onChange: (value: string | undefined, currency: string) => void;
+  onChange: (value: string | undefined) => void;
   placeholder?: string;
   disabled?: boolean;
   defaultCurrency?: 'INR' | 'USD' | 'EUR';
@@ -40,7 +40,7 @@ export const AmountInput = ({
     if (!value) return;
 
     const reversedValue = parseFloat(value) * -1;
-    onChange(reversedValue.toString(), currency);
+    onChange(reversedValue.toString());
   };
 
   return (
@@ -74,7 +74,7 @@ export const AmountInput = ({
         onChange={(e) => {
           const newCurrency = e.target.value as 'INR' | 'USD' | 'EUR';
           setCurrency(newCurrency);
-          onChange(value, newCurrency);
+          onChange(value);
         }}
         disabled={disabled}
         className="absolute left-16 top-1.5 h-6 w-16 rounded-md border border-input bg-background px-1 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
@@ -91,7 +91,7 @@ export const AmountInput = ({
         value={value}
         decimalScale={2}
         decimalsLimit={2}
-        onValueChange={(newValue) => onChange(newValue, currency)}
+        onValueChange={(newValue) => onChange(newValue)}
         disabled={disabled}
       />
 

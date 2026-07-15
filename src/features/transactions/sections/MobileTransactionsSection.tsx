@@ -14,7 +14,6 @@ import {
   groupTransactionsByDate,
   totalIncome,
   totalExpense,
-  fmtDate,
   type Tx,
   type TypeFilter,
 } from "@/src/features/transactions/lib/filters";

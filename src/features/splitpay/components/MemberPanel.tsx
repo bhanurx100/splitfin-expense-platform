@@ -45,6 +45,7 @@ export function AddMemberSheet({
       name: name.trim(),
       phone: phone.trim(),
       upiId: upiId.trim() || undefined,
+      emoji: "👤",
     });
     onClose();
   }, [name, phone, upiId, groupId, addMember, onClose]);

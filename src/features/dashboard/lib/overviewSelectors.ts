@@ -1,4 +1,4 @@
-import { Transaction } from './csvParser';
+import { Transaction } from '@/src/types/transaction';
 
 export interface OverviewData {
   totalBalance: number;
@@ -40,11 +40,11 @@ export interface CategoryData {
 export function calculateOverviewData(transactions: Transaction[]): OverviewData {
   // Calculate total balance (Income - Expense)
   const income = transactions
-    .filter(t => t.type === 'Income')
+    .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0);
   
   const expenses = transactions
-    .filter(t => t.type === 'Expense')
+    .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + t.amount, 0);
   
   const totalBalance = income - expenses;
@@ -65,14 +65,14 @@ export function calculateOverviewData(transactions: Transaction[]): OverviewData
   });
   
   const recentNet = recentTransactions.reduce((sum, t) => {
-    if (t.type === 'Income') return sum + t.amount;
-    if (t.type === 'Expense') return sum - t.amount;
+    if (t.type === 'income') return sum + t.amount;
+    if (t.type === 'expense') return sum - t.amount;
     return sum;
   }, 0);
   
   const previousNet = previousTransactions.reduce((sum, t) => {
-    if (t.type === 'Income') return sum + t.amount;
-    if (t.type === 'Expense') return sum - t.amount;
+    if (t.type === 'income') return sum + t.amount;
+    if (t.type === 'expense') return sum - t.amount;
     return sum;
   }, 0);
   
@@ -82,10 +82,10 @@ export function calculateOverviewData(transactions: Transaction[]): OverviewData
   
   const net = income - expenses;
   
-  // Calculate category breakdown (only for Expense transactions)
+  // Calculate category breakdown (only for expense transactions)
   const categoryMap = new Map<string, number>();
   transactions
-    .filter(t => t.type === 'Expense')
+    .filter(t => t.type === 'expense')
     .forEach(t => {
       const current = categoryMap.get(t.category) || 0;
       categoryMap.set(t.category, current + t.amount);
@@ -109,10 +109,10 @@ export function calculateOverviewData(transactions: Transaction[]): OverviewData
     
     const current = monthlyData.get(monthKey) || { income: 0, expense: 0, net: 0 };
     
-    if (t.type === 'Income') {
+    if (t.type === 'income') {
       current.income += t.amount;
       current.net += t.amount;
-    } else if (t.type === 'Expense') {
+    } else if (t.type === 'expense') {
       current.expense += t.amount;
       current.net -= t.amount;
     }
@@ -163,18 +163,18 @@ export function calculateAccountData(transactions: Transaction[]): AccountData[]
       credits: 0,
       debits: 0,
       transactionCount: 0,
-      lastTransaction: t.date,
+      lastTransaction: t.date.toISOString(),
     };
 
-    if (t.type === 'Income') {
+    if (t.type === 'income') {
       current.credits += t.amount;
-    } else if (t.type === 'Expense') {
+    } else if (t.type === 'expense') {
       current.debits += t.amount;
     }
 
     current.transactionCount += 1;
-    if (t.date > current.lastTransaction) {
-      current.lastTransaction = t.date;
+    if (t.date.toISOString() > current.lastTransaction) {
+      current.lastTransaction = t.date.toISOString();
     }
 
     accountMap.set(t.account, current);
@@ -197,7 +197,7 @@ export function calculateCategoryData(transactions: Transaction[]): CategoryData
     monthlySpending: number;
   }>();
 
-  const debitTransactions = transactions.filter(t => t.type === 'Expense');
+  const debitTransactions = transactions.filter(t => t.type === 'expense');
   const totalExpenses = debitTransactions.reduce((sum, t) => sum + t.amount, 0);
 
   debitTransactions.forEach(t => {

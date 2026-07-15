@@ -3,7 +3,9 @@
 import { motion } from "framer-motion"
 import { Edit2, Trash2, CheckCircle } from "lucide-react"
 import { staggerItem, springs } from "@/src/features/splitpay/motions/motion"
-import type { TimelineCard as TimelineCardData } from "../../types"
+import type { TimelineCard } from "../../types"
+
+type TimelineCardData = TimelineCard
 
 // ─── Card accent config per type ─────────────────────────────────────────────
 

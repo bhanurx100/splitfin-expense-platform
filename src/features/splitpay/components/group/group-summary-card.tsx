@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useId } from "react"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { animate } from "framer-motion"
 import { fadeUp, breathingGlow } from "@/src/features/splitpay/motions/motion"
@@ -88,8 +88,10 @@ function BalanceRing({ youWillPay, youWillReceive, sym }: RingProps) {
         <motion.div
             className="relative flex items-center justify-center mx-auto"
             style={{ width: 126, height: 126 }}
-            animate={breathingGlow.orbShadow.animate}
-            transition={{ ...breathingGlow.orbShadow.transition, boxShadow: undefined }}
+            animate={{
+                boxShadow: breathingGlow.orbShadow.animate.boxShadow as any,
+            }}
+            transition={breathingGlow.orbShadow.transition}
         >
             {/* Outer glow */}
             <div

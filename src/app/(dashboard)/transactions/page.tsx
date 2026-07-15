@@ -22,8 +22,8 @@ import type { Tx } from "@/src/features/transactions/lib/filters";
 
 import { ImportCard } from "./import-card";
 import { TransactionsSkeleton } from "@/src/features/transactions/sections/TransactionsSkeleton";
-import { DesktopTransactionsSection } from "@/src/features/transactions/sections/DesktopTransactionsSection";
-import { MobileTransactionsSection } from "@/src/features/transactions/sections/MobileTransactionsSection";
+import { createAuroraTransactionFeed } from "@/src/features/transactions/aurora/adapter";
+import { AuroraTransactions } from "@/src/features/transactions/aurora/transactions";
 
 enum VIEW {
   LIST = "LIST",
@@ -84,24 +84,7 @@ export default function TransactionsPage() {
   return (
     <>
       <AccountDialog />
-      {/* Desktop */}
-      <div className="hidden lg:block">
-        <DesktopTransactionsSection
-          transactions={transactions}
-          onUpload={onUpload}
-          onNewTx={newTx.onOpen}
-          onBulkDelete={(ids) => bulkDelete.mutate({ ids })}
-          isDisabled={isDisabled}
-        />
-      </div>
-      {/* Mobile */}
-      <div className="lg:hidden">
-        <MobileTransactionsSection
-          transactions={transactions}
-          onUpload={onUpload}
-          onNewTx={newTx.onOpen}
-        />
-      </div>
+      <AuroraTransactions feed={createAuroraTransactionFeed(transactions)} onNewTransaction={newTx.onOpen} />
     </>
   );
 }

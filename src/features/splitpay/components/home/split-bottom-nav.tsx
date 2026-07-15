@@ -13,12 +13,12 @@ import type { SplitNavItem } from "../../types"
 
 // ─── Icon map ─────────────────────────────────────────────────────────────────
 
-const ICON_MAP: Record<string, React.FC<{ size?: number; strokeWidth?: number; className?: string }>> = {
-  home:              LayoutGrid,
-  "arrow-left-right":ArrowLeftRight,
-  users:             Users,
-  "credit-card":     CreditCard,
-  "pie-chart":       PieChart,
+const ICON_MAP: Record<string, React.ComponentType<any>> = {
+  home: LayoutGrid,
+  "arrow-left-right": ArrowLeftRight,
+  users: Users,
+  "credit-card": CreditCard,
+  "pie-chart": PieChart,
 }
 
 // ─── SplitPay active icon with breathing glow ─────────────────────────────────
@@ -29,10 +29,10 @@ function SplitPayIcon() {
       className="relative flex items-center justify-center"
       animate={{ scale: [1, 1.03, 1] }}
       transition={{
-        duration:  3,
-        repeat:    Infinity,
-        ease:      "easeInOut",
-        repeatType:"loop",
+        duration: 3,
+        repeat: Infinity,
+        ease: "easeInOut",
+        repeatType: "loop",
       }}
     >
       {/* Glow halo */}
@@ -40,9 +40,9 @@ function SplitPayIcon() {
         aria-hidden
         className="absolute inset-0 rounded-full"
         style={{
-          background:  "rgba(124,58,237,0.30)",
-          filter:      "blur(8px)",
-          transform:   "scale(1.6)",
+          background: "rgba(124,58,237,0.30)",
+          filter: "blur(8px)",
+          transform: "scale(1.6)",
         }}
       />
       <Users
@@ -78,12 +78,12 @@ export function SplitBottomNav({ items }: SplitBottomNavProps) {
         <div
           className="relative flex items-center justify-around rounded-[26px] overflow-hidden"
           style={{
-            height:              "64px",
-            background:          "rgba(3, 7, 18, 0.90)",
-            backdropFilter:      "blur(40px) saturate(180%)",
-            WebkitBackdropFilter:"blur(40px) saturate(180%)",
-            border:              "1px solid rgba(255,255,255,0.08)",
-            boxShadow:           "0 -2px 32px rgba(0,0,0,0.60), inset 0 1px 0 rgba(255,255,255,0.05)",
+            height: "64px",
+            background: "rgba(3, 7, 18, 0.90)",
+            backdropFilter: "blur(40px) saturate(180%)",
+            WebkitBackdropFilter: "blur(40px) saturate(180%)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            boxShadow: "0 -2px 32px rgba(0,0,0,0.60), inset 0 1px 0 rgba(255,255,255,0.05)",
           }}
         >
           {/* Ambient active tab glow */}
@@ -125,10 +125,10 @@ function NavTab({ item }: { item: SplitNavItem }) {
           layoutId="split-nav-pill"
           className="absolute top-2 rounded-[12px]"
           style={{
-            width:      "46px",
-            height:     "30px",
+            width: "46px",
+            height: "30px",
             background: "rgba(124,58,237,0.16)",
-            border:     "1px solid rgba(124,58,237,0.24)",
+            border: "1px solid rgba(124,58,237,0.24)",
           }}
           initial={false}
           transition={{ type: "spring", stiffness: 380, damping: 30 }}
@@ -144,7 +144,7 @@ function NavTab({ item }: { item: SplitNavItem }) {
             size={20}
             strokeWidth={isActive ? 2.2 : 1.8}
             style={{
-              color:      isActive ? "#9F6EF5" : "rgba(249,250,251,0.36)",
+              color: isActive ? "#9F6EF5" : "rgba(249,250,251,0.36)",
               transition: "color 0.2s ease",
             }}
           />
@@ -155,8 +155,8 @@ function NavTab({ item }: { item: SplitNavItem }) {
       <span
         className="relative z-10 font-medium leading-none"
         style={{
-          fontSize:   "10px",
-          color:      isActive ? "#9F6EF5" : "rgba(249,250,251,0.36)",
+          fontSize: "10px",
+          color: isActive ? "#9F6EF5" : "rgba(249,250,251,0.36)",
           transition: "color 0.2s ease",
         }}
       >
@@ -168,10 +168,10 @@ function NavTab({ item }: { item: SplitNavItem }) {
         <motion.div
           className="absolute bottom-1 rounded-full"
           style={{
-            width:      "4px",
-            height:     "4px",
+            width: "4px",
+            height: "4px",
             background: "#7C3AED",
-            boxShadow:  "0 0 6px rgba(124,58,237,0.60)",
+            boxShadow: "0 0 6px rgba(124,58,237,0.60)",
           }}
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}

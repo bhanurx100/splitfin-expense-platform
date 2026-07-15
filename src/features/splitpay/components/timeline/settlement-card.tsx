@@ -3,7 +3,7 @@
 import { motion } from "framer-motion"
 import { CheckCircle } from "lucide-react"
 import { staggerItem } from "@/src/features/splitpay/motions/motion"
-import type { TimelineCard } from "../timeline/timeline-card"
+import type { TimelineCard } from "../../types"
 
 interface SettlementCardProps {
   card: TimelineCard

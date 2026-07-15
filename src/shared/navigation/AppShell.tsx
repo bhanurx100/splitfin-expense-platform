@@ -1,329 +1,35 @@
 "use client";
 
-import { memo, useState } from "react";
+import { ClerkLoaded, ClerkLoading, UserButton } from "@clerk/nextjs";
+import { motion } from "framer-motion";
+import { Building2, PieChart, Home, Landmark, Loader2, ReceiptText, UsersRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClerkLoaded, ClerkLoading, UserButton } from "@clerk/nextjs";
-import { Loader2, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
-import { Icon } from "@iconify/react";
-import {
-  ThemeToggle,
-  ThemeToggleCompact,
-} from "@/src/shared/components/theme-toggle";
+import { type ReactNode, useState } from "react";
 import { cn } from "@/src/lib/utils";
+import { ThemeToggleCompact } from "@/src/shared/components/theme-toggle";
 
-// ── Shared nav config ─────────────────────────────────────────────────────────
-type NavItem = {
-  href: string;
-  label: string;
-  icon: string;
-  exact: boolean;
-};
+type NavItem = { href: string; label: string; icon: LucideIcon; exact?: boolean };
+const items: NavItem[] = [
+  { href: "/", label: "Overview", icon: Home, exact: true },
+  { href: "/transactions", label: "Transactions", icon: ReceiptText },
+  { href: "/split", label: "SplitPay", icon: UsersRound },
+  { href: "/categories", label: "Categories", icon: PieChart },
+  { href: "/accounts", label: "Accounts", icon: Landmark },
+];
 
-const NAV: NavItem[] = [
-  { href: "/", label: "Overview", icon: "line-md:home-twotone", exact: true },
-  {
-    href: "/transactions",
-    label: "Transactions",
-    icon: "bitcoin-icons:transactions-filled",
-    exact: false,
-  },
-  {
-    href: "/split",
-    label: "SplitPay",
-    icon: "glyphs-poly:users",
-    exact: false,
-  },
-  {
-    href: "/categories",
-    label: "Categories",
-    icon: "material-symbols:category",
-    exact: false,
-  },
-  { href: "/accounts", label: "Accounts", icon: "lucide:wallet", exact: false },
-] as const;
+const active = (item: NavItem, pathname: string) => item.exact ? pathname === item.href : pathname.startsWith(item.href);
 
-function isActive(href: string, exact: boolean, pathname: string) {
-  return exact ? pathname === href : pathname.startsWith(href);
-}
-
-const ACTIVE_GRADIENT = "linear-gradient(135deg, #10B981, #059669)";
-const INACTIVE_COLOR = "rgba(148,163,184,0.85)";
-
-// ── Desktop sidebar ───────────────────────────────────────────────────────────
-
-const DesktopSidebar = memo(function DesktopSidebar({
-  collapsed,
-  onToggle,
-}: {
-  collapsed: boolean;
-  onToggle: () => void;
-}) {
+export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const sidebarWidth = collapsed ? 80 : 220;
-
-  return (
-    <aside
-      className="fixed inset-y-0 left-0 z-40 hidden flex-col transition-[width] duration-200 lg:flex"
-      style={{
-        width: `${sidebarWidth}px`,
-        background: "var(--sf-card,var(--surface-card))",
-        borderRight: "1px solid var(--sf-border-subtle,var(--border-subtle))",
-      }}
-    >
-      {/* Header with logo */}
-      <div
-        className="flex h-[72px] flex-shrink-0 items-center px-5"
-        style={{
-          borderBottom:
-            "1px solid var(--sf-border-subtle,var(--border-subtle))",
-        }}
-      >
-        <div
-          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl"
-          style={{ background: "linear-gradient(135deg,#10B981,#059669)" }}
-        >
-          <TrendingUp className="h-4 w-4 text-white" strokeWidth={2.5} />
-        </div>
-        {!collapsed && (
-          <span
-            className="ml-3 text-[18px] font-bold tracking-tight"
-            style={{ color: "var(--sf-text-primary,var(--text-primary))" }}
-          >
-            Split<span style={{ color: "#10B981" }}>Fin</span>
-          </span>
-        )}
-      </div>
-
-      {/* Nav links */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
-        {NAV.map(({ href, label, icon, exact }) => {
-          const active = isActive(href, exact, pathname);
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex h-[40px] items-center rounded-xl px-3 transition-all duration-150",
-                collapsed ? "justify-center" : "gap-[12px]",
-                active
-                  ? "bg-[rgba(16,185,129,0.08)] font-semibold"
-                  : "font-medium hover:bg-[rgba(148,163,184,0.06)]"
-              )}
-              style={{ marginBottom: "2px" }}
-              title={collapsed ? label : undefined}
-            >
-              <Icon
-                icon={icon}
-                width={20}
-                height={20}
-                className="flex-shrink-0"
-                style={{
-                  color: active ? undefined : INACTIVE_COLOR,
-                  ...(active
-                    ? {
-                      background: ACTIVE_GRADIENT,
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                    }
-                    : {}),
-                }}
-              />
-              {!collapsed && (
-                <span
-                  className="text-[13px] font-medium whitespace-nowrap"
-                  style={{
-                    color: active
-                      ? "#10B981"
-                      : "var(--sf-text-muted,var(--text-muted))",
-                  }}
-                >
-                  {label}
-                </span>
-              )}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Footer: collapse toggle + user */}
-      <div
-        className="flex-shrink-0 space-y-2 p-3"
-        style={{
-          borderTop: "1px solid var(--sf-border-subtle,var(--border-subtle))",
-        }}
-      >
-        <button
-          type="button"
-          onClick={onToggle}
-          className="flex h-[36px] w-full items-center justify-center rounded-lg transition-colors hover:bg-[rgba(148,163,184,0.08)]"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed ? (
-            <ChevronRight
-              className="h-4 w-4"
-              style={{ color: INACTIVE_COLOR }}
-            />
-          ) : (
-            <ChevronLeft
-              className="h-4 w-4"
-              style={{ color: INACTIVE_COLOR }}
-            />
-          )}
-        </button>
-
-        {!collapsed && <ThemeToggleCompact />}
-
-        <div
-          className={cn(
-            "flex items-center rounded-xl px-3 py-2",
-            collapsed ? "justify-center" : "gap-3"
-          )}
-          style={{ background: "var(--sf-sunken,var(--surface-sunken))" }}
-        >
-          <ClerkLoaded>
-            <UserButton afterSignOutUrl="/" />
-          </ClerkLoaded>
-          <ClerkLoading>
-            <Loader2 className="h-5 w-5 animate-spin opacity-40" />
-          </ClerkLoading>
-          {!collapsed && (
-            <span className="text-xs font-medium opacity-50">Account</span>
-          )}
-        </div>
-      </div>
-    </aside>
-  );
-});
-
-// ── Mobile header ─────────────────────────────────────────────────────────────
-
-function MobileHeader() {
-  return (
-    <header
-      className="sticky top-0 z-50 flex h-[64px] flex-shrink-0 items-center justify-between px-4 lg:hidden"
-      style={{
-        background: "var(--sf-card,var(--surface-card))",
-        borderBottom: "1px solid var(--sf-border-subtle,var(--border-subtle))",
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
-      }}
-    >
-      <Link href="/" className="flex items-center gap-2">
-        <div
-          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg"
-          style={{ background: "linear-gradient(135deg,#10B981,#059669)" }}
-        >
-          <TrendingUp className="h-3.5 w-3.5 text-white" strokeWidth={2.5} />
-        </div>
-        <span
-          className="text-[18px] font-bold tracking-tight"
-          style={{ color: "var(--sf-text-primary,var(--text-primary))" }}
-        >
-          Split<span style={{ color: "#10B981" }}>Fin</span>
-        </span>
-      </Link>
-      <div className="flex items-center gap-2">
-        <ThemeToggle />
-        <ClerkLoaded>
-          <UserButton afterSignOutUrl="/" />
-        </ClerkLoaded>
-        <ClerkLoading>
-          <Loader2 className="h-4 w-4 animate-spin opacity-40" />
-        </ClerkLoading>
-      </div>
-    </header>
-  );
-}
-
-// ── Mobile bottom nav ─────────────────────────────────────────────────────────
-
-const MobileDock = memo(function MobileDock() {
-  const pathname = usePathname();
-  return (
-    <nav
-      className="fixed bottom-0 left-0 right-0 z-40 lg:hidden"
-      style={{
-        background: "var(--sf-card,var(--surface-card))",
-        borderTop: "1px solid var(--sf-border-subtle,var(--border-subtle))",
-        paddingBottom: "env(safe-area-inset-bottom,8px)",
-        paddingTop: "8px",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-      }}
-    >
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(5, 1fr)",
-        }}
-      >
-        {NAV.map(({ href, label, icon, exact }) => {
-          const active = isActive(href, exact, pathname);
-          return (
-            <Link
-              key={href}
-              href={href}
-              className="flex flex-col items-center justify-center py-1"
-            >
-              <Icon
-                icon={icon}
-                width={22}
-                height={22}
-                style={{
-                  color: active ? undefined : INACTIVE_COLOR,
-                  ...(active
-                    ? {
-                      background: ACTIVE_GRADIENT,
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                    }
-                    : {}),
-                }}
-              />
-              <span
-                className="mt-0.5 text-[11px] font-medium leading-tight"
-                style={{
-                  whiteSpace: "nowrap",
-                  color: active ? "#10B981" : INACTIVE_COLOR,
-                }}
-              >
-                {label}
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
-  );
-});
-
-// ── Shell ─────────────────────────────────────────────────────────────────────
-
-export function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
-
-  return (
-    <div
-      className="min-h-screen"
-      style={{ background: "var(--sf-page,var(--surface-bg))" }}
-    >
-      <DesktopSidebar
-        collapsed={collapsed}
-        onToggle={() => setCollapsed((c) => !c)}
-      />
-      <div
-        className={cn(
-          "flex min-h-screen flex-col transition-[padding-left] duration-200",
-          collapsed ? "lg:pl-[80px]" : "lg:pl-[220px]"
-        )}
-      >
-        <MobileHeader />
-        <main className="flex-1">{children}</main>
-      </div>
-      <MobileDock />
-    </div>
-  );
+  return <div className="min-h-dvh bg-[var(--surface-bg)] text-[var(--text-primary)]">
+    <aside className={cn("fixed inset-y-0 left-0 z-[var(--aurora-z-navigation)] hidden border-r border-[var(--aurora-glass-border)] bg-[var(--surface-sidebar)]/80 backdrop-blur-2xl transition-[width] duration-300 lg:flex lg:flex-col", collapsed ? "w-20" : "w-60")}>
+      <Link href="/" className="flex h-[76px] items-center gap-3 border-b border-[var(--aurora-glass-border)] px-5"><span className="grid h-9 w-9 place-items-center rounded-xl bg-[var(--aurora-gradient)] text-white shadow-[var(--aurora-glow-violet)]"><Building2 size={19} /></span>{!collapsed && <span className="text-lg font-bold tracking-tight">SplitFin</span>}</Link>
+      <nav aria-label="Main navigation" className="flex-1 space-y-1 p-3">{items.map((item) => { const Icon = item.icon; const selected = active(item, pathname); return <Link key={item.href} href={item.href} aria-current={selected ? "page" : undefined} title={collapsed ? item.label : undefined} className={cn("relative flex h-11 items-center rounded-xl px-3 text-sm font-medium transition", collapsed ? "justify-center" : "gap-3", selected ? "bg-[var(--aurora-gradient-soft)] text-[var(--aurora-cyan)]" : "text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)]")}><Icon size={19} strokeWidth={selected ? 2.25 : 1.8} />{!collapsed && item.label}{selected && <motion.span layoutId="desktop-nav" className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-[var(--aurora-cyan)] shadow-[var(--aurora-glow-cyan)]" />}</Link>; })}</nav>
+      <div className="space-y-2 border-t border-[var(--aurora-glass-border)] p-3"><button type="button" onClick={() => setCollapsed((state) => !state)} className="w-full rounded-lg py-2 text-xs text-[var(--text-secondary)] hover:bg-white/5">{collapsed ? "Expand" : "Collapse"}</button>{!collapsed && <ThemeToggleCompact />}<div className={cn("flex items-center rounded-xl bg-white/5 p-2", collapsed ? "justify-center" : "gap-2")}><ClerkLoaded><UserButton afterSignOutUrl="/" /></ClerkLoaded><ClerkLoading><Loader2 className="animate-spin" size={18} /></ClerkLoading>{!collapsed && <span className="text-xs text-[var(--text-secondary)]">Your account</span>}</div></div>
+    </aside>
+    <div className={cn("min-h-dvh transition-[padding-left] duration-300", collapsed ? "lg:pl-20" : "lg:pl-60")}><header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-[var(--aurora-glass-border)] bg-[var(--surface-bg)]/75 px-4 backdrop-blur-xl lg:hidden"><Link href="/" className="font-bold tracking-tight">SplitFin</Link><ThemeToggleCompact /></header><main>{children}</main></div>
+    <nav aria-label="Main navigation" className="fixed inset-x-0 bottom-0 z-[var(--aurora-z-navigation)] border-t border-[var(--aurora-glass-border)] bg-[var(--surface-raised)]/85 px-1 backdrop-blur-2xl lg:hidden"><div className="mx-auto flex max-w-[30rem]">{items.map((item) => { const Icon = item.icon; const selected = active(item, pathname); return <Link key={item.href} href={item.href} aria-current={selected ? "page" : undefined} className={cn("relative flex min-h-16 flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium", selected ? "text-[var(--aurora-cyan)]" : "text-[var(--text-muted)]")}><Icon size={20} strokeWidth={selected ? 2.25 : 1.8} />{item.label}{selected && <span className="absolute bottom-1 h-0.5 w-7 rounded-full bg-[var(--aurora-cyan)] shadow-[var(--aurora-glow-cyan)]" />}</Link>; })}</div></nav>
+  </div>;
 }
