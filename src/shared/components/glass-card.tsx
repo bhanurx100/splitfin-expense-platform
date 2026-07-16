@@ -18,6 +18,8 @@ interface GlassCardProps extends Omit<HTMLMotionProps<"div">, "children"> {
   padding?: "none" | "sm" | "md" | "lg"
   animated?: boolean
   pressable?: boolean
+  strong?: boolean
+  interactive?: boolean
   children?: React.ReactNode
 }
 
@@ -97,6 +99,8 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
       padding = "md",
       animated = false,
       pressable = false,
+      strong = false,
+      interactive = false,
       children,
       className,
       style,
@@ -111,6 +115,8 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
       "relative",
       // Glass
       variantStyles[variant],
+      // Strong variant (higher opacity)
+      strong && "bg-[rgba(255,255,255,0.08)]",
       // Border
       "border",
       borderStyles[border],
@@ -120,6 +126,8 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
       paddingStyles[padding],
       // Saturate for richer glass
       "[--tw-backdrop-saturate:saturate(160%)]",
+      // Interactive hover effect
+      interactive && "transition-transform hover:-translate-y-0.5",
       className
     )
 
