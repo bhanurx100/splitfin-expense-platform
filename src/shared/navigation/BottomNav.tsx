@@ -1,104 +1,69 @@
-"use client";
-/**
- * shared/navigation/BottomNav.tsx
- *
- * Mobile bottom navigation for SplitFin.
- * 5 tabs: Overview · Transactions · SplitPay · Categories · Accounts
- * Matches the reference design exactly (purple active state, icon + label).
- *
- * Usage: drop into AppShell in place of the existing BottomNav.
- */
+'use client'
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import {
-  Home,
-  ArrowLeftRight,
-  SplitSquareHorizontal,
-  LayoutGrid,
-  Wallet,
-} from "lucide-react";
-import { cn } from "@/src/lib/utils";
+import { cn } from '@/src/lib/utils'
+import { motion } from 'framer-motion'
+import { Home, List, PieChart, Users, Wallet } from 'lucide-react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
-const NAV_ITEMS = [
-  { href: "/", label: "Overview", icon: Home, exact: true },
-  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight, exact: false },
-  { href: "/split", label: "SplitPay", icon: SplitSquareHorizontal, exact: false },
-  { href: "/categories", label: "Categories", icon: LayoutGrid, exact: false },
-  { href: "/accounts", label: "Accounts", icon: Wallet, exact: false },
-] as const;
+const tabs = [
+  { href: '/', label: 'Overview', icon: Home },
+  { href: '/transactions', label: 'Transactions', icon: List },
+  { href: '/splitpay', label: 'SplitPay', icon: Users },
+  { href: '/categories', label: 'Categories', icon: PieChart },
+  { href: '/accounts', label: 'Accounts', icon: Wallet },
+]
 
-export function SFBottomNav() {
-  const pathname = usePathname();
+export function BottomNav() {
+  const pathname = usePathname()
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch justify-around lg:hidden"
-      style={{
-        background: "var(--sf-card)",
-        borderTop: "1px solid var(--sf-border-subtle)",
-        paddingBottom: "env(safe-area-inset-bottom, 6px)",
-        paddingTop: "6px",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-      }}
+      aria-label="Primary"
+      className="fixed inset-x-0 z-40 mx-auto max-w-md px-4"
+      style={{ bottom: 'max(12px, env(safe-area-inset-bottom))' }}
     >
-      {NAV_ITEMS.map(({ href, label, icon: Icon, exact }) => {
-        const active = exact ? pathname === href : pathname.startsWith(href);
-        const isSplit = href === "/split";
-
-        if (isSplit) {
+      <div
+        className="edge-light flex items-stretch justify-between rounded-3xl border border-[rgba(145,130,255,0.18)] px-2 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+        style={{
+          background: 'rgba(10, 12, 27, 0.92)',
+          backdropFilter: 'blur(28px)',
+          WebkitBackdropFilter: 'blur(28px)',
+        }}
+      >
+        {tabs.map((tab) => {
+          const active = pathname === tab.href
+          const Icon = tab.icon
           return (
             <Link
-              key={href}
-              href={href}
-              className="flex flex-col items-center justify-center gap-0.5 px-2 py-1 -mt-3"
-            >
-              <div
-                className="flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-transform active:scale-90"
-                style={{
-                  background: active
-                    ? "linear-gradient(135deg,#6C5CE7,#A29BFE)"
-                    : "linear-gradient(135deg,#6C5CE7,#A29BFE)",
-                  boxShadow: "0 4px 16px rgba(108,92,231,0.45)",
-                }}
-              >
-                <Icon className="h-5 w-5 text-white" strokeWidth={4.5} />
-              </div>
-              <span className="text-[10px] font-semibold" style={{ color: "var(--brand)" }}>
-                {label}
-              </span>
-            </Link>
-          );
-        }
-
-        return (
-          <Link
-            key={href}
-            href={href}
-            className="flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-[56px]"
-          >
-            <div
+              key={tab.href}
+              href={tab.href}
+              aria-current={active ? 'page' : undefined}
               className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150",
-                active && "bg-[var(--sf-info-bg)]",
+                'relative flex min-h-11 min-w-11 flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-1.5 text-[10px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-ring',
+                active ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              <Icon
-                className={cn("h-5 w-5 transition-colors")}
-                style={{ color: active ? "var(--brand)" : "var(--sf-text-muted)" }}
-                strokeWidth={active ? 2.5 : 1.8}
-              />
-            </div>
-            <span
-              className="text-[10px] font-semibold transition-colors"
-              style={{ color: active ? "var(--brand)" : "var(--sf-text-muted)" }}
-            >
-              {label}
-            </span>
-          </Link>
-        );
-      })}
+              {active && (
+                <motion.span
+                  layoutId="nav-glow"
+                  className="absolute inset-0 rounded-2xl bg-primary/10"
+                  transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                />
+              )}
+              <Icon className="relative size-5" aria-hidden="true" />
+              <span className="relative">{tab.label}</span>
+              {active && (
+                <motion.span
+                  layoutId="nav-underline"
+                  className="absolute -bottom-0.5 h-0.5 w-6 rounded-full bg-primary glow-primary"
+                  transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                />
+              )}
+            </Link>
+          )
+        })}
+      </div>
     </nav>
-  );
+  )
 }
