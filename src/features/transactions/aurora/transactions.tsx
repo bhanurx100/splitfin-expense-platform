@@ -2,7 +2,7 @@
 
 import { ArrowDownRight, ArrowUpRight, ArrowUpDown, ChevronRight, FileText, Plus, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import { AuroraButton, AuroraSheet, GlassCard } from "@/src/design-system";
+import { GlassCard } from "@/src/shared/components/glass-card";
 import { cn } from "@/src/lib/utils";
 import type { AuroraTransaction, AuroraTransactionFeed } from "./contracts";
 
