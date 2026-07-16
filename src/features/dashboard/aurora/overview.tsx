@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowDownRight, ArrowUpRight, Eye, EyeOff, Landmark, Plus, ReceiptText, Sparkles, UsersRound } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { GlassCard } from "@/src/design-system";
+import { GlassCard } from "@/src/shared/components/glass-card";
 import { cn } from "@/src/lib/utils";
 import type { AuroraOverviewModel } from "./contracts";
 
