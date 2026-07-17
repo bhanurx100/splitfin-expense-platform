@@ -1,11 +1,11 @@
-# Spendwise - Modern Expense Tracking Dashboard
+# Splitfin - Modern Expense Tracking Dashboard
 
 [![Next.js](https://img.shields.io/badge/Next.js-14-black.svg?style=flat&logo=next.js)](https://nextjs.org)
 [![React](https://img.shields.io/badge/React-18-blue.svg?style=flat&logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg?style=flat&logo=typescript)](https://www.typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4-blue.svg?style=flat&logo=tailwind)](https://tailwindcss.com)
 
-Spendwise is a full-stack personal finance management dashboard built with Next.js 14 App Router. Track your income and expenses, manage accounts and categories, visualize spending patterns with interactive charts, and analyze summaries with powerful filters and data tables.
+Splitfin is a full-stack personal finance management dashboard built with Next.js 14 App Router. Track your income and expenses, manage accounts and categories, visualize spending patterns with interactive charts, and analyze summaries with powerful filters and data tables.
 
 ## ✨ Features
 
@@ -19,7 +19,7 @@ Spendwise is a full-stack personal finance management dashboard built with Next.
 - **Type-safe API** with TanStack Query hooks, Zod validation, Drizzle ORM
 - **Dark/Light mode** support
 
-![Dashboard Screenshot](https://via.placeholder.com/1200x600/1e3a8a/ffffff?text=Spendwise+Dashboard) <!-- Replace with actual screenshot -->
+![Dashboard Screenshot](https://via.placeholder.com/1200x600/1e3a8a/ffffff?text=Splitfin+Dashboard) <!-- Replace with actual screenshot -->
 
 ## 📁 File Structure
 

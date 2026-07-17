@@ -1,7 +1,7 @@
 /**
  * scripts/seed-demo.ts
  *
- * Realistic demo data for SpendWise finance dashboard.
+ * Realistic demo data for Splitfin finance dashboard.
  * Run: bun ./scripts/seed-demo.ts
  *
  * Generates 90 days of believable Indian personal finance data:
@@ -422,7 +422,7 @@ function creditCardPayments(): TxSeed[] {
 
 // ── Assemble all transactions ─────────────────────────────────────────────────
 async function main() {
-  console.log("🌱 Seeding demo data for SpendWise...\n");
+  console.log("🌱 Seeding demo data for Splitfin...\n");
 
   const allTransactions: TxSeed[] = [
     ...salaryTransactions(),
