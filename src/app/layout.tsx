@@ -2,41 +2,37 @@ import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
 import type { PropsWithChildren } from "react";
 
-import { Toaster } from "@/src/components/ui/sonner";
-import { siteConfig } from "@/src/config";
 import { QueryProviders } from "@/src/providers/query-provider";
-import { SheetProvider } from "@/src/providers/sheet-provider";
-import { ThemeProvider } from "@/src/providers/theme-provider";
 
 import "./globals.css";
 
-export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#3b82f6" },
-    { media: "(prefers-color-scheme: dark)", color: "#1e3a8a" },
-  ],
+export const metadata: Metadata = {
+  title: "SplitFin — Take control, split smart, save more",
+  description:
+    "A premium fintech experience: track transactions, split expenses with friends, understand categories, and manage every account in one place.",
 };
 
-export const metadata: Metadata = siteConfig;
+export const viewport: Viewport = {
+  themeColor: "#04050f",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
 
+/**
+ * Root layout — production architecture preserved:
+ * - ClerkProvider: required by middleware-protected routes and (auth) pages.
+ * - QueryProviders: React Query client for the kept API/feature hooks.
+ * Removed: ThemeProvider (Aurora is dark-only), SheetProvider + Toaster
+ * (old sheet/toaster UI deleted with the legacy dashboard).
+ */
 const RootLayout = ({ children }: Readonly<PropsWithChildren>) => {
   return (
     <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
-        <body className="bg-[var(--surface-base)] text-[var(--text-primary)] antialiased">
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange={false}
-            storageKey="splitfin-theme"
-          >
-            <QueryProviders>
-              <SheetProvider />
-              <Toaster richColors position="top-right" />
-              {children}
-            </QueryProviders>
-          </ThemeProvider>
+      <html lang="en" className="dark bg-background">
+        <body className="font-sans antialiased">
+          <QueryProviders>{children}</QueryProviders>
         </body>
       </html>
     </ClerkProvider>
