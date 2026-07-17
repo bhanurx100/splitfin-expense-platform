@@ -1,90 +1,53 @@
-"use client";
+'use client'
 
-/**
- * app/(dashboard)/transactions/page.tsx
- *
- * Composition root — no inline UI.
- * All logic and rendering delegated to feature sections.
- * Uses canonical Transaction[] as single source of truth.
- */
+import { FilterChips } from '@/src/shared/components/filter-chips'
+import { IconButton } from '@/src/shared/components/icon-button'
+import { MobileShell } from '@/src/shared/components/mobile-shell'
+import { PageHeader } from '@/src/shared/components/page-header'
+import { TransactionActions } from '@/src/features/transactions/components/transaction-actions'
+import { FlowSummary } from '@/src/features/transactions/sections/flow-summary'
+import { TransactionTimeline } from '@/src/features/transactions/sections/transaction-timeline'
+import { monthGroups, transactionSummary } from '@/src/lib/data'
+import { Search, SlidersHorizontal } from 'lucide-react'
+import { useState } from 'react'
 
-import { useState, useCallback } from "react";
-import { toast } from "sonner";
-
-import { transactions as transactionSchema } from "@/src/db/schema";
-import { useSelectAccount } from "@/src/features/accounts/hooks/use-select-account";
-import { useBulkCreateTransactions } from "@/src/features/transactions/api/use-bulk-create-transactions";
-import { useBulkDeleteTransactions } from "@/src/features/transactions/api/use-bulk-delete-transactions";
-import { useGetTransactions } from "@/src/features/transactions/api/use-get-transactions";
-import { useNewTransaction } from "@/src/features/transactions/hooks/use-new-transaction";
-import { INITIAL_IMPORT } from "@/src/features/transactions/constants";
-import type { Tx } from "@/src/features/transactions/lib/filters";
-
-import { ImportCard } from "./import-card";
-import { TransactionsSkeleton } from "@/src/features/transactions/sections/TransactionsSkeleton";
-import { createAuroraTransactionFeed } from "@/src/features/transactions/aurora/adapter";
-import { AuroraTransactions } from "@/src/features/transactions/aurora/transactions";
-
-enum VIEW {
-  LIST = "LIST",
-  IMPORT = "IMPORT",
-}
+const typeOptions = [
+  { id: 'all', label: 'All' },
+  { id: 'income', label: 'Income' },
+  { id: 'expense', label: 'Expense' },
+  { id: 'transfer', label: 'Transfer' },
+  { id: 'refund', label: 'Refund' },
+]
 
 export default function TransactionsPage() {
-  const [view, setView] = useState<VIEW>(VIEW.LIST);
-  const [importData, setImportData] = useState(INITIAL_IMPORT);
-  const [AccountDialog, confirmAccount] = useSelectAccount();
-  const newTx = useNewTransaction();
-  const bulkCreate = useBulkCreateTransactions();
-  const bulkDelete = useBulkDeleteTransactions();
-  const txQuery = useGetTransactions();
-  const transactions = (txQuery.data ?? []) as Tx[];
-  const isDisabled = txQuery.isLoading || bulkDelete.isPending;
-
-  const onUpload = useCallback((r: typeof INITIAL_IMPORT) => {
-    setImportData(r);
-    setView(VIEW.IMPORT);
-  }, []);
-
-  const onCancelImport = useCallback(() => {
-    setImportData(INITIAL_IMPORT);
-    setView(VIEW.LIST);
-  }, []);
-
-  const onSubmitImport = useCallback(
-    async (values: (typeof transactionSchema.$inferInsert)[]) => {
-      const accountId = await confirmAccount();
-      if (!accountId)
-        return toast.error("Please select an account to continue.");
-      bulkCreate.mutate(
-        values.map((v) => ({ ...v, accountId: accountId as string })),
-        { onSuccess: onCancelImport }
-      );
-    },
-    [confirmAccount, bulkCreate, onCancelImport]
-  );
-
-  if (view === VIEW.IMPORT) {
-    return (
-      <>
-        <AccountDialog />
-        <div className="mx-auto w-full max-w-screen-xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-          <ImportCard
-            data={importData.data}
-            onCancel={onCancelImport}
-            onSubmit={onSubmitImport}
-          />
-        </div>
-      </>
-    );
-  }
-
-  if (txQuery.isLoading) return <TransactionsSkeleton />;
+  const [type, setType] = useState('all')
 
   return (
-    <>
-      <AccountDialog />
-      <AuroraTransactions feed={createAuroraTransactionFeed(transactions)} onNewTransaction={newTx.onOpen} />
-    </>
-  );
+    <MobileShell>
+      <PageHeader
+        title="Transactions"
+        subtitle="Your money stories"
+        actions={
+          <>
+            <IconButton icon={Search} label="Search transactions" />
+            <IconButton icon={SlidersHorizontal} label="Transaction filters" />
+          </>
+        }
+      />
+
+      <FlowSummary summary={transactionSummary} />
+
+      <TransactionActions />
+
+      <FilterChips
+        options={typeOptions}
+        value={type}
+        onChange={setType}
+        layoutId="transaction-type-chip"
+        ariaLabel="Filter transactions by type"
+      />
+
+      <TransactionTimeline groups={monthGroups} activeType={type} />
+    </MobileShell>
+  )
 }
