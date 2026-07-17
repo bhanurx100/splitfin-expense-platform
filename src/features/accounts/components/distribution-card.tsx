@@ -3,7 +3,7 @@
 import { AnimatedAmount } from '@/src/shared/components/animated-number'
 import { DonutChart } from '@/src/shared/components/donut-chart'
 import { GlassCard } from '@/src/shared/components/glass-card'
-import { formatCurrency } from '@/src/lib/utils'
+import { formatCurrency } from '@/src/shared/lib/format'
 import type { DistributionSegment } from '@/src/types/transaction'
 import { motion } from 'framer-motion'
 import { TrendingUp } from 'lucide-react'
