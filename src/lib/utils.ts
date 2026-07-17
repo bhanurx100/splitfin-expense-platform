@@ -1,15 +1,7 @@
 /**
  * lib/utils.ts
  *
- * App-wide utility helpers.
- *
- * REMOVED (now in shared/lib/):
- *   formatCurrency   → shared/lib/currency.ts  (formatUSD)
- *   formatPercentage → shared/lib/currency.ts
- *   formatDateRange  → shared/lib/date.ts
- *
- * Re-exported here for zero-churn backward compat with any existing import
- * of `formatCurrency` / `formatPercentage` / `formatDateRange` from "@/lib/utils".
+ * App-wide utility helpers shared by UI and the kept API layer.
  */
 
 import { type ClassValue, clsx } from "clsx";
@@ -53,10 +45,3 @@ export function fillMissingDays(
     return found ?? { date: day, income: 0, expenses: 0 };
   });
 }
-
-// ── Backward-compat re-exports ─────────────────────────────────────────────────
-// Callers that import these from "@/lib/utils" continue to work without change.
-
-export { formatUSD      as formatCurrency  } from "@/src/shared/lib/currency";
-export { formatPercentage                  } from "@/src/shared/lib/currency";
-export { formatDateRange                   } from "@/src/shared/lib/date";
