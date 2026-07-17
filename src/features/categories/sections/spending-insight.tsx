@@ -1,6 +1,7 @@
 'use client'
 
 import { GlassCard } from '@/src/shared/components/glass-card'
+import { formatCurrency } from '@/src/shared/lib/format'
 import type { Currency } from '@/src/types/transaction'
 import { ChevronRight, PiggyBank } from 'lucide-react'
 
@@ -10,7 +11,7 @@ interface SpendingInsightProps {
   currency: Currency
 }
 
-export function SpendingInsight({ savedAmount, comparedCategory }: SpendingInsightProps) {
+export function SpendingInsight({ savedAmount, comparedCategory, currency }: SpendingInsightProps) {
   return (
     <GlassCard strong interactive className="flex items-center gap-4 p-4">
       <span className="glow-breathe flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary">
@@ -21,7 +22,7 @@ export function SpendingInsight({ savedAmount, comparedCategory }: SpendingInsig
         <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">
           You spent{' '}
           <span className="font-semibold text-positive">
-            ₹{new Intl.NumberFormat('en-IN').format(savedAmount)}
+            {formatCurrency(savedAmount, currency)}
           </span>{' '}
           less on {comparedCategory} compared to last month.
         </p>
