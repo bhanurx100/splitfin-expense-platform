@@ -198,3 +198,12 @@ export interface PortfolioSummary {
   sparkline: number[]
   currency: Currency
 }
+
+export interface CategoryPageSummary {
+  totalSpent: number
+  changePercent: number
+  month: string
+  savedAmount: number
+  comparedCategory: string
+  currency: Currency
+}
