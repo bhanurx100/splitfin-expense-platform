@@ -1,13 +1,13 @@
 /**
  * Transaction Mapper
- * 
+ *
  * Maps between different transaction formats:
  * - Database schema (from repository)
- * - Canonical Transaction model
+ * - Canonical Transaction model (src/types/transaction.ts — Premium UI shape)
  * - CSV format
  */
 
-import { Transaction } from '@/src/types/transaction';
+import { Transaction, TransactionType } from '@/src/types/transaction';
 
 // Database transaction type (from repository)
 export interface DbTransaction {
@@ -22,30 +22,46 @@ export interface DbTransaction {
   categoryId: string | null;
 }
 
+const timeFormatter = new Intl.DateTimeFormat('en-IN', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: true,
+});
+
+const dateFormatter = new Intl.DateTimeFormat('en-IN', {
+  day: 'numeric',
+  month: 'short',
+});
+
 /**
  * Convert database transaction to canonical Transaction
  */
-export function dbToCanonical(dbTx: DbTransaction, source: Transaction['source'] = 'manual'): Transaction {
+export function dbToCanonical(dbTx: DbTransaction): Transaction {
   // Determine type based on amount sign
-  const type: Transaction['type'] = dbTx.amount >= 0 ? 'income' : 'expense';
-  
+  const type: TransactionType = dbTx.amount >= 0 ? 'income' : 'expense';
+  const date = dbTx.date instanceof Date ? dbTx.date : new Date(dbTx.date);
+
   return {
     id: dbTx.id,
-    date: dbTx.date,
-    amount: Math.abs(dbTx.amount),
-    type,
-    account: dbTx.account,
+    merchant: dbTx.payee,
+    subtitle: dbTx.notes ?? dbTx.payee,
     category: dbTx.category || 'Uncategorized',
-    description: dbTx.payee,
-    source,
+    icon: 'more-horizontal',
+    account: dbTx.account,
+    type,
+    amount: Math.abs(dbTx.amount),
+    currency: 'INR',
+    time: timeFormatter.format(date),
+    date: dateFormatter.format(date),
+    status: 'completed',
   };
 }
 
 /**
  * Convert array of database transactions to canonical Transactions
  */
-export function dbToCanonicalMany(dbTxs: DbTransaction[], source: Transaction['source'] = 'manual'): Transaction[] {
-  return dbTxs.map(tx => dbToCanonical(tx, source));
+export function dbToCanonicalMany(dbTxs: DbTransaction[]): Transaction[] {
+  return dbTxs.map(tx => dbToCanonical(tx));
 }
 
 /**
@@ -54,12 +70,12 @@ export function dbToCanonicalMany(dbTxs: DbTransaction[], source: Transaction['s
  */
 export function canonicalToDb(tx: Transaction, accountId: string, categoryId: string | null = null): Omit<DbTransaction, 'accountId' | 'categoryId'> {
   const amount = tx.type === 'expense' ? -tx.amount : tx.amount;
-  
+
   return {
     id: tx.id,
-    date: tx.date,
+    date: new Date(tx.date),
     amount,
-    payee: tx.description,
+    payee: tx.merchant,
     notes: null,
     account: tx.account,
     category: tx.category,
