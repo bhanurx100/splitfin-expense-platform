@@ -5,6 +5,7 @@ import type {
   PortfolioSummary,
   BalanceSummary,
   CashFlowPoint,
+  CategoryPageSummary,
   CategorySummary,
   DistributionSegment,
   Insight,
@@ -671,3 +672,13 @@ export const accountDistribution: DistributionSegment[] = [
   { id: 'debit', label: 'Debit Cards', amount: 25600, percent: 9, color: 'var(--warning)' },
   { id: 'wallets', label: 'Wallets & Cash', amount: 77770, percent: 28, color: 'var(--positive)' },
 ]
+
+/** Categories page headline metrics — single source of truth for the page. */
+export const categoryPageSummary: CategoryPageSummary = {
+  totalSpent: 176020,
+  changePercent: 12.4,
+  month: 'June 2026',
+  savedAmount: 6230,
+  comparedCategory: 'Food',
+  currency: 'INR',
+}
