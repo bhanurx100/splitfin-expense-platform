@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/logo.svg" alt="SplitFin" width="88" />
+<img src="public/logo.svg" alt="SplitFin" width="88" />
 
 # SplitFin
 
@@ -112,7 +112,7 @@ Most personal finance apps assume money is a solitary problem: one person, one w
 
 ## Screenshots
 
-> Screenshots live under `assets/screenshots/`. Replace placeholders with current builds before publishing a release.
+> Screenshots live under `public/images/screenshots/`. Replace placeholders with current builds before publishing a release.
 
 <table>
 <tr>
@@ -120,7 +120,7 @@ Most personal finance apps assume money is a solitary problem: one person, one w
 
 **Dashboard Overview**
 
-<img src="assets/screenshots/dashboard-overview.png" alt="Dashboard overview" />
+<img src="public/images/screenshots/dashboard-overview.png" alt="Dashboard overview" />
 
 </td>
 <td width="50%">
@@ -142,7 +142,7 @@ Most personal finance apps assume money is a solitary problem: one person, one w
 
 **Transactions Overview**
 
-<img src="assets/screenshots/transactions-overview.png" alt="Transactions overview" />
+<img src="public/images/screenshots/transactions-overview.png" alt="Transactions overview" />
 
 </td>
 <td width="50%">
@@ -164,7 +164,7 @@ Most personal finance apps assume money is a solitary problem: one person, one w
 
 **SplitPay Overview**
 
-<img src="assets/screenshots/splitpay-overview.png" alt="SplitPay overview" />
+<img src="public/images/screenshots/splitpay-overview.png" alt="SplitPay overview" />
 
 </td>
 <td width="50%">
@@ -186,7 +186,7 @@ Most personal finance apps assume money is a solitary problem: one person, one w
 
 **Categories Overview**
 
-<img src="assets/screenshots/categories-overview.png" alt="Categories overview" />
+<img src="public/images/screenshots/categories-overview.png" alt="Categories overview" />
 
 </td>
 <td width="50%">
@@ -208,7 +208,7 @@ Most personal finance apps assume money is a solitary problem: one person, one w
 
 **Accounts Overview**
 
-<img src="assets/screenshots/accounts-overview.png" alt="Accounts overview" />
+<img src="public/images/screenshots/accounts-overview.png" alt="Accounts overview" />
 
 </td>
 <td width="50%">
