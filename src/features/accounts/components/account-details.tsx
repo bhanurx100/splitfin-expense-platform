@@ -71,10 +71,16 @@ export function AccountDetailsSection({ details }: { details: AccountDetails }) 
         >
           {/* Detail grid */}
           <dl className="grid grid-cols-2 gap-x-4 gap-y-4">
-            {details.fields.map((field) => {
+            {details.fields.map((field, i) => {
               const Icon = iconMap[field.icon] ?? Landmark
               return (
-                <div key={field.id} className="flex items-start gap-2.5">
+                <motion.div
+                  key={field.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 26, delay: 0.05 + i * 0.04 }}
+                  className="flex items-start gap-2.5"
+                >
                   <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary">
                     <Icon className="size-3.5" aria-hidden="true" />
                   </span>
@@ -93,7 +99,7 @@ export function AccountDetailsSection({ details }: { details: AccountDetails }) 
                         <button
                           type="button"
                           aria-label={`Copy ${field.label}`}
-                          className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+                          className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
                           onClick={() => navigator.clipboard?.writeText(field.value)}
                         >
                           <Copy className="size-3" aria-hidden="true" />
@@ -101,7 +107,7 @@ export function AccountDetailsSection({ details }: { details: AccountDetails }) 
                       )}
                     </dd>
                   </div>
-                </div>
+                </motion.div>
               )
             })}
           </dl>

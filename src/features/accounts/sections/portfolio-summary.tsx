@@ -1,42 +1,64 @@
 'use client'
 
 import { AnimatedAmount } from '@/src/shared/components/animated-number'
+import { GlassCard } from '@/src/shared/components/glass-card'
+import { CATEGORY_PALETTE } from '@/src/shared/lib/category-colors'
 import { formatCurrency } from '@/src/shared/lib/format'
-import type { PortfolioSummary } from '@/src/types/transaction'
+import type { AccountPreview, AccountType, PortfolioSummary } from '@/src/types/transaction'
 import { motion } from 'framer-motion'
-import { ChevronRight, TrendingUp } from 'lucide-react'
-import { useId } from 'react'
+import { ChevronRight, TrendingUp, Wallet2 } from 'lucide-react'
+import { useMemo, useState } from 'react'
 
-function Sparkline({ points }: { points: number[] }) {
-  const gradientId = useId()
-  const max = Math.max(...points)
-  const w = 200
-  const h = 56
-  const step = w / (points.length - 1)
-  const coords = points.map((p, i) => `${i * step},${h - (p / max) * (h - 6) - 3}`)
-
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="h-14 w-full" aria-hidden="true" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <polygon points={`0,${h} ${coords.join(' ')} ${w},${h}`} fill={`url(#${gradientId})`} />
-      <polyline
-        points={coords.join(' ')}
-        fill="none"
-        stroke="var(--primary)"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
+const typeLabels: Record<AccountType, string> = {
+  bank: 'Bank',
+  'credit-card': 'Credit Card',
+  'debit-card': 'Debit Card',
+  wallet: 'Wallet',
+  cash: 'Cash',
+  investment: 'Investments',
 }
 
-export function PortfolioSummarySection({ portfolio }: { portfolio: PortfolioSummary }) {
+interface AllocationSlice {
+  id: AccountType
+  label: string
+  amount: number
+  percent: number
+  color: string
+}
+
+/** Real allocation derived from the user's accounts — never invented. */
+function useAllocation(accounts: AccountPreview[]): AllocationSlice[] {
+  return useMemo(() => {
+    const totals: Partial<Record<AccountType, number>> = {}
+    for (const account of accounts) {
+      totals[account.type] = (totals[account.type] ?? 0) + Math.abs(account.balance)
+    }
+    const entries = (Object.keys(totals) as AccountType[])
+      .map((type) => ({ type, amount: totals[type] ?? 0 }))
+      .sort((a, b) => b.amount - a.amount)
+    const grand = entries.reduce((sum, entry) => sum + entry.amount, 0)
+    if (grand === 0) return []
+    return entries.map(({ type, amount }, i) => ({
+      id: type,
+      label: typeLabels[type],
+      amount,
+      percent: Math.round((amount / grand) * 100),
+      color: CATEGORY_PALETTE[i % CATEGORY_PALETTE.length],
+    }))
+  }, [accounts])
+}
+
+export function PortfolioSummarySection({
+  portfolio,
+  accounts,
+}: {
+  portfolio: PortfolioSummary
+  accounts: AccountPreview[]
+}) {
+  const allocation = useAllocation(accounts)
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const invested = portfolio.totalValue - portfolio.totalGain
+
   return (
     <section aria-label="Portfolio summary" className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -50,44 +72,122 @@ export function PortfolioSummarySection({ portfolio }: { portfolio: PortfolioSum
         </button>
       </div>
 
-      <motion.div
+      <GlassCard
+        strong
+        interactive
+        hoverGlow="purple"
+        className="flex flex-col gap-5 p-5"
         initial={{ opacity: 0, y: 14 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        transition={{ type: 'spring', stiffness: 240, damping: 26 }}
-        className="glass grid grid-cols-[1.5fr_1fr] gap-4 rounded-xl p-5"
       >
-        <div className="flex flex-col gap-1">
-          <p className="text-xs text-muted-foreground">Total Investment Value</p>
-          <AnimatedAmount
-            value={portfolio.totalValue}
-            currency={portfolio.currency}
-            className="text-2xl font-extrabold tracking-tight"
-          />
-          <Sparkline points={portfolio.sparkline} />
-          <p className="text-xs text-muted-foreground">
-            Today&apos;s Change{' '}
-            <span className="font-semibold text-positive">
-              +{formatCurrency(portfolio.todaysChange, portfolio.currency)} ({portfolio.todaysChangePercent}%)
-            </span>
-          </p>
+        {/* Value block */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">Total Investment Value</p>
+            <AnimatedAmount
+              value={portfolio.totalValue}
+              currency={portfolio.currency}
+              className="mt-1 block text-2xl font-extrabold tracking-tight"
+            />
+            <p className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-positive">
+              <TrendingUp className="size-3.5" aria-hidden="true" />
+              +{formatCurrency(portfolio.todaysChange, portfolio.currency)} today (
+              {portfolio.todaysChangePercent}%)
+            </p>
+          </div>
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+            <Wallet2 className="size-5" aria-hidden="true" />
+          </span>
         </div>
 
-        <div className="flex flex-col justify-center gap-4 border-l border-border pl-4">
-          <div>
-            <p className="text-xs text-muted-foreground">Holdings</p>
-            <p className="text-xl font-extrabold">{portfolio.holdings}</p>
+        {/* Performance indicators — real numbers, no fake charts */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="glass rounded-xl px-3 py-2.5">
+            <p className="text-[11px] text-muted-foreground">Holdings</p>
+            <p className="mt-0.5 text-base font-extrabold tabular-nums">{portfolio.holdings}</p>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Total Gain</p>
-            <p className="flex items-center gap-1 text-sm font-bold text-positive">
-              <TrendingUp className="size-3.5" aria-hidden="true" />
-              +{formatCurrency(portfolio.totalGain, portfolio.currency)}
+          <div className="glass rounded-xl px-3 py-2.5">
+            <p className="text-[11px] text-muted-foreground">Invested</p>
+            <p className="mt-0.5 truncate text-base font-extrabold tabular-nums">
+              {formatCurrency(invested, portfolio.currency)}
             </p>
-            <p className="text-xs font-semibold text-positive">({portfolio.totalGainPercent}%)</p>
+          </div>
+          <div className="glass rounded-xl px-3 py-2.5">
+            <p className="text-[11px] text-muted-foreground">Total Gain</p>
+            <p className="mt-0.5 truncate text-base font-extrabold tabular-nums text-positive">
+              +{portfolio.totalGainPercent}%
+            </p>
           </div>
         </div>
-      </motion.div>
+
+        {/* Asset allocation — derived from real accounts */}
+        {allocation.length > 0 && (
+          <div>
+            <p className="mb-2.5 text-xs font-semibold text-muted-foreground">Asset allocation</p>
+
+            {/* Stacked bar — segments spring in, hover isolates */}
+            <div
+              className="flex h-2.5 w-full gap-0.5 overflow-hidden rounded-full"
+              role="img"
+              aria-label="Asset allocation across account types"
+            >
+              {allocation.map((slice, i) => {
+                const dim = hoveredId !== null && hoveredId !== slice.id
+                return (
+                  <motion.div
+                    key={slice.id}
+                    initial={{ scaleX: 0 }}
+                    whileInView={{ scaleX: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ type: 'spring', stiffness: 120, damping: 22, delay: i * 0.06 }}
+                    className="h-full origin-left rounded-full transition-opacity duration-300"
+                    style={{
+                      width: `${slice.percent}%`,
+                      backgroundColor: slice.color,
+                      boxShadow: dim ? 'none' : `0 0 10px ${slice.color}55`,
+                      opacity: dim ? 0.3 : 1,
+                    }}
+                    onMouseEnter={() => setHoveredId(slice.id)}
+                    onMouseLeave={() => setHoveredId(null)}
+                  />
+                )
+              })}
+            </div>
+
+            {/* Legend rows */}
+            <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1" aria-label="Allocation details">
+              {allocation.map((slice) => {
+                const dim = hoveredId !== null && hoveredId !== slice.id
+                return (
+                  <li key={slice.id}>
+                    <button
+                      type="button"
+                      onMouseEnter={() => setHoveredId(slice.id)}
+                      onMouseLeave={() => setHoveredId(null)}
+                      className={`flex min-h-9 w-full items-center gap-2 rounded-lg px-2 text-left transition-all duration-300 hover:bg-glass focus-visible:outline-2 focus-visible:outline-ring ${
+                        dim ? 'opacity-40' : ''
+                      }`}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="size-2 shrink-0 rounded-full"
+                        style={{ backgroundColor: slice.color, boxShadow: `0 0 6px ${slice.color}` }}
+                      />
+                      <span className="min-w-0 flex-1 truncate text-xs font-medium">
+                        {slice.label}
+                      </span>
+                      <span className="shrink-0 text-xs font-bold tabular-nums text-muted-foreground">
+                        {slice.percent}%
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
+      </GlassCard>
     </section>
   )
 }

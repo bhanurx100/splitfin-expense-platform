@@ -30,10 +30,16 @@ export function AccountCarousel3D({
   accounts,
   activeIndex,
   onActiveChange,
+  requestedIndex,
+  onRequestIndex,
 }: {
   accounts: AccountPreview[]
   activeIndex: number
   onActiveChange: (index: number) => void
+  /** Index an external control wants the carousel to spring to. */
+  requestedIndex?: number
+  /** Pagination-dot taps — parent decides the requested index. */
+  onRequestIndex?: (index: number) => void
 }) {
   const cards: CarouselCardData[] = useMemo(
     () =>
@@ -45,6 +51,7 @@ export function AccountCarousel3D({
         balanceCaption: account.type === 'credit-card' ? 'Outstanding' : 'Available Balance',
         maskedNumber: account.maskedNumber,
         isPrimary: account.isPrimary,
+        iconType: account.type,
         theme: typeThemes[account.type],
       })),
     [accounts],
@@ -63,16 +70,31 @@ export function AccountCarousel3D({
         }}
       />
       <div className="h-[340px] w-full">
-        <AccountCarouselScene cards={cards} onActiveChange={onActiveChange} />
+        <AccountCarouselScene
+          cards={cards}
+          onActiveChange={onActiveChange}
+          requestedIndex={requestedIndex}
+        />
       </div>
 
-      <div className="flex justify-center gap-1.5" aria-hidden="true">
+      <div className="flex justify-center gap-1.5" role="tablist" aria-label="Choose account">
         {accounts.map((account, i) => (
-          <span
+          <button
             key={account.id}
-            className={`h-1.5 rounded-full transition-all duration-300 ${i === activeIndex ? 'w-5 bg-primary' : 'w-1.5 bg-muted'
+            type="button"
+            role="tab"
+            aria-selected={i === activeIndex}
+            aria-label={`${account.institution} ${account.name}`}
+            onClick={() => onRequestIndex?.(i)}
+            className="group/dot flex min-h-6 min-w-6 items-center justify-center focus-visible:outline-2 focus-visible:outline-ring"
+          >
+            <span
+              aria-hidden="true"
+              className={`h-1.5 rounded-full transition-all duration-300 group-hover/dot:bg-primary/70 ${
+                i === activeIndex ? 'w-5 bg-primary' : 'w-1.5 bg-muted'
               }`}
-          />
+            />
+          </button>
         ))}
       </div>
       <p aria-live="polite" className="sr-only">

@@ -18,21 +18,37 @@ import {
   upcomingBills,
 } from '@/src/lib/data'
 import { Bell, Plus } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 
-export default function AccountsPage() {
+function AccountsPageContent() {
+  const searchParams = useSearchParams()
   const [filter, setFilter] = useState<AccountFilter>('all')
   const [activeIndex, setActiveIndex] = useState(0)
+  const [requestedIndex, setRequestedIndex] = useState(0)
 
   const visibleAccounts =
     filter === 'all' ? accounts : accounts.filter((account) => account.type === filter)
 
+  // Deep link: /accounts?account=<id> (e.g. from the Overview preview cards).
+  const deepLinkedId = searchParams.get('account')
+  useEffect(() => {
+    if (!deepLinkedId) return
+    const index = accounts.findIndex((account) => account.id === deepLinkedId)
+    if (index === -1) return
+    setFilter('all')
+    setActiveIndex(index)
+    setRequestedIndex(index)
+  }, [deepLinkedId])
+
   const onFilterChange = (next: AccountFilter) => {
     setFilter(next)
     setActiveIndex(0)
+    setRequestedIndex(0)
   }
 
   const onActiveChange = useCallback((index: number) => setActiveIndex(index), [])
+  const onRequestIndex = useCallback((index: number) => setRequestedIndex(index), [])
 
   const activeAccount = visibleAccounts[Math.min(activeIndex, visibleAccounts.length - 1)]
   const details = activeAccount ? accountDetailsById[activeAccount.id] : undefined
@@ -57,6 +73,8 @@ export default function AccountsPage() {
           accounts={visibleAccounts}
           activeIndex={Math.min(activeIndex, visibleAccounts.length - 1)}
           onActiveChange={onActiveChange}
+          requestedIndex={requestedIndex}
+          onRequestIndex={onRequestIndex}
         />
       ) : (
         <p className="glass rounded-xl p-6 text-center text-sm text-muted-foreground">
@@ -66,11 +84,29 @@ export default function AccountsPage() {
 
       {details && <AccountDetailsSection details={details} />}
 
-      <PortfolioSummarySection portfolio={portfolioSummary} />
+      <PortfolioSummarySection portfolio={portfolioSummary} accounts={accounts} />
 
       <BillsSection bills={upcomingBills} />
 
       <SmartInsights insights={accountInsights} />
     </MobileShell>
+  )
+}
+
+export default function AccountsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <span
+            className="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent"
+            aria-hidden="true"
+          />
+          <span className="sr-only">Loading accounts</span>
+        </div>
+      }
+    >
+      <AccountsPageContent />
+    </Suspense>
   )
 }
