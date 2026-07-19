@@ -14,6 +14,8 @@ interface GlassCardProps extends Omit<HTMLMotionProps<"div">, "children"> {
   variant?: GlassVariant
   border?: GlassBorder
   glow?: GlassGlow
+  /** Glow color the card interpolates toward on hover (requires `interactive`). */
+  hoverGlow?: Exclude<GlassGlow, "none">
   radius?: "md" | "lg" | "xl" | "2xl" | "3xl"
   padding?: "none" | "sm" | "md" | "lg"
   animated?: boolean
@@ -48,6 +50,13 @@ const glowStyles: Record<GlassGlow, React.CSSProperties> = {
   pink: { boxShadow: "0 0 24px rgba(255, 0, 140, 0.20), 0 4px 16px rgba(0,0,0,0.5)" },
   purple: { boxShadow: "0 0 24px rgba(124, 58, 237, 0.20), 0 4px 16px rgba(0,0,0,0.5)" },
   cyan: { boxShadow: "0 0 24px rgba(0, 255, 208, 0.16), 0 4px 16px rgba(0,0,0,0.5)" },
+}
+
+/** Stronger glow the card interpolates toward while hovered. */
+const hoverGlowStyles: Record<Exclude<GlassGlow, "none">, string> = {
+  pink: "0 0 36px rgba(255, 0, 140, 0.38), 0 14px 32px rgba(0,0,0,0.60)",
+  purple: "0 0 36px rgba(124, 58, 237, 0.42), 0 14px 32px rgba(0,0,0,0.60)",
+  cyan: "0 0 36px rgba(0, 255, 208, 0.30), 0 14px 32px rgba(0,0,0,0.60)",
 }
 
 const radiusStyles: Record<NonNullable<GlassCardProps["radius"]>, string> = {
@@ -95,6 +104,7 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
       variant = "default",
       border = "default",
       glow = "none",
+      hoverGlow,
       radius = "xl",
       padding = "md",
       animated = false,
@@ -126,10 +136,12 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
       paddingStyles[padding],
       // Saturate for richer glass
       "[--tw-backdrop-saturate:saturate(160%)]",
-      // Interactive hover effect
-      interactive && "transition-transform hover:-translate-y-0.5",
+      // Interactive affordance (motion handles the lift/glow interpolation)
+      interactive && "cursor-pointer",
       className
     )
+
+    const baseShadow = glowStyles[glow].boxShadow ?? "0 4px 16px rgba(0,0,0,0.5)"
 
     const mergedStyle = {
       ...glowStyles[glow],
@@ -139,6 +151,18 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
     const motionProps = {
       ...(animated ? entranceVariants : {}),
       ...(pressable ? { whileTap: pressVariants.tap } : {}),
+      ...(interactive
+        ? {
+            whileHover: {
+              y: -3,
+              scale: 1.005,
+              boxShadow: hoverGlow ? hoverGlowStyles[hoverGlow] : baseShadow,
+              borderColor: "rgba(255,255,255,0.22)",
+            },
+            whileTap: { scale: 0.99 },
+            transition: { type: "spring" as const, stiffness: 300, damping: 26 },
+          }
+        : {}),
     }
 
     const content = (

@@ -1,13 +1,26 @@
 'use client'
 
 import { AnimatedAmount } from '@/src/shared/components/animated-number'
+import { AvatarStack } from '@/src/shared/components/avatar-stack'
 import { GlassCard } from '@/src/shared/components/glass-card'
-import type { SplitPaySummary } from '@/src/types/transaction'
+import { springs } from '@/src/shared/lib/motion'
+import type { SplitMember, SplitPaySummary } from '@/src/types/transaction'
 import { motion } from 'framer-motion'
-import { ArrowDownLeft, ArrowUpRight, Plus, Scale } from 'lucide-react'
-import Link from 'next/link'
+import { ArrowDownLeft, ArrowRight, ArrowUpRight, Plus, Scale } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
-export function SplitPayPreview({ summary }: { summary: SplitPaySummary }) {
+export function SplitPayPreview({
+  summary,
+  members,
+}: {
+  summary: SplitPaySummary
+  members: SplitMember[]
+}) {
+  const router = useRouter()
+  const open = () => router.push('/splitpay')
+
+  const pending = members.filter((m) => m.direction !== 'settled')
+
   const metrics = [
     {
       id: 'receive',
@@ -40,17 +53,49 @@ export function SplitPayPreview({ summary }: { summary: SplitPaySummary }) {
   ]
 
   return (
-    <GlassCard strong className="relative flex flex-col gap-4 overflow-hidden p-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold">SplitPay Overview</h2>
-        <Link
-          href="/splitpay"
-          className="flex min-h-9 items-center gap-1.5 rounded-xl bg-primary px-3.5 text-sm font-semibold text-primary-foreground glow-primary transition-transform hover:scale-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+    <GlassCard
+      strong
+      interactive
+      hoverGlow="purple"
+      className="relative flex flex-col gap-4 overflow-hidden p-5"
+      onClick={open}
+      role="link"
+      aria-label="SplitPay overview — open SplitPay"
+    >
+      {/* Ambient gradient */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-50"
+        style={{
+          background:
+            'radial-gradient(ellipse 60% 50% at 90% 0%, oklch(0.45 0.18 285 / 22%), transparent)',
+        }}
+        aria-hidden="true"
+      />
+      <div className="relative flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold">SplitPay</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {pending.length > 0
+              ? `${pending.length} pending settlement${pending.length === 1 ? '' : 's'}`
+              : 'All settled up'}
+          </p>
+        </div>
+        <motion.button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            open()
+          }}
+          whileHover={{ scale: 1.06 }}
+          whileTap={{ scale: 0.94 }}
+          transition={springs.snappy}
+          className="flex min-h-9 items-center gap-1.5 rounded-xl bg-primary px-3.5 text-sm font-semibold text-primary-foreground glow-primary focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
         >
           <Plus className="size-4" aria-hidden="true" />
           New Split
-        </Link>
+        </motion.button>
       </div>
+
       <div className="relative flex flex-col gap-3">
         {/* Connecting line */}
         <motion.span
@@ -83,6 +128,26 @@ export function SplitPayPreview({ summary }: { summary: SplitPaySummary }) {
           )
         })}
       </div>
+
+      {/* Friends strip */}
+      {pending.length > 0 && (
+        <div className="relative flex items-center justify-between gap-3 rounded-2xl border border-white/6 bg-white/[0.03] px-3.5 py-3">
+          <div className="flex items-center gap-3">
+            <AvatarStack initials={pending.slice(0, 4).map((m) => m.avatar)} extra={Math.max(pending.length - 4, 0)} />
+            <div className="min-w-0">
+              <p className="truncate text-xs font-medium">
+                {pending[0].name}
+                {pending.length > 1 ? ` +${pending.length - 1}` : ''}
+              </p>
+              <p className="text-[10px] text-muted-foreground">waiting to settle</p>
+            </div>
+          </div>
+          <span className="flex items-center gap-1 text-xs font-semibold text-primary">
+            Settle
+            <ArrowRight className="size-3.5" aria-hidden="true" />
+          </span>
+        </div>
+      )}
     </GlassCard>
   )
 }

@@ -1,17 +1,5 @@
 'use client'
 
-import { MobileShell } from '@/src/shared/components/mobile-shell'
-import { QuickActions } from '@/src/shared/components/quick-actions'
-import {
-  accounts,
-  balanceSummary,
-  cashFlow,
-  categories,
-  greeting,
-  insights,
-  moneySummary,
-  splitPaySummary,
-} from '@/src/lib/data'
 import { HeroCard } from '@/src/features/dashboard/components/hero-card'
 import { MoneySummaryRow } from '@/src/features/dashboard/components/money-summary'
 import { OverviewHeader } from '@/src/features/dashboard/components/overview-header'
@@ -20,14 +8,27 @@ import { CashFlowCard } from '@/src/features/dashboard/sections/cash-flow-card'
 import { CategoriesPreview } from '@/src/features/dashboard/sections/categories-preview'
 import { InsightCard } from '@/src/features/dashboard/sections/insight-card'
 import { SplitPayPreview } from '@/src/features/dashboard/sections/splitpay-preview'
+import {
+  accounts,
+  balanceSummary,
+  cashFlow,
+  categories,
+  greeting,
+  insights,
+  moneySummary,
+  splitMembers,
+  splitPaySummary,
+} from '@/src/lib/data'
+import { MobileShell } from '@/src/shared/components/mobile-shell'
+import { QuickActions, type QuickAction } from '@/src/shared/components/quick-actions'
 import { motion } from 'framer-motion'
-import { Plus, ScanLine, Target, Users } from 'lucide-react'
+import { Plus, ScanLine, Sparkles, Users } from 'lucide-react'
 
-const quickActions = [
-  { id: 'scan', icon: ScanLine, label: 'Scan Bill', hint: 'Auto capture', tone: 'primary' as const },
-  { id: 'add', icon: Plus, label: 'Add Money', hint: 'Any account', tone: 'positive' as const },
-  { id: 'goal', icon: Target, label: 'Set Goal', hint: 'Save smart', tone: 'info' as const },
-  { id: 'split', icon: Users, label: 'SplitPay', hint: 'With friends', tone: 'warning' as const },
+const quickActions: QuickAction[] = [
+  { id: 'add', icon: Plus, label: 'Add Money', hint: 'Any account', tone: 'positive', href: '/accounts' },
+  { id: 'scan', icon: ScanLine, label: 'Scan Bill', hint: 'Auto capture', tone: 'primary', href: '/transactions?action=scan' },
+  { id: 'split', icon: Users, label: 'Split', hint: 'With friends', tone: 'warning', href: '/splitpay' },
+  { id: 'insights', icon: Sparkles, label: 'Insights', hint: 'Spend smart', tone: 'info', href: '/categories' },
 ]
 
 const sectionMotion = {
@@ -41,26 +42,33 @@ export default function OverviewPage() {
   return (
     <MobileShell>
       <OverviewHeader greeting={greeting} />
+      {/* 1 — Hero (→ Accounts) */}
       <motion.div {...sectionMotion}>
         <HeroCard summary={balanceSummary} />
       </motion.div>
-      <motion.div {...sectionMotion}>
-        <MoneySummaryRow summary={moneySummary} />
-      </motion.div>
+      {/* 2 — Quick actions */}
       <motion.section aria-label="Quick actions" {...sectionMotion}>
         <QuickActions actions={quickActions} />
       </motion.section>
+      {/* 3 — Financial summary (→ Transactions, filtered) */}
+      <motion.div {...sectionMotion}>
+        <MoneySummaryRow summary={moneySummary} />
+      </motion.div>
+      {/* 4 — Accounts preview (→ Accounts / account detail) */}
       <motion.div {...sectionMotion}>
         <AccountsPreview accounts={accounts.slice(0, 4)} />
       </motion.div>
+      {/* 5 — Cash flow (→ Transactions) */}
       <motion.div {...sectionMotion}>
         <CashFlowCard data={cashFlow} />
       </motion.div>
+      {/* 6 — Top categories (→ Categories / selected category) */}
       <motion.div {...sectionMotion}>
         <CategoriesPreview categories={categories} />
       </motion.div>
+      {/* 7 — SplitPay preview (→ SplitPay) */}
       <motion.div {...sectionMotion}>
-        <SplitPayPreview summary={splitPaySummary} />
+        <SplitPayPreview summary={splitPaySummary} members={splitMembers} />
       </motion.div>
       {insights.map((insight) => (
         <motion.div key={insight.id} {...sectionMotion}>
