@@ -8,6 +8,8 @@ interface ProgressRingProps {
   strokeWidth?: number
   color?: string
   trackColor?: string
+  /** Adds a soft neon drop-shadow around the progress arc. */
+  glow?: boolean
   children?: React.ReactNode
   label?: string
 }
@@ -18,6 +20,7 @@ export function ProgressRing({
   strokeWidth = 6,
   color = 'var(--primary)',
   trackColor = 'oklch(1 0 0 / 8%)',
+  glow = false,
   children,
   label,
 }: ProgressRingProps) {
@@ -49,11 +52,11 @@ export function ProgressRing({
           strokeLinecap="round"
           strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
-          whileInView={{
+          animate={{
             strokeDashoffset: circumference - (Math.min(percent, 100) / 100) * circumference,
           }}
-          viewport={{ once: true }}
-          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ type: 'spring', stiffness: 120, damping: 22 }}
+          style={glow ? { filter: `drop-shadow(0 0 6px ${color})` } : undefined}
         />
       </svg>
       {children && <div className="absolute inset-0 flex items-center justify-center">{children}</div>}

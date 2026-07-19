@@ -4,12 +4,15 @@ import { AnimatedAmount } from '@/src/shared/components/animated-number'
 import { CategoryIcon } from '@/src/shared/components/category-icon'
 import { DonutChart } from '@/src/shared/components/donut-chart'
 import { SpectralRibbon } from '@/src/shared/components/spectral-ribbon'
+import { withCategoryPalette } from '@/src/shared/lib/category-colors'
 import { formatCurrency } from '@/src/shared/lib/format'
+import { springs } from '@/src/shared/lib/motion'
+import { cn } from '@/src/lib/utils'
 import type { CategorySummary, Currency } from '@/src/types/transaction'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ChevronDown, TrendingUp } from 'lucide-react'
 import dynamic from 'next/dynamic'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 const CategoryRingScene = dynamic(() => import('@/src/shared/three/category-ring-scene'), {
   ssr: false,
@@ -22,15 +25,39 @@ interface SpendHeroProps {
   changePercent: number
   month: string
   currency: Currency
+  /** Deep-linked selection (e.g. from Overview → /categories?category=id). */
+  initialSelectedId?: string | null
 }
 
-export function SpendHero({ categories, totalSpent, changePercent, month, currency }: SpendHeroProps) {
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+export function SpendHero({
+  categories: rawCategories,
+  totalSpent,
+  changePercent,
+  month,
+  currency,
+  initialSelectedId = null,
+}: SpendHeroProps) {
+  const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId)
   const [webglFailed, setWebglFailed] = useState(false)
   const reduced = useReducedMotion()
+
+  // Palette colors by spend rank — data stays content-only; categories
+  // added or removed later are colored automatically.
+  const categories = useMemo(
+    () => withCategoryPalette([...rawCategories].sort((a, b) => b.amount - a.amount)),
+    [rawCategories],
+  )
+
+  useEffect(() => {
+    if (initialSelectedId && categories.some((c) => c.id === initialSelectedId)) {
+      setSelectedId(initialSelectedId)
+    }
+  }, [initialSelectedId, categories])
+
   const selected = categories.find((c) => c.id === selectedId)
   const top = categories[0]
   const focus = selected ?? top
+  const legend = categories.slice(0, 4)
 
   return (
     <section
@@ -41,7 +68,7 @@ export function SpendHero({ categories, totalSpent, changePercent, month, curren
       }}
       aria-label="Total spending summary"
     >
-      {/* LAYER 5 — ambient haze behind the ring composition */}
+      {/* Ambient haze behind the ring composition */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -top-1/4 -right-1/4 size-[80%] rounded-full"
@@ -66,18 +93,67 @@ export function SpendHero({ categories, totalSpent, changePercent, month, curren
         </div>
         <button
           type="button"
-          className="glass flex min-h-11 shrink-0 items-center gap-1.5 rounded-2xl px-3.5 text-sm font-medium text-foreground/90 focus-visible:outline-2 focus-visible:outline-ring"
+          className="glass flex min-h-11 shrink-0 items-center gap-1.5 rounded-2xl px-3.5 text-sm font-medium text-foreground/90 transition-transform hover:scale-[1.03] active:scale-95 focus-visible:outline-2 focus-visible:outline-ring"
         >
           {month}
           <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
         </button>
       </div>
 
-      {/* Composition row: ribbon flows behind the dominant 3D ring */}
-      <div className="relative mt-1 h-56">
+      {/* Balanced composition: legend left, 3D ring right, ribbon behind */}
+      <div className="relative mt-1 flex h-56 items-center">
         <SpectralRibbon className="absolute top-1/2 left-0 h-32 w-full -translate-y-1/2 opacity-80" />
 
-        <div className="absolute top-0 right-1 h-56 w-[58%] min-w-56">
+        {/* Legend — hovering a row lifts its ring segment */}
+        <div className="relative z-10 flex w-[42%] flex-col justify-center gap-1 pl-5">
+          {legend.map((c) => {
+            const active = selectedId === c.id
+            return (
+              <motion.button
+                key={c.id}
+                type="button"
+                onClick={() => setSelectedId(active ? null : c.id)}
+                onPointerEnter={() => setSelectedId(c.id)}
+                onPointerLeave={() => setSelectedId((cur) => (cur === c.id ? null : cur))}
+                animate={{
+                  backgroundColor: active ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0)',
+                  x: active ? 3 : 0,
+                }}
+                transition={springs.soft}
+                className="flex min-h-10 items-center gap-2.5 rounded-xl px-2.5 text-left focus-visible:outline-2 focus-visible:outline-ring"
+                aria-label={`${c.name} — ${c.percent}% of spending`}
+              >
+                <span
+                  className="flex size-6 items-center justify-center rounded-lg transition-all duration-300"
+                  style={{
+                    backgroundColor: `color-mix(in oklch, ${c.color} 18%, transparent)`,
+                    color: c.color,
+                    boxShadow: active ? `0 0 12px color-mix(in oklch, ${c.color} 45%, transparent)` : 'none',
+                  }}
+                >
+                  <CategoryIcon name={c.icon} className="size-3" />
+                </span>
+                <span
+                  className={cn(
+                    'min-w-0 flex-1 truncate text-xs font-medium transition-colors duration-300',
+                    active ? 'text-foreground' : 'text-foreground/75',
+                  )}
+                >
+                  {c.name}
+                </span>
+                <span
+                  className="text-xs font-semibold tabular-nums transition-colors duration-300"
+                  style={{ color: active ? c.color : 'var(--muted-foreground)' }}
+                >
+                  {c.percent}%
+                </span>
+              </motion.button>
+            )
+          })}
+        </div>
+
+        {/* 3D ring */}
+        <div className="absolute top-0 right-1 h-56 w-[58%] min-w-52">
           {!webglFailed ? (
             <>
               <CategoryRingScene
@@ -91,7 +167,6 @@ export function SpendHero({ categories, totalSpent, changePercent, month, curren
                 onSelect={(id) => setSelectedId(id === selectedId ? null : id)}
                 reducedMotion={!!reduced}
               />
-              {/* Central cavity label + contact shadow */}
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-3xl font-extrabold tabular-nums drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
                   {categories.length}
@@ -134,7 +209,7 @@ export function SpendHero({ categories, totalSpent, changePercent, month, curren
         </ul>
       </div>
 
-      {/* Top Category glass panel — embedded, overlapping the lower hero */}
+      {/* Focus category glass panel */}
       <div className="relative px-4 pb-4">
         <motion.div
           key={focus.id}
@@ -148,7 +223,6 @@ export function SpendHero({ categories, totalSpent, changePercent, month, curren
             WebkitBackdropFilter: 'blur(16px)',
           }}
         >
-          {/* LAYER 2 — localized category-colored inner glow */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-0"

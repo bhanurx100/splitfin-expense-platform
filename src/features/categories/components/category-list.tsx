@@ -2,7 +2,9 @@
 
 import { CategoryIcon } from '@/src/shared/components/category-icon'
 import { GlassCard } from '@/src/shared/components/glass-card'
+import { withCategoryPalette } from '@/src/shared/lib/category-colors'
 import { formatCurrency } from '@/src/shared/lib/format'
+import { springs } from '@/src/shared/lib/motion'
 import type { CategorySummary, Currency } from '@/src/types/transaction'
 import { motion } from 'framer-motion'
 import { TrendingDown, TrendingUp } from 'lucide-react'
@@ -13,9 +15,28 @@ interface CategoryListProps {
 }
 
 export function CategoryList({ categories, currency }: CategoryListProps) {
+  // Palette colors by position — data stays content-only.
+  const colored = withCategoryPalette(categories)
+
+  if (colored.length === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.97 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={springs.soft}
+        className="glass rounded-2xl p-8 text-center"
+      >
+        <p className="text-sm font-semibold">Nothing here yet</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Categories appear automatically from your transactions.
+        </p>
+      </motion.div>
+    )
+  }
+
   return (
     <ul className="flex flex-col gap-3" aria-label="Category budgets">
-      {categories.map((cat, i) => {
+      {colored.map((cat, i) => {
         const budgetUsed = cat.budget ? Math.min((cat.amount / cat.budget) * 100, 100) : null
         const overBudget = cat.budget != null && cat.amount > cat.budget * 0.9
         const trendUp = (cat.trend ?? 0) > 0
