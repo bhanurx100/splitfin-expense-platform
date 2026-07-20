@@ -3,12 +3,20 @@
 import { TransactionActions } from '@/src/features/transactions/components/transaction-actions'
 import { FlowSummary } from '@/src/features/transactions/sections/flow-summary'
 import { TransactionTimeline } from '@/src/features/transactions/sections/transaction-timeline'
-import { monthGroups, transactionSummary } from '@/src/lib/data'
-import { FilterChips } from '@/src/shared/components/filter-chips'
+import { cashFlow, monthGroups, transactionSummary } from '@/src/lib/data'
 import { IconButton } from '@/src/shared/components/icon-button'
 import { MobileShell } from '@/src/shared/components/mobile-shell'
 import { PageHeader } from '@/src/shared/components/page-header'
-import { Search, SlidersHorizontal } from 'lucide-react'
+import { SegmentedTabs, type SegmentedOption } from '@/src/shared/components/segmented-tabs'
+import {
+  ArrowDownLeft,
+  ArrowLeftRight,
+  ArrowUpRight,
+  LayoutGrid,
+  RotateCcw,
+  Search,
+  SlidersHorizontal,
+} from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useMemo, useState } from 'react'
 
@@ -24,15 +32,17 @@ function TransactionsContent() {
     if (param && validTypes.has(param)) setType(param)
   }, [searchParams])
 
-  const typeOptions = useMemo(() => {
+  // Filters are a lightweight segmented control — visually distinct from
+  // the circular quick actions above, with semantic active tones.
+  const typeFilters = useMemo<SegmentedOption[]>(() => {
     const all = monthGroups.flatMap((g) => g.transactions)
     const count = (pred: (t: (typeof all)[number]) => boolean) => all.filter(pred).length
     return [
-      { id: 'all', label: 'All', count: all.length },
-      { id: 'income', label: 'Income', count: count((t) => t.type === 'income' || t.type === 'refund') },
-      { id: 'expense', label: 'Expense', count: count((t) => t.type === 'expense') },
-      { id: 'transfer', label: 'Transfer', count: count((t) => t.type === 'transfer') },
-      { id: 'refund', label: 'Refund', count: count((t) => t.type === 'refund') },
+      { id: 'all', label: 'All', icon: LayoutGrid, count: all.length, tone: 'primary' },
+      { id: 'income', label: 'Income', icon: ArrowDownLeft, count: count((t) => t.type === 'income' || t.type === 'refund'), tone: 'positive' },
+      { id: 'expense', label: 'Expense', icon: ArrowUpRight, count: count((t) => t.type === 'expense'), tone: 'negative' },
+      { id: 'transfer', label: 'Transfer', icon: ArrowLeftRight, count: count((t) => t.type === 'transfer'), tone: 'info' },
+      { id: 'refund', label: 'Refund', icon: RotateCcw, count: count((t) => t.type === 'refund'), tone: 'warning' },
     ]
   }, [])
 
@@ -49,16 +59,18 @@ function TransactionsContent() {
         }
       />
 
-      <FlowSummary summary={transactionSummary} />
+      <FlowSummary summary={transactionSummary} flow={cashFlow} />
 
       <TransactionActions />
 
-      <FilterChips
-        options={typeOptions}
+      {/* Breathing room separates tools (actions) from navigation (filters) */}
+      <SegmentedTabs
+        options={typeFilters}
         value={type}
         onChange={setType}
-        layoutId="transaction-type-chip"
+        layoutId="transaction-type-tab"
         ariaLabel="Filter transactions by type"
+        className="mt-3"
       />
 
       <TransactionTimeline groups={monthGroups} activeType={type} />

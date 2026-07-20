@@ -5,17 +5,29 @@ import { GlassCard } from '@/src/shared/components/glass-card'
 import { MicroBars } from '@/src/shared/components/micro-bars'
 import { ProgressRing } from '@/src/shared/components/progress-ring'
 import { springs } from '@/src/shared/lib/motion'
-import type { TransactionSummary } from '@/src/types/transaction'
+import type { CashFlowPoint, TransactionSummary } from '@/src/types/transaction'
 import { motion } from 'framer-motion'
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react'
+import { useMemo } from 'react'
 
 /**
  * One premium summary row — Income / Expense / Net Flow share a single
- * balanced row. Numbers are the hero; graphs are intentionally compact.
+ * balanced row. Numbers are the hero; the mini bars are the REAL monthly
+ * cash-flow series (same data as the Overview chart), never fake filler.
  */
-export function FlowSummary({ summary }: { summary: TransactionSummary }) {
+export function FlowSummary({
+  summary,
+  flow,
+}: {
+  summary: TransactionSummary
+  flow: CashFlowPoint[]
+}) {
   const netPercent =
     summary.income > 0 ? Math.max(0, Math.min(100, (summary.netFlow / summary.income) * 100)) : 0
+
+  // Real monthly series from the shared cash-flow data.
+  const incomeBars = useMemo(() => flow.map((p) => p.inflow), [flow])
+  const expenseBars = useMemo(() => flow.map((p) => p.outflow), [flow])
 
   return (
     <section aria-label="Monthly flow summary" className="grid grid-cols-3 gap-2.5">
@@ -37,10 +49,15 @@ export function FlowSummary({ summary }: { summary: TransactionSummary }) {
             currency={summary.currency}
             className="mt-2 block text-lg font-extrabold leading-tight text-positive"
           />
-          <p className="mt-0.5 text-[10px] font-medium text-positive/80">
-            ↑ {summary.incomeChangePercent}% vs last month
+          <p
+            className={`mt-0.5 text-[10px] font-medium ${
+              summary.incomeChangePercent >= 0 ? 'text-positive/80' : 'text-negative/80'
+            }`}
+          >
+            {summary.incomeChangePercent >= 0 ? '↑' : '↓'} {Math.abs(summary.incomeChangePercent)}%
+            vs last month
           </p>
-          <MicroBars values={summary.incomeBars} color="var(--positive)" className="mt-auto pt-2" />
+          <MicroBars values={incomeBars} color="var(--positive)" className="mt-auto pt-2" />
         </GlassCard>
       </motion.div>
 
@@ -62,10 +79,16 @@ export function FlowSummary({ summary }: { summary: TransactionSummary }) {
             currency={summary.currency}
             className="mt-2 block text-lg font-extrabold leading-tight text-negative"
           />
-          <p className="mt-0.5 text-[10px] font-medium text-negative/80">
-            ↑ {summary.expenseChangePercent}% vs last month
+          {/* Spending less than last month is good news — tone follows semantics */}
+          <p
+            className={`mt-0.5 text-[10px] font-medium ${
+              summary.expenseChangePercent > 0 ? 'text-negative/80' : 'text-positive/80'
+            }`}
+          >
+            {summary.expenseChangePercent >= 0 ? '↑' : '↓'} {Math.abs(summary.expenseChangePercent)}%
+            vs last month
           </p>
-          <MicroBars values={summary.expenseBars} color="var(--negative)" className="mt-auto pt-2" />
+          <MicroBars values={expenseBars} color="var(--negative)" className="mt-auto pt-2" />
         </GlassCard>
       </motion.div>
 
