@@ -21,6 +21,8 @@ export interface BalanceSummary {
   monthlyChange: number
   monthlyChangePercent: number
   accountCount: number
+  /** Credit-card dues included in (subtracted from) the total. */
+  creditOutstanding: number
   currency: Currency
 }
 
@@ -28,7 +30,10 @@ export interface MoneySummary {
   moneyIn: number
   moneyOut: number
   netBalance: number
-  bars: number[]
+  /** Real daily sparklines for the current month — one series per card. */
+  inBars: number[]
+  outBars: number[]
+  netBars: number[]
   currency: Currency
 }
 
@@ -44,6 +49,12 @@ export interface AccountPreview {
   isPrimary?: boolean
   maskedNumber?: string
   lastSynced?: string
+  /**
+   * Set when this entry is a card instrument that mirrors a bank account
+   * (e.g. a debit card). Its balance always equals the linked account and
+   * it is NEVER counted in totals — that would double-count the money.
+   */
+  linkedAccountId?: string
 }
 
 export interface CashFlowPoint {
@@ -51,6 +62,8 @@ export interface CashFlowPoint {
   inflow: number
   outflow: number
 }
+
+export type CashFlowPeriod = '1M' | '3M' | '6M' | '1Y'
 
 export interface CategorySummary {
   id: string
@@ -80,6 +93,7 @@ export interface Insight {
   title: string
   description: string
   cta?: string
+  href?: string
   tone: 'positive' | 'negative' | 'info' | 'warning'
 }
 
@@ -95,6 +109,8 @@ export interface Transaction {
   currency: Currency
   time: string
   date: string
+  /** ISO calendar date (YYYY-MM-DD) — the single source for all derivations. */
+  isoDate: string
   status?: 'completed' | 'pending' | 'failed'
   hasReceipt?: boolean
   isSplit?: boolean
@@ -127,6 +143,7 @@ export interface SplitMember {
   avatar: string
   netBalance: number
   direction: 'you-owe' | 'owes-you' | 'settled'
+  lastActive?: string
 }
 
 export interface SplitGroup {
@@ -203,7 +220,5 @@ export interface CategoryPageSummary {
   totalSpent: number
   changePercent: number
   month: string
-  savedAmount: number
-  comparedCategory: string
   currency: Currency
 }

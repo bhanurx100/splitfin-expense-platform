@@ -53,6 +53,7 @@ export function dbToCanonical(dbTx: DbTransaction): Transaction {
     currency: 'INR',
     time: timeFormatter.format(date),
     date: dateFormatter.format(date),
+    isoDate: date.toISOString().slice(0, 10),
     status: 'completed',
   };
 }
@@ -73,7 +74,7 @@ export function canonicalToDb(tx: Transaction, accountId: string, categoryId: st
 
   return {
     id: tx.id,
-    date: new Date(tx.date),
+    date: new Date(`${tx.isoDate}T00:00:00Z`),
     amount,
     payee: tx.merchant,
     notes: null,
