@@ -1,7 +1,6 @@
 'use client'
 
 import { GroupList } from '@/src/features/splitpay/components/home/group-list'
-import { SettleBanner } from '@/src/features/splitpay/components/home/settle-banner'
 import { SplitBalanceHero } from '@/src/features/splitpay/components/home/split-balance-hero'
 import { MemberList } from '@/src/features/splitpay/components/member/member-list'
 import { splitGroups, splitMembers, splitPaySummary } from '@/src/lib/data'
@@ -32,33 +31,26 @@ export default function SplitPayPage() {
       <PageHeader
         title="SplitPay"
         subtitle="Simplify bills, split smartly"
-        actions={
-          <>
-            <IconButton icon={Search} label="Search groups" />
-            <IconButton icon={Plus} label="New split" className="bg-primary/20 text-primary" />
-          </>
-        }
+        actions={<IconButton icon={Search} label="Search groups" />}
       />
 
-      {/* Hero — 3D settlement scene + summary trio */}
+      {/* Hero — one connected card: 3D scene + summary trio */}
       <SplitBalanceHero summary={splitPaySummary} />
+
+      {/* Quick actions — directly under the hero */}
+      <motion.section aria-label="SplitPay quick actions" {...sectionMotion}>
+        <QuickActions actions={quickActions} />
+      </motion.section>
 
       {/* Pending settlements */}
       <motion.div {...sectionMotion}>
         <GroupList groups={splitGroups} />
       </motion.div>
 
-      <SettleBanner />
-
       {/* You're involved in */}
       <motion.div {...sectionMotion}>
-        <MemberList members={splitMembers} />
+        <MemberList members={splitMembers} groups={splitGroups} />
       </motion.div>
-
-      {/* Quick actions — shared premium interaction language */}
-      <motion.section aria-label="SplitPay quick actions" {...sectionMotion}>
-        <QuickActions actions={quickActions} />
-      </motion.section>
     </MobileShell>
   )
 }

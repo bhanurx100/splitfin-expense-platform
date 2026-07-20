@@ -1,49 +1,69 @@
 'use client'
 
-import { FilterChips } from '@/src/shared/components/filter-chips'
+import { AnimatedAmount } from '@/src/shared/components/animated-number'
 import { GlassCard } from '@/src/shared/components/glass-card'
-import { formatCurrency } from '@/src/shared/lib/format'
+import { SegmentedTabs, type SegmentedOption } from '@/src/shared/components/segmented-tabs'
 import { springs } from '@/src/shared/lib/motion'
 import { cn } from '@/src/lib/utils'
-import type { SplitMember } from '@/src/types/transaction'
+import type { SplitGroup, SplitMember } from '@/src/types/transaction'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronRight } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Check } from 'lucide-react'
 import { useMemo, useState } from 'react'
-
-const filterOptions = [
-  { id: 'all', label: 'All' },
-  { id: 'you-owe', label: 'You owe' },
-  { id: 'owes-you', label: "You're owed" },
-  { id: 'settled', label: 'Settled' },
-]
 
 const directionMeta: Record<
   SplitMember['direction'],
-  { label: string; chip: string; amountClass: string; ring: string }
+  {
+    label: string
+    tone: 'negative' | 'positive' | 'neutral'
+    amountClass: string
+    chip: string
+    glow: 'pink' | 'cyan' | 'purple'
+    ring: string
+    avatarGradient: string
+  }
 > = {
   'you-owe': {
     label: 'You owe',
-    chip: 'bg-negative/15 text-negative',
+    tone: 'negative',
     amountClass: 'text-negative',
-    ring: 'rgba(255,45,120,0.4)',
+    chip: 'bg-negative/12 text-negative',
+    glow: 'pink',
+    ring: 'rgba(255,45,120,0.45)',
+    avatarGradient: 'linear-gradient(135deg, rgba(255,45,120,0.35), rgba(255,45,120,0.08))',
   },
   'owes-you': {
     label: 'Owes you',
-    chip: 'bg-positive/15 text-positive',
+    tone: 'positive',
     amountClass: 'text-positive',
-    ring: 'rgba(22,230,161,0.4)',
+    chip: 'bg-positive/12 text-positive',
+    glow: 'cyan',
+    ring: 'rgba(22,230,161,0.45)',
+    avatarGradient: 'linear-gradient(135deg, rgba(22,230,161,0.32), rgba(22,230,161,0.08))',
   },
   settled: {
     label: 'Settled up',
-    chip: 'bg-muted text-muted-foreground',
+    tone: 'neutral',
     amountClass: 'text-muted-foreground',
-    ring: 'rgba(255,255,255,0.14)',
+    chip: 'bg-white/8 text-muted-foreground',
+    glow: 'purple',
+    ring: 'rgba(255,255,255,0.16)',
+    avatarGradient: 'linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04))',
   },
 }
 
-const avatarPalette = ['bg-primary/30', 'bg-info/30', 'bg-positive/30', 'bg-warning/30']
+function DirectionIcon({ direction }: { direction: SplitMember['direction'] }) {
+  if (direction === 'you-owe') return <ArrowUpRight className="size-3.5" aria-hidden="true" />
+  if (direction === 'owes-you') return <ArrowDownLeft className="size-3.5" aria-hidden="true" />
+  return <Check className="size-3.5" aria-hidden="true" />
+}
 
-export function MemberList({ members }: { members: SplitMember[] }) {
+export function MemberList({
+  members,
+  groups,
+}: {
+  members: SplitMember[]
+  groups: SplitGroup[]
+}) {
   const [filter, setFilter] = useState('all')
 
   const visible = useMemo(
@@ -51,67 +71,140 @@ export function MemberList({ members }: { members: SplitMember[] }) {
     [filter, members],
   )
 
-  const counts = useMemo(() => {
-    const opts = filterOptions.map((o) => ({
-      ...o,
-      count: o.id === 'all' ? members.length : members.filter((m) => m.direction === o.id).length,
-    }))
-    return opts
-  }, [members])
+  const filterOptions = useMemo<SegmentedOption[]>(
+    () => [
+      { id: 'all', label: 'All', count: members.length, tone: 'primary' },
+      {
+        id: 'you-owe',
+        label: 'You owe',
+        count: members.filter((m) => m.direction === 'you-owe').length,
+        tone: 'negative',
+      },
+      {
+        id: 'owes-you',
+        label: "You're owed",
+        count: members.filter((m) => m.direction === 'owes-you').length,
+        tone: 'positive',
+      },
+      {
+        id: 'settled',
+        label: 'Settled',
+        count: members.filter((m) => m.direction === 'settled').length,
+        tone: 'neutral',
+      },
+    ],
+    [members],
+  )
+
+  // How many real groups each person appears in — derived, never invented.
+  const groupCountFor = useMemo(() => {
+    const map: Record<string, number> = {}
+    for (const member of members) {
+      map[member.id] = groups.filter((g) => g.memberAvatars.includes(member.avatar[0])).length
+    }
+    return map
+  }, [members, groups])
 
   return (
     <section aria-label="People you split with" className="flex flex-col gap-4">
       <h2 className="text-lg font-bold">You&apos;re involved in</h2>
-      <FilterChips
-        options={counts}
+
+      <SegmentedTabs
+        options={filterOptions}
         value={filter}
         onChange={setFilter}
-        layoutId="member-filter-chip"
+        layoutId="member-filter-tab"
         ariaLabel="Filter people by balance direction"
       />
+
       {visible.length > 0 ? (
-        <ul className="flex flex-col gap-2.5">
+        <ul className="flex flex-col gap-3">
           <AnimatePresence mode="popLayout">
             {visible.map((member, i) => {
               const meta = directionMeta[member.direction]
+              const sharedGroups = groupCountFor[member.id] ?? 0
               return (
                 <motion.li
                   key={member.id}
                   layout
-                  initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                  initial={{ opacity: 0, y: 14, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.96 }}
-                  transition={{ ...springs.soft, delay: i * 0.04 }}
+                  transition={{ ...springs.soft, delay: i * 0.05 }}
                 >
                   <GlassCard
                     interactive
-                    hoverGlow={member.direction === 'you-owe' ? 'pink' : member.direction === 'owes-you' ? 'cyan' : 'purple'}
-                    className="group flex w-full cursor-pointer items-center gap-3.5 p-3.5"
+                    pressable
+                    hoverGlow={meta.glow}
+                    className="group relative w-full cursor-pointer overflow-hidden p-4"
                     role="button"
-                    aria-label={`${member.name} — ${meta.label} ${formatCurrency(member.netBalance)}`}
+                    aria-label={`${member.name} — ${meta.label}`}
                   >
-                    {/* Avatar with status-colored glow ring */}
-                    <motion.span
-                      whileHover={{ scale: 1.1 }}
-                      transition={springs.bouncy}
-                      className={cn(
-                        'flex size-11 shrink-0 items-center justify-center rounded-full text-xs font-bold text-foreground',
-                        avatarPalette[i % avatarPalette.length],
-                      )}
-                      style={{ boxShadow: `0 0 0 1.5px ${meta.ring}, 0 0 14px ${meta.ring}` }}
-                    >
-                      {member.avatar}
-                    </motion.span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold">{member.name}</p>
-                      <span className={cn('mt-1 inline-block rounded-md px-1.5 py-0.5 text-[10px] font-semibold', meta.chip)}>
-                        {meta.label}
-                      </span>
+                    {/* Direction-colored edge light */}
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-y-3 left-0 w-[3px] rounded-full opacity-70 transition-opacity duration-300 group-hover:opacity-100"
+                      style={{ background: meta.ring, boxShadow: `0 0 10px ${meta.ring}` }}
+                    />
+
+                    <div className="flex items-center gap-3.5 pl-1.5">
+                      {/* Premium avatar — gradient glass with status glow */}
+                      <motion.span
+                        whileHover={{ scale: 1.1, rotate: -3 }}
+                        transition={springs.bouncy}
+                        className="relative flex size-12 shrink-0 items-center justify-center rounded-2xl text-sm font-bold text-foreground"
+                        style={{
+                          background: meta.avatarGradient,
+                          boxShadow: `0 0 0 1px ${meta.ring}, 0 6px 16px rgba(0,0,0,0.35), 0 0 16px ${meta.ring}30`,
+                        }}
+                      >
+                        {/* Glass top light */}
+                        <span
+                          aria-hidden
+                          className="pointer-events-none absolute inset-0 rounded-2xl"
+                          style={{
+                            background:
+                              'linear-gradient(180deg, rgba(255,255,255,0.18), transparent 55%)',
+                          }}
+                        />
+                        <span className="relative">{member.avatar}</span>
+                      </motion.span>
+
+                      {/* Person + status */}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold">{member.name}</p>
+                        <div className="mt-1 flex items-center gap-2">
+                          <span
+                            className={cn(
+                              'flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold',
+                              meta.chip,
+                            )}
+                          >
+                            <DirectionIcon direction={member.direction} />
+                            {meta.label}
+                          </span>
+                          {sharedGroups > 0 && (
+                            <span className="text-[10px] text-muted-foreground">
+                              {sharedGroups} {sharedGroups === 1 ? 'group' : 'groups'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Amount — the strongest element */}
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <AnimatedAmount
+                          value={member.netBalance}
+                          className={cn('text-lg font-extrabold tabular-nums', meta.amountClass)}
+                        />
+                        <motion.span
+                          className="text-muted-foreground transition-colors duration-300 group-hover:text-foreground"
+                          variants={{ rest: { x: 0 }, hover: { x: 3 } }}
+                        >
+                          <ArrowUpRight className="size-4" aria-hidden="true" />
+                        </motion.span>
+                      </div>
                     </div>
-                    <p className={cn('shrink-0 text-base font-extrabold tabular-nums', meta.amountClass)}>
-                      {formatCurrency(member.netBalance)}
-                    </p>
-                    <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />
                   </GlassCard>
                 </motion.li>
               )
