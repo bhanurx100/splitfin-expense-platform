@@ -12,7 +12,7 @@ export interface QuickAction {
   icon: LucideIcon
   label: string
   hint?: string
-  tone?: 'primary' | 'positive' | 'info' | 'warning'
+  tone?: 'primary' | 'positive' | 'negative' | 'info' | 'warning'
   onClick?: () => void
   href?: string
 }
@@ -43,6 +43,14 @@ const toneStyles: Record<
     tint: 'radial-gradient(circle at 50% 32%, rgba(22,230,161,0.28), rgba(22,230,161,0.05) 68%)',
     ring: 'rgba(22,230,161,0.40)',
   },
+  negative: {
+    text: 'text-negative',
+    glow: '0 6px 18px rgba(0,0,0,0.45), 0 0 12px rgba(255,45,120,0.10)',
+    glowHover:
+      '0 14px 32px rgba(0,0,0,0.55), 0 0 28px rgba(255,45,120,0.40), 0 0 56px rgba(255,45,120,0.16)',
+    tint: 'radial-gradient(circle at 50% 32%, rgba(255,45,120,0.28), rgba(255,45,120,0.05) 68%)',
+    ring: 'rgba(255,45,120,0.40)',
+  },
   info: {
     text: 'text-info',
     glow: '0 6px 18px rgba(0,0,0,0.45), 0 0 12px rgba(20,217,255,0.10)',
@@ -61,7 +69,7 @@ const toneStyles: Record<
   },
 }
 
-function QuickActionButton({ action }: { action: QuickAction }) {
+function QuickActionButton({ action, active }: { action: QuickAction; active: boolean }) {
   const router = useRouter()
   const reduced = useReducedMotion()
   const [ripples, setRipples] = useState<Ripple[]>([])
@@ -99,13 +107,15 @@ function QuickActionButton({ action }: { action: QuickAction }) {
       initial="rest"
       whileHover="hover"
       whileTap="press"
-      animate="rest"
+      animate={active ? 'active' : 'rest'}
       className="group flex min-w-0 flex-1 cursor-pointer flex-col items-center gap-2.5 rounded-2xl py-1 focus-visible:outline-2 focus-visible:outline-ring"
       aria-label={action.label}
+      aria-pressed={active}
     >
       <motion.span
         variants={{
           rest: { scale: 1, boxShadow: tone.glow, borderColor: 'rgba(255,255,255,0.10)' },
+          active: { scale: 1.05, boxShadow: tone.glowHover, borderColor: tone.ring },
           hover: { scale: 1.07, boxShadow: tone.glowHover, borderColor: tone.ring },
           press: { scale: 0.9, boxShadow: tone.glowHover, borderColor: tone.ring },
         }}
@@ -117,7 +127,7 @@ function QuickActionButton({ action }: { action: QuickAction }) {
         <span
           aria-hidden
           className="pointer-events-none absolute inset-0 rounded-full"
-          style={{ background: tone.tint }}
+          style={{ background: tone.tint, opacity: active ? 1 : 0.55, transition: 'opacity 300ms' }}
         />
         {/* Top edge light */}
         <span
@@ -148,6 +158,7 @@ function QuickActionButton({ action }: { action: QuickAction }) {
         <motion.span
           variants={{
             rest: { y: 0, scale: 1, rotate: 0 },
+            active: { y: -1, scale: 1.08, rotate: 0 },
             hover: { y: -1.5, scale: 1.12, rotate: -4 },
             press: { y: 0, scale: 0.94, rotate: 0 },
           }}
@@ -158,7 +169,12 @@ function QuickActionButton({ action }: { action: QuickAction }) {
         </motion.span>
       </motion.span>
       <span className="flex flex-col items-center gap-0.5">
-        <span className="text-center text-[11px] font-medium leading-tight text-foreground/85 transition-colors duration-300 group-hover:text-foreground">
+        <span
+          className={cn(
+            'text-center text-[11px] font-medium leading-tight transition-colors duration-300 group-hover:text-foreground',
+            active ? 'text-foreground' : 'text-foreground/85',
+          )}
+        >
           {action.label}
         </span>
         {action.hint && (
@@ -173,15 +189,18 @@ function QuickActionButton({ action }: { action: QuickAction }) {
 
 export function QuickActions({
   actions,
+  activeId,
   className,
 }: {
   actions: QuickAction[]
+  /** When set, the matching action renders in the active (selected) state. */
+  activeId?: string
   className?: string
 }) {
   return (
     <div className={cn('flex items-start justify-between gap-2', className)}>
       {actions.map((action) => (
-        <QuickActionButton key={action.id} action={action} />
+        <QuickActionButton key={action.id} action={action} active={action.id === activeId} />
       ))}
     </div>
   )

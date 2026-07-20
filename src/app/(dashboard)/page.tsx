@@ -11,7 +11,7 @@ import { SplitPayPreview } from '@/src/features/dashboard/sections/splitpay-prev
 import {
   accounts,
   balanceSummary,
-  cashFlow,
+  cashFlowByPeriod,
   categories,
   greeting,
   insights,
@@ -56,11 +56,11 @@ export default function OverviewPage() {
       </motion.div>
       {/* 4 — Accounts preview (→ Accounts / account detail) */}
       <motion.div {...sectionMotion}>
-        <AccountsPreview accounts={accounts.slice(0, 4)} />
+        <AccountsPreview accounts={accounts} />
       </motion.div>
       {/* 5 — Cash flow (→ Transactions) */}
       <motion.div {...sectionMotion}>
-        <CashFlowCard data={cashFlow} />
+        <CashFlowCard seriesByPeriod={cashFlowByPeriod} currency={balanceSummary.currency} />
       </motion.div>
       {/* 6 — Top categories (→ Categories / selected category) */}
       <motion.div {...sectionMotion}>
@@ -70,11 +70,10 @@ export default function OverviewPage() {
       <motion.div {...sectionMotion}>
         <SplitPayPreview summary={splitPaySummary} members={splitMembers} />
       </motion.div>
-      {insights.map((insight) => (
-        <motion.div key={insight.id} {...sectionMotion}>
-          <InsightCard insight={insight} />
-        </motion.div>
-      ))}
+      {/* 8 — Live insights from the insight engine */}
+      <motion.div {...sectionMotion}>
+        <InsightCard insights={insights} />
+      </motion.div>
     </MobileShell>
   )
 }

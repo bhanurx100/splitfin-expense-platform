@@ -13,6 +13,7 @@ export function MoneySummaryRow({ summary }: { summary: MoneySummary }) {
       id: 'in',
       label: 'Money In',
       value: summary.moneyIn,
+      bars: summary.inBars,
       icon: ArrowDownLeft,
       tone: 'text-info',
       bg: 'bg-info/15',
@@ -25,6 +26,7 @@ export function MoneySummaryRow({ summary }: { summary: MoneySummary }) {
       id: 'out',
       label: 'Money Out',
       value: summary.moneyOut,
+      bars: summary.outBars,
       icon: ArrowUpRight,
       tone: 'text-negative',
       bg: 'bg-negative/15',
@@ -37,6 +39,7 @@ export function MoneySummaryRow({ summary }: { summary: MoneySummary }) {
       id: 'net',
       label: 'Net Balance',
       value: summary.netBalance,
+      bars: summary.netBars,
       icon: Wallet,
       tone: 'text-primary',
       bg: 'bg-primary/15',
@@ -69,7 +72,7 @@ export function MoneySummaryRow({ summary }: { summary: MoneySummary }) {
                 signed={item.signed}
                 className={`text-base font-bold leading-tight ${item.tone}`}
               />
-              <MicroBars values={summary.bars} color={item.color} className="mt-auto" />
+              <MicroBars values={item.bars} color={item.color} className="mt-auto" />
               <span className="text-[10px] text-muted-foreground">This month</span>
             </GlassCard>
           </Link>
