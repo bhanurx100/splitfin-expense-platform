@@ -10,7 +10,7 @@ import { springs } from '@/src/shared/lib/motion'
 import { cn } from '@/src/lib/utils'
 import type { CategorySummary, Currency } from '@/src/types/transaction'
 import { motion, useReducedMotion } from 'framer-motion'
-import { ChevronDown, TrendingUp } from 'lucide-react'
+import { ChevronLeft, ChevronRight, TrendingDown, TrendingUp } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -27,6 +27,11 @@ interface SpendHeroProps {
   currency: Currency
   /** Deep-linked selection (e.g. from Overview → /categories?category=id). */
   initialSelectedId?: string | null
+  /** Month navigation — every month with activity is explorable. */
+  canPrevMonth?: boolean
+  canNextMonth?: boolean
+  onPrevMonth?: () => void
+  onNextMonth?: () => void
 }
 
 export function SpendHero({
@@ -36,6 +41,10 @@ export function SpendHero({
   month,
   currency,
   initialSelectedId = null,
+  canPrevMonth = false,
+  canNextMonth = false,
+  onPrevMonth,
+  onNextMonth,
 }: SpendHeroProps) {
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId)
   const [webglFailed, setWebglFailed] = useState(false)
@@ -82,22 +91,50 @@ export function SpendHero({
         <div className="min-w-0">
           <p className="text-sm text-muted-foreground">Total Spent</p>
           <AnimatedAmount
+            key={month}
             value={totalSpent}
             currency={currency}
             className="mt-1 block text-[32px] font-extrabold tracking-tight"
           />
-          <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-positive">
-            <TrendingUp className="size-3.5" aria-hidden="true" />
-            {changePercent}% vs last month
+          {/* Spending less than the comparison window is good news */}
+          <p
+            className={cn(
+              'mt-1.5 flex items-center gap-1 text-xs font-medium',
+              changePercent > 0 ? 'text-negative' : 'text-positive',
+            )}
+          >
+            {changePercent > 0 ? (
+              <TrendingUp className="size-3.5" aria-hidden="true" />
+            ) : (
+              <TrendingDown className="size-3.5" aria-hidden="true" />
+            )}
+            {Math.abs(changePercent)}% vs last month
           </p>
         </div>
-        <button
-          type="button"
-          className="glass flex min-h-11 shrink-0 items-center gap-1.5 rounded-2xl px-3.5 text-sm font-medium text-foreground/90 transition-transform hover:scale-[1.03] active:scale-95 focus-visible:outline-2 focus-visible:outline-ring"
-        >
-          {month}
-          <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
-        </button>
+        {/* Month switcher — every month with activity is explorable */}
+        <div className="glass flex shrink-0 items-center rounded-2xl">
+          <button
+            type="button"
+            aria-label="Previous month"
+            disabled={!canPrevMonth}
+            onClick={onPrevMonth}
+            className="flex min-h-11 items-center justify-center rounded-l-2xl px-2 text-foreground/90 transition-colors enabled:hover:text-primary disabled:opacity-30 focus-visible:outline-2 focus-visible:outline-ring"
+          >
+            <ChevronLeft className="size-4" aria-hidden="true" />
+          </button>
+          <span className="min-w-20 text-center text-sm font-medium text-foreground/90">
+            {month}
+          </span>
+          <button
+            type="button"
+            aria-label="Next month"
+            disabled={!canNextMonth}
+            onClick={onNextMonth}
+            className="flex min-h-11 items-center justify-center rounded-r-2xl px-2 text-foreground/90 transition-colors enabled:hover:text-primary disabled:opacity-30 focus-visible:outline-2 focus-visible:outline-ring"
+          >
+            <ChevronRight className="size-4" aria-hidden="true" />
+          </button>
+        </div>
       </div>
 
       {/* Balanced composition: legend left, 3D ring right, ribbon behind */}

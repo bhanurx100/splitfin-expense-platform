@@ -1,10 +1,13 @@
 'use client'
 
 import {
+  AlertTriangle,
   BookOpen,
   Briefcase,
   Car,
+  Crown,
   FileText,
+  Flame,
   Fuel,
   Heart,
   HeartPulse,
@@ -18,8 +21,11 @@ import {
   Play,
   Popcorn,
   ShoppingBag,
+  Sparkles,
+  TrendingUp,
   Utensils,
   Wallet,
+  Zap,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -43,6 +49,12 @@ const icons: Record<string, LucideIcon> = {
   pizza: Pizza,
   home: Home,
   popcorn: Popcorn,
+  crown: Crown,
+  'trending-up': TrendingUp,
+  flame: Flame,
+  'alert-triangle': AlertTriangle,
+  sparkles: Sparkles,
+  zap: Zap,
 }
 
 export function CategoryIcon({
