@@ -2,7 +2,6 @@
 
 import { AnimatedAmount } from '@/src/shared/components/animated-number'
 import { GlassCard } from '@/src/shared/components/glass-card'
-import { formatCurrency } from '@/src/shared/lib/format'
 import type { Bill } from '@/src/types/transaction'
 import { motion } from 'framer-motion'
 import {

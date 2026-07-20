@@ -33,8 +33,8 @@ export interface CarouselCardData {
 }
 
 /* Composition constants — depth-first staging. */
-const SIDE_X = 2.02 // lateral spacing for neighbours (center card overlaps them)
-const SIDE_Z = 1.85 // how fast cards recede into depth
+const SIDE_X = 1.98 // lateral spacing for neighbours (center card overlaps them)
+const SIDE_Z = 2.3 // how fast cards recede into depth
 const SIDE_TILT = 0.42 // natural rotation toward the viewer (~24°)
 
 interface CarouselState {
@@ -80,12 +80,12 @@ function AccountCard({
       Math.sin(t * 0.55 + index * 1.7) * 0.02 * (1 - centeredness) // sides sway
     g.rotation.y = -clamped * SIDE_TILT
     g.rotation.z = Math.sin(t * 0.6 + index) * 0.012
-    g.scale.setScalar(Math.max(0.7, 1 - abs * 0.27))
+    g.scale.setScalar(Math.max(0.66, 1 - abs * 0.32))
 
     if (bodyMat.current) {
-      bodyMat.current.opacity = Math.max(0.16, 1 - abs * 0.62)
+      bodyMat.current.opacity = Math.max(0.12, 1 - abs * 0.66)
       bodyMat.current.emissiveIntensity =
-        Math.max(0.06, 0.32 - abs * 0.22) + Math.sin(t * 1.5) * 0.045 * centeredness
+        Math.max(0.05, 0.3 - abs * 0.22) + Math.sin(t * 1.5) * 0.045 * centeredness
     }
     if (rimMat.current) {
       rimMat.current.opacity = Math.max(0.04, 0.2 - abs * 0.14)
@@ -263,23 +263,30 @@ function Platform({ cards, state }: { cards: CarouselCardData[]; state: React.Mu
       }
       if (light.current) light.current.color.set(theme.glow)
     }
-    if (ring1.current) ring1.current.opacity = 0.55 + pulse * 0.3
-    if (ring2.current) ring2.current.opacity = 0.3 + pulse * 0.2
-    if (ring3.current) ring3.current.opacity = 0.14 + pulse * 0.12
-    if (glowDisc.current) glowDisc.current.opacity = 0.16 + pulse * 0.1
-    if (light.current) light.current.intensity = 9 + pulse * 4
-    if (spin1.current) spin1.current.rotation.z = t * 0.18
-    if (spin2.current) spin2.current.rotation.z = -t * 0.12
+    if (ring1.current) ring1.current.opacity = 0.4 + pulse * 0.25
+    if (ring2.current) ring2.current.opacity = 0.2 + pulse * 0.15
+    if (ring3.current) ring3.current.opacity = 0.1 + pulse * 0.08
+    if (glowDisc.current) glowDisc.current.opacity = 0.1 + pulse * 0.07
+    if (light.current) light.current.intensity = 5 + pulse * 2.5
+    if (spin1.current) spin1.current.rotation.z = t * 0.14
+    if (spin2.current) spin2.current.rotation.z = -t * 0.1
   })
 
   return (
     <group position={[0, -2.02, 0]}>
-      <pointLight ref={light} position={[0, 0.7, 0.6]} intensity={11} distance={6} />
+      {/* Soft under-light — in front of the stage so it never bleeds through cards */}
+      <pointLight ref={light} position={[0, 0.3, 1.2]} intensity={6} distance={4} />
 
-      {/* Solid stage disc */}
+      {/* Solid stage disc — clearcoat glass feel */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]}>
         <circleGeometry args={[1.2, 48]} />
-        <meshStandardMaterial color="#0c0a15" metalness={0.5} roughness={0.5} />
+        <meshPhysicalMaterial
+          color="#0c0a15"
+          metalness={0.55}
+          roughness={0.4}
+          clearcoat={0.7}
+          clearcoatRoughness={0.25}
+        />
       </mesh>
 
       {/* Radial energy glow */}
@@ -288,8 +295,8 @@ function Platform({ cards, state }: { cards: CarouselCardData[]; state: React.Mu
         <meshStandardMaterial
           ref={glowDisc}
           transparent
-          opacity={0.22}
-          emissiveIntensity={1.1}
+          opacity={0.14}
+          emissiveIntensity={1}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
         />
@@ -302,21 +309,8 @@ function Platform({ cards, state }: { cards: CarouselCardData[]; state: React.Mu
           <meshStandardMaterial
             ref={ring1}
             transparent
-            opacity={0.8}
-            emissiveIntensity={1.5}
-            blending={THREE.AdditiveBlending}
-            depthWrite={false}
-          />
-        </mesh>
-        {/* Orbiting energy node */}
-        <mesh position={[1.28, 0.01, 0]}>
-          <sphereGeometry args={[0.045, 12, 12]} />
-          <meshStandardMaterial
-            color="#ffffff"
-            emissive="#ffffff"
-            emissiveIntensity={2}
-            transparent
-            opacity={0.9}
+            opacity={0.6}
+            emissiveIntensity={1.4}
             blending={THREE.AdditiveBlending}
             depthWrite={false}
           />
@@ -328,8 +322,8 @@ function Platform({ cards, state }: { cards: CarouselCardData[]; state: React.Mu
           <meshStandardMaterial
             ref={ring2}
             transparent
-            opacity={0.45}
-            emissiveIntensity={1.2}
+            opacity={0.32}
+            emissiveIntensity={1.1}
             blending={THREE.AdditiveBlending}
             depthWrite={false}
           />
@@ -340,8 +334,8 @@ function Platform({ cards, state }: { cards: CarouselCardData[]; state: React.Mu
         <meshStandardMaterial
           ref={ring3}
           transparent
-          opacity={0.2}
-          emissiveIntensity={1}
+          opacity={0.14}
+          emissiveIntensity={0.9}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
         />
@@ -560,9 +554,10 @@ export default function AccountCarouselScene({
     >
       <Canvas
         dpr={[1, 1.5]}
-        camera={{ position: [0, 0.32, 4.15], fov: 30 }}
+        camera={{ position: [0, 0.6, 4.6], fov: 33 }}
         gl={{ antialias: true, alpha: true }}
         style={{ background: 'transparent' }}
+        onCreated={({ camera }) => camera.lookAt(0, -0.15, 0)}
       >
         {/* Three-point lighting + ambient wash */}
         <ambientLight intensity={0.4} />
@@ -572,8 +567,8 @@ export default function AccountCarouselScene({
 
         <Rig state={state} onSettled={onActiveChange} />
         <Atmosphere cards={cards} state={state} />
-        {/* Stage scaled so the hero card fills ~90% of the frame height */}
-        <group scale={0.65} position={[0, 0.12, 0]}>
+        {/* Stage scaled so the hero card dominates without clipping */}
+        <group scale={0.62} position={[0, 0.05, 0]}>
           <Platform cards={cards} state={state} />
           {cards.map((card, i) => (
             <AccountCard key={card.id} card={card} index={i} state={state} />

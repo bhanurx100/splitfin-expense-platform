@@ -6,6 +6,7 @@ import { PageHeader } from '@/src/shared/components/page-header'
 import { AccountCarousel3D } from '@/src/features/accounts/components/account-carousel-3d'
 import { AccountDetailsSection } from '@/src/features/accounts/components/account-details'
 import { AccountFilters, type AccountFilter } from '@/src/features/accounts/components/account-filters'
+import { AccountsHeadline } from '@/src/features/accounts/components/accounts-headline'
 import { BillsSection } from '@/src/features/accounts/sections/bills-section'
 import { PortfolioSummarySection } from '@/src/features/accounts/sections/portfolio-summary'
 import { SmartInsights } from '@/src/features/accounts/sections/smart-insights'
@@ -13,6 +14,7 @@ import {
   accountDetailsById,
   accountInsights,
   accounts,
+  balanceSummary,
   greeting,
   portfolioSummary,
   upcomingBills,
@@ -65,6 +67,9 @@ function AccountsPageContent() {
           </>
         }
       />
+
+      {/* Derived headline — total, monthly change, active accounts */}
+      <AccountsHeadline summary={balanceSummary} />
 
       <AccountFilters value={filter} onChange={onFilterChange} />
 
