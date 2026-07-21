@@ -1,6 +1,8 @@
 'use client'
 
 import { AnimatedAmount } from '@/src/shared/components/animated-number'
+import { GlassCard } from '@/src/shared/components/glass-card'
+// import { formatCurrency } from '@/src/shared/lib/format'
 import { springs } from '@/src/shared/lib/motion'
 import { cn } from '@/src/lib/utils'
 import type { AccountPreview } from '@/src/types/transaction'
@@ -19,72 +21,69 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRef, useState } from 'react'
 
-/**
- * Visual language mirrors the original product art direction: each
- * account is a collectible card whose hero zone is a real glossy 3D
- * object (bank, card, wallet, cash) rendered live — the same objects
- * used by the Accounts page carousel.
- */
+/** Muted type tints — preview cards sit below the hero, not compete with it. */
 const typeMeta: Record<
   string,
-  { icon: LucideIcon; gradient: string; glow: string; ring: string }
+  { icon: LucideIcon; gradient: string; glow: string; ring: string; color: string }
 > = {
   bank: {
     icon: Landmark,
-    gradient: 'linear-gradient(160deg, rgba(59,29,158,0.55) 0%, rgba(91,61,245,0.28) 55%, rgba(14,15,32,0) 100%)',
-    glow: 'rgba(124,60,255,0.45)',
-    ring: 'rgba(155,92,255,0.5)',
+    gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+    glow: 'rgba(59, 130, 246, 0.4)',
+    ring: 'rgba(59, 130, 246, 0.6)',
+    color: '#3b82f6',
   },
   'credit-card': {
     icon: CreditCard,
-    gradient: 'linear-gradient(160deg, rgba(14,75,94,0.55) 0%, rgba(15,126,168,0.28) 55%, rgba(14,15,32,0) 100%)',
-    glow: 'rgba(20,217,255,0.35)',
-    ring: 'rgba(20,217,255,0.45)',
+    gradient: 'linear-gradient(160deg, rgba(14,75,94,0.32) 0%, rgba(15,90,110,0.14) 55%, rgba(14,15,32,0) 100%)',
+    glow: 'rgba(20,217,255,0.2)',
+    ring: 'rgba(20,217,255,0.3)',
+    color: '#14d9ff',
   },
   'debit-card': {
     icon: CreditCard,
-    gradient: 'linear-gradient(160deg, rgba(94,58,14,0.55) 0%, rgba(168,122,15,0.28) 55%, rgba(14,15,32,0) 100%)',
-    glow: 'rgba(255,170,43,0.35)',
-    ring: 'rgba(255,170,43,0.45)',
+    gradient: 'linear-gradient(160deg, rgba(80,55,14,0.28) 0%, rgba(110,80,20,0.12) 55%, rgba(14,15,32,0) 100%)',
+    glow: 'rgba(255,170,43,0.2)',
+    ring: 'rgba(255,170,43,0.3)',
+    color: '#ffaa2b',
   },
   wallet: {
     icon: Wallet,
-    gradient: 'linear-gradient(160deg, rgba(6,80,60,0.55) 0%, rgba(11,156,110,0.28) 55%, rgba(14,15,32,0) 100%)',
-    glow: 'rgba(22,230,161,0.35)',
-    ring: 'rgba(22,230,161,0.45)',
+    gradient: 'linear-gradient(160deg, rgba(6,60,45,0.28) 0%, rgba(10,90,65,0.12) 55%, rgba(14,15,32,0) 100%)',
+    glow: 'rgba(22,230,161,0.18)',
+    ring: 'rgba(22,230,161,0.28)',
+    color: '#16e6a1',
   },
   cash: {
     icon: Banknote,
-    gradient: 'linear-gradient(160deg, rgba(63,82,14,0.55) 0%, rgba(116,168,15,0.26) 55%, rgba(14,15,32,0) 100%)',
-    glow: 'rgba(198,255,43,0.28)',
-    ring: 'rgba(198,255,43,0.4)',
+    gradient: 'linear-gradient(160deg, rgba(50,65,14,0.26) 0%, rgba(80,100,20,0.1) 55%, rgba(14,15,32,0) 100%)',
+    glow: 'rgba(180,220,40,0.16)',
+    ring: 'rgba(180,220,40,0.26)',
+    color: '#b4dc28',
   },
   investment: {
     icon: TrendingUp,
-    gradient: 'linear-gradient(160deg, rgba(94,14,70,0.55) 0%, rgba(168,15,110,0.28) 55%, rgba(14,15,32,0) 100%)',
-    glow: 'rgba(255,45,120,0.35)',
-    ring: 'rgba(255,45,120,0.45)',
+    gradient: 'linear-gradient(160deg, rgba(70,14,55,0.28) 0%, rgba(100,20,70,0.12) 55%, rgba(14,15,32,0) 100%)',
+    glow: 'rgba(255,45,120,0.18)',
+    ring: 'rgba(255,45,120,0.28)',
+    color: '#ff2d78',
   },
   savings: {
     icon: Lock,
-    gradient: 'linear-gradient(160deg, rgba(22,34,47,0.6) 0%, rgba(47,76,102,0.3) 55%, rgba(14,15,32,0) 100%)',
-    glow: 'rgba(127,176,224,0.35)',
-    ring: 'rgba(127,176,224,0.45)',
+    gradient: 'linear-gradient(160deg, rgba(22,34,47,0.32) 0%, rgba(40,60,80,0.14) 55%, rgba(14,15,32,0) 100%)',
+    glow: 'rgba(127,176,224,0.18)',
+    ring: 'rgba(127,176,224,0.28)',
+    color: '#7fb0e0',
   },
 }
 
-/* The 3D viewer is client-only — load it lazily per card. */
 const ObjectCanvas = dynamic(
   () => import('@/src/shared/three/account-objects').then((m) => m.AccountObjectCanvas),
   {
     ssr: false,
-    loading: () => <div className="size-full animate-pulse rounded-full bg-white/5" aria-hidden="true" />,
+    loading: () => <div className="size-full animate-pulse rounded-full bg-white/4" aria-hidden="true" />,
   },
 )
-
-/* ------------------------------------------------------------------ */
-/* Card                                                                 */
-/* ------------------------------------------------------------------ */
 
 function AccountCard({ account, index }: { account: AccountPreview; index: number }) {
   const meta = typeMeta[account.type] ?? typeMeta.bank
@@ -103,8 +102,8 @@ function AccountCard({ account, index }: { account: AccountPreview; index: numbe
     const rect = e.currentTarget.getBoundingClientRect()
     const px = (e.clientX - rect.left) / rect.width - 0.5
     const py = (e.clientY - rect.top) / rect.height - 0.5
-    rotateY.set(px * 9)
-    rotateX.set(py * -9)
+    rotateY.set(px * 7)
+    rotateX.set(py * -7)
   }
 
   function resetTilt() {
@@ -123,80 +122,58 @@ function AccountCard({ account, index }: { account: AccountPreview; index: numbe
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 24, scale: 0.96 }}
+      initial={{ opacity: 0, x: 20, scale: 0.97 }}
       whileInView={{ opacity: 1, x: 0, scale: 1 }}
       viewport={{ once: true, margin: '-20px' }}
-      transition={{ ...springs.soft, delay: index * 0.06 }}
+      transition={{ ...springs.soft, delay: index * 0.05 }}
       className="snap-start"
     >
       <Link
         href={`/accounts?account=${account.id}`}
         aria-label={`${account.institution} ${account.name} — open account`}
-        className="block rounded-[20px] focus-visible:outline-2 focus-visible:outline-ring"
+        className="block rounded-[var(--radius)] focus-visible:outline-2 focus-visible:outline-ring"
         style={{ perspective: 900 }}
       >
         <motion.div
           onMouseMove={handleMouseMove}
           onMouseLeave={resetTilt}
           onPointerDown={handlePointerDown}
-          whileHover={{ y: -6, scale: 1.03 }}
-          whileTap={{ scale: 0.96 }}
+          whileHover={{ y: -4, scale: 1.02 }}
+          whileTap={{ scale: 0.97 }}
           transition={springs.snappy}
           style={{
             rotateX: springRotateX,
             rotateY: springRotateY,
             transformStyle: 'preserve-3d',
-            boxShadow: `0 10px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06)`,
+            borderColor: 'var(--border)',
+            boxShadow: `0 0 16px color-mix(in srgb, ${meta.color} 12%, transparent)`,
           }}
-          className="group relative flex w-[150px] shrink-0 flex-col overflow-hidden rounded-[20px] border border-white/10"
+          className="group relative flex w-[135px] shrink-0 flex-col overflow-hidden rounded-[var(--radius)] border bg-transparent"
         >
-          {/* Hover glow ring */}
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-0 z-10 rounded-[20px] opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-            style={{ boxShadow: `0 0 0 1.5px ${meta.ring}, 0 14px 32px ${meta.glow}` }}
-          />
-
-          {/* ── 3D object hero zone ────────────────────────────── */}
-          <div className="relative flex h-32 items-end justify-center overflow-hidden">
-            {/* Type-tinted atmosphere */}
-            <span aria-hidden className="absolute inset-0" style={{ background: meta.gradient }} />
-            <span
-              aria-hidden
-              className="absolute bottom-0 size-24 translate-y-6 rounded-full opacity-80 blur-2xl"
-              style={{ background: meta.glow }}
-            />
-            {/* Top edge light */}
-            <span
-              aria-hidden
-              className="absolute inset-x-0 top-0 h-8"
-              style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.16), transparent)' }}
-            />
-            {/* Live glossy 3D object */}
+          <div className="relative flex h-[5.5rem] items-end justify-center overflow-hidden">
             <motion.div
-              initial={{ opacity: 0, y: 10, scale: 0.9 }}
+              initial={{ opacity: 0, y: 8, scale: 0.92 }}
               whileInView={{ opacity: 1, y: 0, scale: 1 }}
               viewport={{ once: true }}
-              transition={{ ...springs.soft, delay: 0.1 + index * 0.06 }}
-              className="relative h-full w-full transition-transform duration-300 ease-out group-hover:scale-[1.06]"
+              transition={{ ...springs.soft, delay: 0.08 + index * 0.05 }}
+              className="relative h-full w-full transition-transform duration-300 ease-out group-hover:scale-[1.04]"
             >
               <ObjectCanvas type={account.type} className="size-full" />
             </motion.div>
             {account.isPrimary && (
-              <span className="absolute top-2 right-2 z-10 rounded-full border border-white/30 bg-black/25 px-2 py-0.5 text-[9px] font-semibold tracking-wide text-white/90 backdrop-blur-sm">
+              <span className="absolute top-2 right-2 z-10 rounded-full border border-white/20 bg-black/30 px-1.5 py-0.5 text-[8px] font-semibold tracking-wide text-foreground/80 backdrop-blur-sm">
                 PRIMARY
               </span>
             )}
 
-            {/* Click ripple */}
             <AnimatePresence>
               {ripples.map((r) => (
                 <motion.span
                   key={r.id}
-                  className="pointer-events-none absolute rounded-full bg-white/45"
+                  className="pointer-events-none absolute rounded-full bg-white/30"
                   style={{ left: r.x, top: r.y, width: 10, height: 10, marginLeft: -5, marginTop: -5 }}
-                  initial={{ scale: 0, opacity: 0.5 }}
-                  animate={{ scale: 15, opacity: 0 }}
+                  initial={{ scale: 0, opacity: 0.4 }}
+                  animate={{ scale: 14, opacity: 0 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.65, ease: 'easeOut' }}
                 />
@@ -204,31 +181,30 @@ function AccountCard({ account, index }: { account: AccountPreview; index: numbe
             </AnimatePresence>
           </div>
 
-          {/* ── Info zone ────────────────────────────────────── */}
-          <div className="flex flex-col gap-1.5 bg-[rgba(14,15,32,0.92)] p-3 backdrop-blur-xl">
+          <div className="flex flex-col gap-1.5 p-3">
             <div className="flex min-w-0 items-center gap-1.5">
               <span
-                className="flex size-5 shrink-0 items-center justify-center rounded-full text-white"
+                className="flex size-5 shrink-0 items-center justify-center rounded-full text-foreground/90"
                 style={{ background: meta.glow }}
               >
                 <Icon className="size-3" aria-hidden="true" />
               </span>
-              <p className="truncate text-[13px] font-semibold">{account.institution}</p>
+              <p className="truncate text-[12px] font-semibold">{account.institution}</p>
             </div>
-            <p className="truncate pl-[26px] text-[10.5px] text-muted-foreground">
+            <p className="truncate pl-[26px] text-[10px] text-muted-foreground">
               {account.name}
               {account.maskedNumber ? ` · ${account.maskedNumber}` : ''}
             </p>
-            <div className="mt-0.5 flex items-end justify-between gap-2">
+            <div className="mt-0.5 flex items-end justify-between gap-1.5">
               <AnimatedAmount
                 value={account.balance}
                 currency={account.currency}
-                className="text-base font-bold leading-tight"
+                className="truncate text-sm font-bold leading-tight"
               />
               <span
                 className={cn(
-                  'flex shrink-0 items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9.5px] font-semibold',
-                  positive ? 'bg-positive/12 text-positive' : 'bg-negative/12 text-negative',
+                  'flex shrink-0 items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-semibold',
+                  positive ? 'bg-positive/10 text-positive' : 'bg-negative/10 text-negative',
                 )}
               >
                 {positive ? (
@@ -246,10 +222,6 @@ function AccountCard({ account, index }: { account: AccountPreview; index: numbe
   )
 }
 
-/* ------------------------------------------------------------------ */
-/* Section                                                              */
-/* ------------------------------------------------------------------ */
-
 export function AccountsPreview({ accounts }: { accounts: AccountPreview[] }) {
   if (accounts.length === 0) {
     return (
@@ -257,12 +229,12 @@ export function AccountsPreview({ accounts }: { accounts: AccountPreview[] }) {
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold">Accounts</h2>
         </div>
-        <div className="glass flex flex-col items-center gap-2 rounded-2xl p-8 text-center">
+        <GlassCard radius="2xl" padding="lg" className="flex flex-col items-center gap-2 text-center">
           <p className="text-sm font-semibold">No accounts yet</p>
           <p className="max-w-56 text-xs leading-relaxed text-muted-foreground">
             Add your first account to see it here.
           </p>
-        </div>
+        </GlassCard>
       </section>
     )
   }
@@ -273,12 +245,12 @@ export function AccountsPreview({ accounts }: { accounts: AccountPreview[] }) {
         <h2 className="text-lg font-bold">Accounts</h2>
         <Link
           href="/accounts"
-          className="rounded-lg text-sm font-medium text-primary transition-colors hover:text-primary-bright focus-visible:outline-2 focus-visible:outline-ring"
+          className="rounded-lg text-sm font-medium text-info transition-colors hover:text-info/80 focus-visible:outline-2 focus-visible:outline-ring"
         >
           View all
         </Link>
       </div>
-      <div className="-mx-6 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-6 pt-1 pb-3 scrollbar-none">
+      <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pt-1 pb-2 scrollbar-none">
         {accounts.map((account, i) => (
           <AccountCard key={account.id} account={account} index={i} />
         ))}

@@ -10,10 +10,10 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 const toneClass: Record<Insight['tone'], string> = {
-  positive: 'text-positive bg-positive/15',
-  negative: 'text-negative bg-negative/15',
-  info: 'text-info bg-info/15',
-  warning: 'text-warning bg-warning/15',
+  positive: 'text-positive',
+  negative: 'text-negative',
+  info: 'text-info',
+  warning: 'text-warning',
 }
 
 const toneDot: Record<Insight['tone'], string> = {
@@ -47,12 +47,17 @@ export function InsightCard({ insights }: { insights: Insight[] }) {
     <AnimatePresence>
       {!dismissed && (
         <motion.div exit={{ opacity: 0, height: 0, marginTop: -16 }} transition={{ duration: 0.3 }}>
-          <GlassCard strong className="relative flex items-start gap-4 overflow-hidden p-5">
+          <GlassCard
+            strong
+            className="relative flex items-start gap-4 overflow-hidden p-5"
+            style={{ borderColor: 'var(--border)', boxShadow: '0 0 20px color-mix(in srgb, var(--info) 12%, transparent)' }}
+          >
             <span
               className={cn(
-                'flex size-10 shrink-0 items-center justify-center rounded-2xl glow-breathe',
+                'flex size-10 shrink-0 items-center justify-center rounded-2xl border border-white/8',
                 toneClass[insight.tone],
               )}
+              style={{ boxShadow: '0 0 16px color-mix(in srgb, var(--info) 10%, transparent)' }}
             >
               <CategoryIcon name={insight.icon} className="size-5" />
             </span>

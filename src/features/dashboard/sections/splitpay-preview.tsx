@@ -37,26 +37,17 @@ export function SplitPayPreview({
     <GlassCard
       strong
       interactive
-      hoverGlow="purple"
       className="group relative flex flex-col gap-4 overflow-hidden p-5"
       onClick={open}
       role="link"
       aria-label="SplitPay overview — open SplitPay"
+      style={{ borderColor: 'var(--border)', boxShadow: '0 0 20px rgba(0,0,0,0.08)' }}
     >
-      {/* Ambient flow — green on the owed side, pink on the owe side */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-60"
-        style={{
-          background:
-            'radial-gradient(ellipse 55% 45% at 100% 0%, oklch(0.55 0.14 165 / 14%), transparent), radial-gradient(ellipse 55% 45% at 0% 0%, oklch(0.55 0.16 350 / 12%), transparent)',
-        }}
-        aria-hidden="true"
-      />
 
       {/* Header — title + live pending state */}
       <div className="relative flex items-center justify-between">
         <h2 className="text-lg font-bold">SplitPay</h2>
-        <span className="flex items-center gap-1.5 rounded-full border border-white/8 bg-white/[0.04] px-2.5 py-1 text-[10px] font-medium text-muted-foreground">
+        <span className="flex items-center gap-1.5 rounded-full border border-white/8 bg-transparent px-2.5 py-1 text-[10px] font-medium text-muted-foreground">
           <span className="relative flex size-1.5" aria-hidden="true">
             {pending.length > 0 && (
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-warning opacity-60" />
@@ -87,8 +78,8 @@ export function SplitPayPreview({
 
       {/* The two sides of the balance */}
       <div className="relative grid grid-cols-2 gap-2.5">
-        <div className="flex items-center gap-2.5 rounded-2xl border border-negative/20 bg-negative/[0.06] px-3 py-2.5">
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-negative/15 text-negative">
+        <div className="flex items-center gap-2.5 rounded-2xl border border-negative/20 bg-transparent px-3 py-2.5">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-negative/30 text-negative">
             <ArrowUpRight className="size-3.5" aria-hidden="true" />
           </span>
           <div className="min-w-0">
@@ -103,8 +94,8 @@ export function SplitPayPreview({
             <p className="text-[9px] text-muted-foreground">Across {summary.oweGroups} groups</p>
           </div>
         </div>
-        <div className="flex items-center gap-2.5 rounded-2xl border border-positive/20 bg-positive/[0.06] px-3 py-2.5">
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-positive/15 text-positive">
+        <div className="flex items-center gap-2.5 rounded-2xl border border-positive/20 bg-transparent px-3 py-2.5">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-positive/30 text-positive">
             <ArrowDownLeft className="size-3.5" aria-hidden="true" />
           </span>
           <div className="min-w-0">
@@ -141,7 +132,7 @@ export function SplitPayPreview({
             </div>
           </div>
           <motion.span
-            className="flex size-8 shrink-0 items-center justify-center rounded-full border border-white/8 bg-white/[0.04] text-muted-foreground transition-colors group-hover:border-primary/40 group-hover:text-primary"
+            className="flex size-8 shrink-0 items-center justify-center rounded-full border border-white/8 bg-transparent text-muted-foreground transition-colors group-hover:border-primary/40 group-hover:text-primary"
             whileHover={{ x: 3 }}
             aria-hidden="true"
           >

@@ -2,23 +2,25 @@
 
 import { AnimatedAmount } from '@/src/shared/components/animated-number'
 import { GlassCard } from '@/src/shared/components/glass-card'
-import { MicroBars } from '@/src/shared/components/micro-bars'
 import type { MoneySummary } from '@/src/types/transaction'
 import { ArrowDownLeft, ArrowUpRight, Wallet } from 'lucide-react'
 import Link from 'next/link'
 
+/**
+ * Unified monthly flow card — one surface, three metrics.
+ * Replaces the previous three-card row for cleaner hierarchy.
+ */
 export function MoneySummaryRow({ summary }: { summary: MoneySummary }) {
+  const netPositive = summary.netBalance >= 0
+
   const items = [
     {
       id: 'in',
       label: 'Money In',
       value: summary.moneyIn,
-      bars: summary.inBars,
       icon: ArrowDownLeft,
       tone: 'text-info',
-      bg: 'bg-info/15',
-      color: 'var(--info)',
-      glow: 'cyan' as const,
+      iconBg: 'bg-info/12 text-info',
       href: '/transactions?type=income',
       signed: false,
     },
@@ -26,12 +28,9 @@ export function MoneySummaryRow({ summary }: { summary: MoneySummary }) {
       id: 'out',
       label: 'Money Out',
       value: summary.moneyOut,
-      bars: summary.outBars,
       icon: ArrowUpRight,
       tone: 'text-negative',
-      bg: 'bg-negative/15',
-      color: 'var(--negative)',
-      glow: 'pink' as const,
+      iconBg: 'bg-negative/12 text-negative',
       href: '/transactions?type=expense',
       signed: false,
     },
@@ -39,45 +38,53 @@ export function MoneySummaryRow({ summary }: { summary: MoneySummary }) {
       id: 'net',
       label: 'Net Balance',
       value: summary.netBalance,
-      bars: summary.netBars,
       icon: Wallet,
-      tone: 'text-primary',
-      bg: 'bg-primary/15',
-      color: 'var(--primary)',
-      glow: 'purple' as const,
+      tone: netPositive ? 'text-positive' : 'text-negative',
+      iconBg: netPositive ? 'bg-positive/12 text-positive' : 'bg-negative/12 text-negative',
       href: '/transactions',
       signed: true,
     },
-  ]
+  ] as const
 
   return (
-    <section aria-label="Monthly money summary" className="grid grid-cols-3 gap-2.5">
-      {items.map((item) => {
-        const Icon = item.icon
-        return (
-          <Link
-            key={item.id}
-            href={item.href}
-            aria-label={`${item.label} — view transactions`}
-            className="rounded-xl focus-visible:outline-2 focus-visible:outline-ring"
-          >
-            <GlassCard interactive hoverGlow={item.glow} className="flex h-full flex-col gap-2 p-3.5">
-              <span className={`flex size-8 items-center justify-center rounded-xl ${item.bg} ${item.tone} glow-breathe`}>
-                <Icon className="size-4" aria-hidden="true" />
-              </span>
-              <span className="text-[11px] text-muted-foreground">{item.label}</span>
-              <AnimatedAmount
-                value={item.value}
-                currency={summary.currency}
-                signed={item.signed}
-                className={`text-base font-bold leading-tight ${item.tone}`}
-              />
-              <MicroBars values={item.bars} color={item.color} className="mt-auto" />
-              <span className="text-[10px] text-muted-foreground">This month</span>
-            </GlassCard>
-          </Link>
-        )
-      })}
+    <section aria-label="Monthly money summary">
+      <GlassCard strong radius="2xl" padding="lg" className="relative overflow-hidden">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-60"
+          style={{
+            background:
+              'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(20,217,255,0.06), transparent 65%)',
+          }}
+          aria-hidden="true"
+        />
+
+        <p className="mb-4 text-xs font-medium tracking-wide text-muted-foreground">This month</p>
+
+        <div className="grid grid-cols-3 divide-x divide-white/8">
+          {items.map((item) => {
+            const Icon = item.icon
+            return (
+              <Link
+                key={item.id}
+                href={item.href}
+                aria-label={`${item.label} — view transactions`}
+                className="group flex min-w-0 flex-col gap-2 px-2 first:pl-0 last:pr-0 focus-visible:outline-2 focus-visible:outline-ring sm:px-3"
+              >
+                <span className={`flex size-8 items-center justify-center rounded-xl ${item.iconBg}`}>
+                  <Icon className="size-4" aria-hidden="true" />
+                </span>
+                <span className="truncate text-[11px] text-muted-foreground">{item.label}</span>
+                <AnimatedAmount
+                  value={item.value}
+                  currency={summary.currency}
+                  signed={item.signed}
+                  className={`truncate text-base font-bold leading-tight sm:text-lg ${item.tone}`}
+                />
+              </Link>
+            )
+          })}
+        </div>
+      </GlassCard>
     </section>
   )
 }
