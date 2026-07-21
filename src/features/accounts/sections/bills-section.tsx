@@ -65,12 +65,12 @@ export function BillsSection({ bills }: { bills: Bill[] }) {
               <GlassCard
                 interactive
                 pressable
-                hoverGlow="purple"
                 className="relative flex items-center gap-3.5 overflow-hidden p-4"
                 style={{
                   borderColor: isNext
                     ? `color-mix(in oklch, ${bill.color} 38%, transparent)`
                     : undefined,
+                  boxShadow: '0 0 20px rgba(0,0,0,0.08)',
                 }}
               >
                 {/* Soft color wash from the bill's identity color */}

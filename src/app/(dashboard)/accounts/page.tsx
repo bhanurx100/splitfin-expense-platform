@@ -63,7 +63,7 @@ function AccountsPageContent() {
         actions={
           <>
             <IconButton icon={Bell} label="Notifications" badge={greeting.unreadNotifications} />
-            <IconButton icon={Plus} label="Add account" className="bg-primary/20 text-primary" />
+            <IconButton icon={Plus} label="Add account" className="bg-white/8 text-foreground" />
           </>
         }
       />

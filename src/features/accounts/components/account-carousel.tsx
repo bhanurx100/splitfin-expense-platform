@@ -56,7 +56,7 @@ export function AccountCarousel({ accounts }: { accounts: AccountPreview[] }) {
 
       <ul
         ref={scrollRef}
-        className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-6 pb-2 scrollbar-none"
+        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 scrollbar-none"
       >
         {accounts.map((account, i) => {
           const meta = typeMeta[account.type]
@@ -72,28 +72,20 @@ export function AccountCarousel({ accounts }: { accounts: AccountPreview[] }) {
               className="w-64 shrink-0 snap-center"
             >
               <div
-                className="glass-strong relative flex h-full flex-col gap-4 overflow-hidden rounded-xl p-5"
+                className="glass-strong relative flex h-full flex-col gap-4 overflow-hidden rounded-xl p-5 bg-transparent"
                 style={{
-                  borderColor: `color-mix(in oklch, ${meta.color} 35%, transparent)`,
-                  boxShadow: `0 0 24px color-mix(in oklch, ${meta.color} 14%, transparent)`,
+                  borderColor: 'var(--border)',
+                  boxShadow: '0 0 20px rgba(0,0,0,0.08)',
                 }}
               >
-                {/* Accent wash */}
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-0 top-0 h-24 opacity-30"
-                  style={{
-                    background: `radial-gradient(ellipse 90% 100% at 50% 0%, color-mix(in oklch, ${meta.color} 40%, transparent), transparent)`,
-                  }}
-                />
 
                 <div className="relative flex items-start justify-between gap-2">
                   <div className="flex items-center gap-3">
                     <span
-                      className="flex size-11 items-center justify-center rounded-2xl"
+                      className="flex size-11 items-center justify-center rounded-2xl border border-white/8 bg-transparent"
                       style={{
-                        backgroundColor: `color-mix(in oklch, ${meta.color} 18%, transparent)`,
                         color: meta.color,
+                        boxShadow: `0 0 16px color-mix(in srgb, ${meta.color} 12%, transparent)`,
                       }}
                     >
                       <Icon className="size-5" aria-hidden="true" />

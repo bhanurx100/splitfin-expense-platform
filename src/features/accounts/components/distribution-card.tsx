@@ -19,7 +19,7 @@ export function DistributionCard({ segments, totalBalance, changePercent }: Dist
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   return (
-    <GlassCard strong className="p-5">
+    <GlassCard strong className="p-5" style={{ borderColor: 'var(--border)', boxShadow: '0 0 20px color-mix(in srgb, var(--info) 12%, transparent)' }}>
       <div className="flex flex-col items-center">
         <DonutChart
           segments={segments.map((s) => ({ id: s.id, percent: s.percent, color: s.color, label: s.label }))}

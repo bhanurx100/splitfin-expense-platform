@@ -88,10 +88,10 @@ export function AccountDetailsSection({ details }: { details: AccountDetails }) 
                     <dt className="text-[11px] text-muted-foreground">{field.label}</dt>
                     <dd
                       className={`flex items-center gap-1 text-xs font-semibold ${field.tone === 'positive'
-                          ? 'text-positive'
-                          : field.tone === 'negative'
-                            ? 'text-negative'
-                            : ''
+                        ? 'text-positive'
+                        : field.tone === 'negative'
+                          ? 'text-negative'
+                          : ''
                         }`}
                     >
                       <span className="truncate">{field.value}</span>
