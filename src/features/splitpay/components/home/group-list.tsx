@@ -70,12 +70,12 @@ export function GroupList({ groups }: { groups: SplitGroup[] }) {
             >
               <GlassCard
                 interactive
-                hoverGlow={meta.hoverGlow}
                 className="flex cursor-pointer items-center gap-3.5 p-4"
                 onClick={() => setExpandedId((cur) => (cur === group.id ? null : group.id))}
                 role="button"
                 aria-expanded={expanded}
                 aria-label={`${group.name} — ${meta.label} ${formatCurrency(group.amount, group.currency)}. Toggle details.`}
+                style={{ boxShadow: '0 0 20px rgba(0,0,0,0.08)' }}
               >
                 <motion.span
                   whileHover={{ scale: 1.1, rotate: -4 }}

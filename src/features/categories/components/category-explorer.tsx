@@ -21,12 +21,12 @@ interface CategoryExplorerProps {
   currency: Currency
 }
 
-const groupOptions: { id: string; label: string; icon: LucideIcon }[] = [
-  { id: 'all', label: 'All', icon: LayoutGrid },
-  { id: 'needs', label: 'Needs', icon: ShoppingBasket },
-  { id: 'wants', label: 'Wants', icon: Gift },
-  { id: 'lifestyle', label: 'Lifestyle', icon: Heart },
-  { id: 'others', label: 'Others', icon: MoreHorizontal },
+const groupOptions: { id: string; label: string; icon: LucideIcon; borderColor: string }[] = [
+  { id: 'all', label: 'All', icon: LayoutGrid, borderColor: 'rgba(124,60,255,0.3)' },
+  { id: 'needs', label: 'Needs', icon: ShoppingBasket, borderColor: 'rgba(22,230,161,0.3)' },
+  { id: 'wants', label: 'Wants', icon: Gift, borderColor: 'rgba(255,45,120,0.3)' },
+  { id: 'lifestyle', label: 'Lifestyle', icon: Heart, borderColor: 'rgba(20,217,255,0.3)' },
+  { id: 'others', label: 'Others', icon: MoreHorizontal, borderColor: 'rgba(255,170,43,0.3)' },
 ]
 
 /** Premium circular group selector — same interaction language as quick actions. */
@@ -71,9 +71,10 @@ function GroupSelector({
                   : 'border-white/10 bg-[rgba(255,255,255,0.05)] text-foreground/75',
               )}
               style={{
+                borderColor: active ? 'rgba(124,60,255,0.6)' : opt.borderColor,
                 boxShadow: active
-                  ? '0 10px 26px rgba(0,0,0,0.5), 0 0 26px rgba(124,60,255,0.5)'
-                  : '0 6px 18px rgba(0,0,0,0.4)',
+                  ? '0 0 20px rgba(0,0,0,0.12)'
+                  : '0 0 20px rgba(0,0,0,0.08)',
               }}
             >
               {active && (
