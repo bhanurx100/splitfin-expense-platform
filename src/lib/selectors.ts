@@ -91,6 +91,8 @@ export interface FlowTotals {
   net: number
   incomeOnly: number
   expenseCount: number
+  incomeCount: number
+  transactionCount: number
 }
 
 export function flowTotals(transactions: Transaction[]): FlowTotals {
@@ -98,20 +100,25 @@ export function flowTotals(transactions: Transaction[]): FlowTotals {
   let outflow = 0
   let incomeOnly = 0
   let expenseCount = 0
+  let incomeCount = 0
+  let transactionCount = 0
   for (const t of transactions) {
     if (t.status === 'failed') continue
+    transactionCount += 1
     if (t.type === 'expense') {
       outflow += t.amount
       expenseCount += 1
     } else if (t.type === 'income') {
       inflow += t.amount
       incomeOnly += t.amount
+      incomeCount += 1
     } else if (t.type === 'refund') {
       inflow += t.amount
+      incomeCount += 1
     }
     // transfers are internal account moves — never counted as flow
   }
-  return { inflow, outflow, net: inflow - outflow, incomeOnly, expenseCount }
+  return { inflow, outflow, net: inflow - outflow, incomeOnly, expenseCount, incomeCount, transactionCount }
 }
 
 export function monthTransactions(transactions: Transaction[], ref: MonthRef): Transaction[] {
@@ -149,7 +156,7 @@ export function dailySeries(transactions: Transaction[], ref: MonthRef): CashFlo
   for (let day = 1; day <= lastDay; day += 1) {
     const key = `${ref.key}-${String(day).padStart(2, '0')}`
     const b = byDay[key] ?? emptyTotals()
-    points.push({ label: shortLabel(key), inflow: b.inflow, outflow: b.outflow })
+    points.push({ label: shortLabel(key), inflow: b.inflow, outflow: b.outflow, dateKey: key })
   }
   return points
 }
@@ -174,7 +181,7 @@ export function weeklySeries(transactions: Transaction[], weeks: number): CashFl
         outflow += b.outflow
       }
     }
-    points.push({ label: shortLabel(weekStart), inflow, outflow })
+    points.push({ label: shortLabel(weekStart), inflow, outflow, dateKey: weekStart.slice(0, 7) })
   }
   return points
 }
@@ -187,7 +194,7 @@ export function monthlySeries(transactions: Transaction[], months: number): Cash
     const d = new Date(Date.UTC(ref.year, ref.month - i, 1))
     const m = monthRefOf(d.toISOString().slice(0, 10))
     const totals = flowTotals(monthTransactions(transactions, m))
-    points.push({ label: m.label.slice(0, 3), inflow: totals.inflow, outflow: totals.outflow })
+    points.push({ label: m.label.slice(0, 3), inflow: totals.inflow, outflow: totals.outflow, dateKey: m.key })
   }
   return points
 }
@@ -203,6 +210,34 @@ export function buildCashFlowByPeriod(
     '6M': weeklySeries(transactions, 26),
     '1Y': monthlySeries(transactions, 12),
   }
+}
+
+/* ── Sync status — derived from per-account provider timestamps ─────────── */
+
+/** Parse relative sync labels like "2 min ago" into minutes elapsed. */
+function parseSyncMinutes(label: string): number | null {
+  if (!label || label === 'Manual') return null
+  const min = label.match(/(\d+)\s*min/i)
+  if (min) return Number(min[1])
+  const hr = label.match(/(\d+)\s*hr/i)
+  if (hr) return Number(hr[1]) * 60
+  return null
+}
+
+function formatSyncLabel(minutes: number): string {
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`
+  const hrs = Math.round(minutes / 60)
+  return `${hrs} hour${hrs === 1 ? '' : 's'} ago`
+}
+
+/** Most recent provider sync across real (non-linked) accounts. */
+export function buildLastSyncedLabel(accounts: AccountPreview[]): string {
+  const real = accounts.filter((a) => !a.linkedAccountId && a.lastSynced)
+  const minutes = real
+    .map((a) => parseSyncMinutes(a.lastSynced!))
+    .filter((m): m is number => m !== null)
+  if (minutes.length === 0) return 'Manual entry'
+  return formatSyncLabel(Math.min(...minutes))
 }
 
 /* ── Headline summaries ────────────────────────────────────────────────── */
@@ -235,6 +270,7 @@ export function buildBalanceSummary(
     monthlyChangePercent: opening > 0 ? Math.round((net / opening) * 1000) / 10 : 0,
     accountCount: real.length,
     creditOutstanding,
+    lastSyncedLabel: buildLastSyncedLabel(accounts),
     currency,
   }
 }
@@ -265,6 +301,9 @@ export function buildTransactionSummary(
   expenseChangePercent: number
   incomeBars: number[]
   expenseBars: number[]
+  transactionCount: number
+  incomeTransactionCount: number
+  expenseTransactionCount: number
   currency: Currency
 } {
   const ref = currentMonthOf(transactions)
@@ -279,6 +318,9 @@ export function buildTransactionSummary(
     expenseChangePercent: monthOverMonth(current.outflow, last.outflow),
     incomeBars: series.map((p) => p.inflow),
     expenseBars: series.map((p) => p.outflow),
+    transactionCount: current.transactionCount,
+    incomeTransactionCount: current.incomeCount,
+    expenseTransactionCount: current.expenseCount,
     currency,
   }
 }

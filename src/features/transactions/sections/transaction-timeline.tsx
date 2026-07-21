@@ -8,20 +8,20 @@ import { cn } from '@/src/lib/utils'
 import type { MonthGroup, Transaction, TransactionType } from '@/src/types/transaction'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CalendarRange, ChevronDown, ChevronRight, Receipt, RefreshCw, Users } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const typeStyles: Record<
   TransactionType,
   { color: string; badge: string; label: string; sign: '+' | '-' }
 > = {
-  income: { color: 'var(--positive)', badge: 'bg-positive/15 text-positive', label: 'Income', sign: '+' },
-  expense: { color: 'var(--negative)', badge: 'bg-negative/15 text-negative', label: 'Expense', sign: '-' },
-  transfer: { color: 'var(--primary)', badge: 'bg-primary/15 text-primary', label: 'Transfer', sign: '-' },
-  refund: { color: 'var(--info)', badge: 'bg-info/15 text-info', label: 'Refund', sign: '+' },
+  income: { color: 'var(--positive)', badge: 'border border-positive/30 text-positive', label: 'Income', sign: '+' },
+  expense: { color: 'var(--negative)', badge: 'border border-negative/30 text-negative', label: 'Expense', sign: '-' },
+  transfer: { color: 'var(--primary)', badge: 'border border-primary/30 text-primary', label: 'Transfer', sign: '-' },
+  refund: { color: 'var(--info)', badge: 'border border-info/30 text-info', label: 'Refund', sign: '+' },
 }
 
 /** X center of the spine (px) inside every timeline block. */
-const SPINE_X = 7
+const SPINE_X = 5
 
 function TransactionRow({
   tx,
@@ -49,42 +49,28 @@ function TransactionRow({
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -16 }}
       transition={{ ...springs.soft, delay: index * 0.045 }}
-      className="group relative pl-9"
+      className="group relative pl-7"
       onPointerEnter={() => onHover(tx.id)}
       onPointerLeave={() => onHover(null)}
     >
-      {/* Spine segment — blends previous node's color into this node */}
+      {/* Individual transaction markers only - no spine segments (header provides continuous line) */}
+      {/* Timeline node — hollow outlined circle with transparent center */}
       <motion.span
         aria-hidden="true"
-        initial={{ scaleY: 0 }}
-        animate={{ scaleY: 1 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: index * 0.045 }}
-        className="absolute w-[2px] rounded-full transition-[filter] duration-400 group-hover:brightness-150"
-        style={{
-          left: SPINE_X - 1,
-          top: -12,
-          bottom: isLast ? 'calc(100% - 34px)' : -12,
-          transformOrigin: 'top',
-          background: `linear-gradient(180deg, ${prevColor}, ${style.color})`,
-          boxShadow: `0 0 6px ${style.color}44`,
-        }}
-      />
-      {/* Timeline node — grows + glows on hover */}
-      <motion.span
-        aria-hidden="true"
-        animate={{ scale: expanded ? 1.3 : 1 }}
+        animate={{ scale: expanded ? 1.2 : 1 }}
         transition={springs.bouncy}
-        className="absolute top-7 z-10 size-3 -translate-x-1/2 rounded-full transition-transform duration-300 group-hover:scale-[1.45]"
+        className="absolute top-7 z-10 size-3 -translate-x-1/2 rounded-full transition-transform duration-300 group-hover:scale-[1.15]"
         style={{
           left: SPINE_X,
-          backgroundColor: style.color,
-          boxShadow: `0 0 8px ${style.color}, 0 0 18px ${style.color}55`,
+          backgroundColor: 'transparent',
+          border: `2px solid ${style.color}`,
+          boxShadow: `0 0 8px ${style.color}44`,
         }}
       />
       <GlassCard
         interactive
         className={cn(
-          'flex min-w-0 flex-1 cursor-pointer items-start gap-3.5 p-3.5 transition-shadow duration-300',
+          'flex min-w-0 flex-1 cursor-pointer items-start gap-3 p-3 transition-shadow duration-300',
           expanded && 'border-white/20',
         )}
         onClick={onToggle}
@@ -95,17 +81,17 @@ function TransactionRow({
         <motion.span
           whileHover={{ scale: 1.1, rotate: -4 }}
           transition={springs.bouncy}
-          className="flex size-12 shrink-0 items-center justify-center rounded-full"
+          className="flex size-10 shrink-0 items-center justify-center rounded-full border border-white/8"
           style={{
-            backgroundColor: `color-mix(in oklch, ${style.color} 14%, transparent)`,
             color: style.color,
+            boxShadow: `0 0 16px color-mix(in oklch, ${style.color} 8%, transparent)`,
           }}
         >
-          <CategoryIcon name={tx.icon} className="size-5" />
+          <CategoryIcon name={tx.icon} className="size-4.5" />
         </motion.span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-bold">{tx.merchant}</p>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
             {tx.account} · {tx.category}
           </p>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -113,19 +99,19 @@ function TransactionRow({
               {style.label}
             </span>
             {tx.isSplit && (
-              <span className="flex items-center gap-0.5 rounded-md bg-info/15 px-1.5 py-0.5 text-[10px] font-semibold text-info">
+              <span className="flex items-center gap-0.5 rounded-md border border-info/30 px-1.5 py-0.5 text-[10px] font-semibold text-info">
                 <Users className="size-2.5" aria-hidden="true" />
                 Split
               </span>
             )}
             {tx.isRecurring && (
-              <span className="flex items-center gap-0.5 rounded-md bg-warning/15 px-1.5 py-0.5 text-[10px] font-semibold text-warning">
+              <span className="flex items-center gap-0.5 rounded-md border border-warning/30 px-1.5 py-0.5 text-[10px] font-semibold text-warning">
                 <RefreshCw className="size-2.5" aria-hidden="true" />
                 Recurring
               </span>
             )}
             {tx.hasReceipt && (
-              <span className="flex items-center gap-0.5 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+              <span className="flex items-center gap-0.5 rounded-md border border-white/20 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
                 <Receipt className="size-2.5" aria-hidden="true" />
                 Bill
               </span>
@@ -160,7 +146,7 @@ function TransactionRow({
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
-            <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 rounded-2xl border border-white/6 bg-white/[0.03] px-4 py-3 text-xs">
+            <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 rounded-2xl border border-white/6 bg-transparent px-4 py-3 text-xs">
               <div>
                 <p className="text-muted-foreground">Account</p>
                 <p className="mt-0.5 font-medium">{tx.account}</p>
@@ -196,11 +182,35 @@ function TransactionRow({
 interface TransactionTimelineProps {
   groups: MonthGroup[]
   activeType: string
+  /** ISO date (YYYY-MM-DD) — expand matching transaction when deep-linked. */
+  highlightDate?: string
+  /** Month key (YYYY-MM) — scroll to matching month group. */
+  highlightMonth?: string
 }
 
-export function TransactionTimeline({ groups, activeType }: TransactionTimelineProps) {
+export function TransactionTimeline({ groups, activeType, highlightDate, highlightMonth }: TransactionTimelineProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const monthRefs = useRef<Record<string, HTMLElement | null>>({})
+
+  // Deep-link: expand a specific transaction or scroll to a month from cash flow.
+  useEffect(() => {
+    if (highlightDate) {
+      for (const group of groups) {
+        const match = group.transactions.find((t) => t.isoDate === highlightDate)
+        if (match) {
+          setExpandedId(match.id)
+          const el = monthRefs.current[group.id]
+          el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          return
+        }
+      }
+    }
+    if (highlightMonth) {
+      const el = monthRefs.current[highlightMonth]
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [highlightDate, highlightMonth, groups])
 
   const visibleGroups = groups
     .map((group) => ({
@@ -209,8 +219,8 @@ export function TransactionTimeline({ groups, activeType }: TransactionTimelineP
         activeType === 'all'
           ? group.transactions
           : group.transactions.filter((t) =>
-              activeType === 'income' ? t.type === 'income' || t.type === 'refund' : t.type === activeType,
-            ),
+            activeType === 'income' ? t.type === 'income' || t.type === 'refund' : t.type === activeType,
+          ),
     }))
     .filter(({ visible }) => visible.length > 0)
 
@@ -220,7 +230,7 @@ export function TransactionTimeline({ groups, activeType }: TransactionTimelineP
         initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={springs.soft}
-        className="glass flex flex-col items-center gap-2 rounded-2xl p-10 text-center"
+        className="glass flex flex-col items-center gap-2 rounded-2xl border border-white/8 p-10 text-center"
       >
         <p className="text-sm font-semibold">No transactions yet</p>
         <p className="max-w-56 text-xs leading-relaxed text-muted-foreground">
@@ -237,6 +247,9 @@ export function TransactionTimeline({ groups, activeType }: TransactionTimelineP
         return (
           <motion.section
             key={group.id}
+            ref={(el) => {
+              monthRefs.current[group.id] = el
+            }}
             aria-label={`${group.month} ${group.year} transactions`}
             className="relative"
             initial={{ opacity: 0, y: 22 }}
@@ -245,8 +258,8 @@ export function TransactionTimeline({ groups, activeType }: TransactionTimelineP
             transition={{ ...springs.soft, delay: gi * 0.05 }}
           >
             {/* ── Month header (anchored to the spine) ──────────────── */}
-            <div className="relative pl-9">
-              {/* Header spine stub — blends into the first transaction's color */}
+            <div className="relative pl-7">
+              {/* Header spine stub — continuous vertical line connecting through all transactions */}
               <motion.span
                 aria-hidden="true"
                 initial={{ scaleY: 0 }}
@@ -256,20 +269,19 @@ export function TransactionTimeline({ groups, activeType }: TransactionTimelineP
                 className="absolute top-[62%] w-[2px] rounded-full"
                 style={{
                   left: SPINE_X - 1,
-                  bottom: -16,
+                  height: `calc(100% - 62% + ${visible.length * 80 + 32}px)`,
                   transformOrigin: 'top',
-                  background: `linear-gradient(180deg, var(--primary), ${firstColor})`,
-                  boxShadow: `0 0 6px ${firstColor}44`,
+                  background: `linear-gradient(180deg, var(--primary)88, ${firstColor}88)`,
                 }}
               />
               <span
                 aria-hidden="true"
-                className="absolute top-1/2 z-10 flex size-[31px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-primary/40 bg-[#171040] text-primary"
-                style={{ left: SPINE_X, boxShadow: '0 0 14px rgba(124,60,255,0.45)' }}
+                className="absolute top-1/2 z-10 flex size-[28px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-info/40 bg-transparent text-info"
+                style={{ left: SPINE_X, boxShadow: '0 0 8px rgba(20,217,255,0.25)' }}
               >
-                <CalendarRange className="size-4" aria-hidden="true" />
+                <CalendarRange className="size-3.5" aria-hidden="true" />
               </span>
-              <GlassCard strong interactive className="flex items-center gap-3.5 p-4">
+              <GlassCard strong interactive className="flex items-center gap-3.5 p-4" style={{ boxShadow: '0 0 20px rgba(0,0,0,0.08)' }}>
                 <div className="min-w-0 flex-1">
                   <p className="text-base font-bold">
                     {group.month} {group.year}

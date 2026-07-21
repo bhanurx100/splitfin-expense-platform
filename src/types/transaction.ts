@@ -23,6 +23,8 @@ export interface BalanceSummary {
   accountCount: number
   /** Credit-card dues included in (subtracted from) the total. */
   creditOutstanding: number
+  /** Human-readable sync status derived from account provider timestamps. */
+  lastSyncedLabel: string
   currency: Currency
 }
 
@@ -61,6 +63,8 @@ export interface CashFlowPoint {
   label: string
   inflow: number
   outflow: number
+  /** ISO date (YYYY-MM-DD) or month key (YYYY-MM) for deep-link navigation. */
+  dateKey?: string
 }
 
 export type CashFlowPeriod = '1M' | '3M' | '6M' | '1Y'
@@ -134,6 +138,10 @@ export interface TransactionSummary {
   expenseChangePercent: number
   incomeBars: number[]
   expenseBars: number[]
+  /** Completed transactions in the current month (excludes failed). */
+  transactionCount: number
+  incomeTransactionCount: number
+  expenseTransactionCount: number
   currency: Currency
 }
 

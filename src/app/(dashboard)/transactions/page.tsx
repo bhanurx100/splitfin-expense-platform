@@ -3,7 +3,7 @@
 import { TransactionActions } from '@/src/features/transactions/components/transaction-actions'
 import { FlowSummary } from '@/src/features/transactions/sections/flow-summary'
 import { TransactionTimeline } from '@/src/features/transactions/sections/transaction-timeline'
-import { cashFlow, monthGroups, transactionSummary } from '@/src/lib/data'
+import { monthGroups, transactionSummary } from '@/src/lib/data'
 import { IconButton } from '@/src/shared/components/icon-button'
 import { MobileShell } from '@/src/shared/components/mobile-shell'
 import { PageHeader } from '@/src/shared/components/page-header'
@@ -25,6 +25,8 @@ const validTypes = new Set(['all', 'income', 'expense', 'transfer', 'refund'])
 function TransactionsContent() {
   const searchParams = useSearchParams()
   const [type, setType] = useState('all')
+  const highlightDate = searchParams.get('date') ?? undefined
+  const highlightMonth = searchParams.get('month') ?? undefined
 
   // Deep links (e.g. Overview → /transactions?type=income) land pre-filtered.
   useEffect(() => {
@@ -59,7 +61,7 @@ function TransactionsContent() {
         }
       />
 
-      <FlowSummary summary={transactionSummary} flow={cashFlow} />
+      <FlowSummary summary={transactionSummary} />
 
       <TransactionActions />
 
@@ -73,7 +75,12 @@ function TransactionsContent() {
         className="mt-3"
       />
 
-      <TransactionTimeline groups={monthGroups} activeType={type} />
+      <TransactionTimeline
+        groups={monthGroups}
+        activeType={type}
+        highlightDate={highlightDate}
+        highlightMonth={highlightMonth}
+      />
     </MobileShell>
   )
 }

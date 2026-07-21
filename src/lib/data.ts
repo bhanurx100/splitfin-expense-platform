@@ -38,7 +38,7 @@ import type {
 /* ── User ──────────────────────────────────────────────────────────────── */
 
 export const greeting: UserGreeting = {
-  name: 'Arjun',
+  name: 'Bhanurx100',
   subtitle: 'Take control, split smart, save more.',
   unreadNotifications: 3,
 }

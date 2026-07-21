@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import type { PropsWithChildren } from "react";
 
 import { QueryProviders } from "@/src/providers/query-provider";
+import { ThemeProvider } from "@/src/providers/theme-provider";
 
 import "./globals.css";
 
@@ -24,15 +25,17 @@ export const viewport: Viewport = {
  * Root layout — production architecture preserved:
  * - ClerkProvider: required by middleware-protected routes and (auth) pages.
  * - QueryProviders: React Query client for the kept API/feature hooks.
- * Removed: ThemeProvider (Aurora is dark-only), SheetProvider + Toaster
- * (old sheet/toaster UI deleted with the legacy dashboard).
+ * - ThemeProvider: Global theme toggle for dark/light mode.
+ * Removed: SheetProvider + Toaster (old sheet/toaster UI deleted with the legacy dashboard).
  */
 const RootLayout = ({ children }: Readonly<PropsWithChildren>) => {
   return (
     <ClerkProvider>
       <html lang="en" className="dark bg-background">
         <body className="font-sans antialiased">
-          <QueryProviders>{children}</QueryProviders>
+          <ThemeProvider>
+            <QueryProviders>{children}</QueryProviders>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>
