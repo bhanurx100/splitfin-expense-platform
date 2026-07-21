@@ -24,9 +24,9 @@ export function BottomNav() {
       style={{ bottom: 'max(12px, env(safe-area-inset-bottom))' }}
     >
       <div
-        className="edge-light flex items-stretch justify-between rounded-3xl border border-[rgba(145,130,255,0.18)] px-2 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+        className="edge-light flex items-stretch justify-between rounded-3xl border border-border/50 px-2 py-1.5 shadow-[0_4px_20px_rgba(0,0,0,0.25)]"
         style={{
-          background: 'rgba(10, 12, 27, 0.92)',
+          background: 'var(--popover)',
           backdropFilter: 'blur(28px)',
           WebkitBackdropFilter: 'blur(28px)',
         }}
@@ -40,7 +40,7 @@ export function BottomNav() {
               href={tab.href}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'relative flex min-h-11 min-w-11 flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-1.5 text-[10px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-ring',
+                'relative flex min-h-9 min-w-9 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl py-1 text-[10px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-ring',
                 active ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
               )}
             >

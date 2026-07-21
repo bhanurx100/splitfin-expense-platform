@@ -5,44 +5,41 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   SPLITFIN "AURORA" DESIGN SYSTEM — final production tokens
-   Dark-only premium fintech theme. All colors are FULL color values (hex/rgba),
-   never channels, because Premium UI components consume the variables directly
-   in inline styles, SVG strokes and color-mix() expressions. Tailwind v3
-   resolves alpha modifiers (e.g. bg-primary/15) through its color-mix fallback.
+   SPLITFIN "AURORA" DESIGN SYSTEM — Unified Border Glow Surface System
+   Premium transparent surfaces with subtle border accents. No filled backgrounds.
+   Supports both dark and light themes with proper semantic text colors.
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 @layer base {
-  :root,
-  .dark {
+  :root {
     color-scheme: dark;
 
-    /* ── Surfaces ─────────────────────────────────────────────────────────── */
-    --background: #04050f;
-    --foreground: #f7f7fb;
-    --surface: #0a0c1b;
-    --surface-elevated: #111326;
-    --card: rgba(18, 20, 39, 0.72);
-    --card-foreground: #f7f7fb;
-    --popover: #111326;
-    --popover-foreground: #f7f7fb;
+    /* ── Surfaces (Dark Mode) ─────────────────────────────────────────────── */
+    --background: #0B0D10;
+    --foreground: #ffffff;
+    --surface: #12151A;
+    --surface-elevated: #171B22;
+    --card: #12151A;
+    --card-foreground: #ffffff;
+    --popover: #171B22;
+    --popover-foreground: #ffffff;
 
     /* ── Brand (violet primary family) ────────────────────────────────────── */
     --primary: #7c3cff;
     --primary-bright: #9b5cff;
-    --primary-foreground: #fdfdff;
-    --secondary: #14162c;
-    --secondary-foreground: #f7f7fb;
-    --muted: #14162c;
-    --muted-foreground: #aaa9c2;
-    --accent: #191b33;
-    --accent-foreground: #f7f7fb;
+    --primary-foreground: #ffffff;
+    --secondary: #111418;
+    --secondary-foreground: #ffffff;
+    --muted: #111418;
+    --muted-foreground: #a1a1aa;
+    --accent: #111418;
+    --accent-foreground: #ffffff;
     --destructive: #ff2d78;
 
     /* ── Lines & focus ────────────────────────────────────────────────────── */
-    --border: rgba(145, 130, 255, 0.16);
-    --border-strong: rgba(124, 77, 255, 0.55);
-    --input: rgba(145, 130, 255, 0.2);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.15);
+    --input: rgba(255, 255, 255, 0.1);
     --ring: #9b5cff;
 
     /* ── Semantic accents ─────────────────────────────────────────────────── */
@@ -50,11 +47,86 @@
     --negative: #ff2d78;
     --info: #14d9ff;
     --warning: #ffaa2b;
-    --text-tertiary: #74758f;
+    --text-tertiary: #71717a;
 
-    /* ── Glass materials ──────────────────────────────────────────────────── */
-    --glass: rgba(18, 20, 39, 0.72);
-    --glass-strong: rgba(24, 26, 48, 0.82);
+    /* ── Glass materials (transparent) ────────────────────────────────────── */
+    --glass: transparent;
+    --glass-strong: transparent;
+
+    /* ── Border Glow Accents (15-25% intensity for visibility) ─────────────── */
+    --border-glow-accounts: rgba(59, 130, 246, 0.15);
+    --border-glow-accounts-hover: rgba(59, 130, 246, 0.25);
+    --border-glow-transactions: rgba(22, 230, 161, 0.15);
+    --border-glow-transactions-hover: rgba(22, 230, 161, 0.25);
+    --border-glow-categories: rgba(255, 170, 43, 0.15);
+    --border-glow-categories-hover: rgba(255, 170, 43, 0.25);
+    --border-glow-splitpay: rgba(124, 60, 255, 0.15);
+    --border-glow-splitpay-hover: rgba(124, 60, 255, 0.25);
+    --border-glow-insights: rgba(20, 217, 255, 0.15);
+    --border-glow-insights-hover: rgba(20, 217, 255, 0.25);
+    --border-glow-settings: rgba(255, 255, 255, 0.15);
+    --border-glow-settings-hover: rgba(255, 255, 255, 0.25);
+
+    /* ── Layout ───────────────────────────────────────────────────────────── */
+    --radius: 20px;
+    --bottom-nav-height: 76px;
+  }
+
+  .light {
+    color-scheme: light;
+
+    /* ── Surfaces (Light Mode) ─────────────────────────────────────────────── */
+    --background: #F5F6F8;
+    --foreground: #09090b;
+    --surface: #ffffff;
+    --surface-elevated: #ffffff;
+    --card: #ffffff;
+    --card-foreground: #09090b;
+    --popover: #ffffff;
+    --popover-foreground: #09090b;
+
+    /* ── Brand (violet primary family) ────────────────────────────────────── */
+    --primary: #7c3cff;
+    --primary-bright: #7c3cff;
+    --primary-foreground: #ffffff;
+    --secondary: #ffffff;
+    --secondary-foreground: #09090b;
+    --muted: #ffffff;
+    --muted-foreground: #71717a;
+    --accent: #ffffff;
+    --accent-foreground: #09090b;
+    --destructive: #ff2d78;
+
+    /* ── Lines & focus ────────────────────────────────────────────────────── */
+    --border: rgba(0, 0, 0, 0.08);
+    --border-strong: rgba(0, 0, 0, 0.15);
+    --input: rgba(0, 0, 0, 0.1);
+    --ring: #7c3cff;
+
+    /* ── Semantic accents ─────────────────────────────────────────────────── */
+    --positive: #16a34a;
+    --negative: #dc2626;
+    --info: #0ea5e9;
+    --warning: #f59e0b;
+    --text-tertiary: #a1a1aa;
+
+    /* ── Glass materials (transparent) ────────────────────────────────────── */
+    --glass: transparent;
+    --glass-strong: transparent;
+
+    /* ── Border Glow Accents (15-25% intensity for visibility) ─────────────── */
+    --border-glow-accounts: rgba(59, 130, 246, 0.15);
+    --border-glow-accounts-hover: rgba(59, 130, 246, 0.25);
+    --border-glow-transactions: rgba(22, 163, 74, 0.15);
+    --border-glow-transactions-hover: rgba(22, 163, 74, 0.25);
+    --border-glow-categories: rgba(249, 115, 22, 0.15);
+    --border-glow-categories-hover: rgba(249, 115, 22, 0.25);
+    --border-glow-splitpay: rgba(124, 60, 255, 0.15);
+    --border-glow-splitpay-hover: rgba(124, 60, 255, 0.25);
+    --border-glow-insights: rgba(14, 165, 233, 0.15);
+    --border-glow-insights-hover: rgba(14, 165, 233, 0.25);
+    --border-glow-settings: rgba(0, 0, 0, 0.15);
+    --border-glow-settings-hover: rgba(0, 0, 0, 0.25);
 
     /* ── Layout ───────────────────────────────────────────────────────────── */
     --radius: 20px;
@@ -72,11 +144,6 @@
 
   body {
     @apply bg-background font-sans text-foreground;
-    background-image:
-      radial-gradient(ellipse 90% 55% at 50% -12%, rgba(124, 60, 255, 0.16), transparent 70%),
-      radial-gradient(ellipse 55% 38% at 92% 102%, rgba(20, 217, 255, 0.07), transparent 70%),
-      radial-gradient(ellipse 45% 32% at 4% 88%, rgba(255, 45, 120, 0.05), transparent 70%);
-    background-attachment: fixed;
   }
 
   .tabular-nums,
@@ -86,18 +153,75 @@
 }
 
 @layer utilities {
-  /* ── Glass materials ────────────────────────────────────────────────────── */
+  /* ── Neutral Border Surface System with Subtle Ambient Glows ───────────── */
+  .surface-accounts {
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 0 20px var(--border-glow-accounts);
+  }
+  .surface-accounts:hover {
+    border-color: var(--border);
+    box-shadow: 0 0 30px var(--border-glow-accounts-hover);
+  }
+
+  .surface-transactions {
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 0 20px var(--border-glow-transactions);
+  }
+  .surface-transactions:hover {
+    border-color: var(--border);
+    box-shadow: 0 0 30px var(--border-glow-transactions-hover);
+  }
+
+  .surface-categories {
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 0 20px var(--border-glow-categories);
+  }
+  .surface-categories:hover {
+    border-color: var(--border);
+    box-shadow: 0 0 30px var(--border-glow-categories-hover);
+  }
+
+  .surface-splitpay {
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 0 20px var(--border-glow-splitpay);
+  }
+  .surface-splitpay:hover {
+    border-color: var(--border);
+    box-shadow: 0 0 30px var(--border-glow-splitpay-hover);
+  }
+
+  .surface-insights {
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 0 20px var(--border-glow-insights);
+  }
+  .surface-insights:hover {
+    border-color: var(--border);
+    box-shadow: 0 0 30px var(--border-glow-insights-hover);
+  }
+
+  .surface-settings {
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 0 20px var(--border-glow-settings);
+  }
+  .surface-settings:hover {
+    border-color: var(--border);
+    box-shadow: 0 0 30px var(--border-glow-settings-hover);
+  }
+
+  /* ── Glass materials (transparent fallback) ─────────────────────────────── */
   .glass {
-    background: var(--glass);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(145, 130, 255, 0.12);
+    background: transparent;
+    border: 1px solid var(--border);
   }
   .glass-strong {
-    background: var(--glass-strong);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(145, 130, 255, 0.18);
+    background: transparent;
+    border: 1px solid var(--border-strong);
   }
 
   /* ════════════════ Layered lighting system ════════════════ */
@@ -160,6 +284,12 @@
     );
     pointer-events: none;
     z-index: 0;
+  }
+
+  /* Remove blur from ambient-haze for crisp orbit in both themes */
+  .ambient-haze::before {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   /* LAYER 6 — soft contact light beneath floating objects */

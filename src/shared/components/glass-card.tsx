@@ -28,17 +28,17 @@ interface GlassCardProps extends Omit<HTMLMotionProps<"div">, "children"> {
 // ─── Style Maps ───────────────────────────────────────────────────────────────
 
 const variantStyles: Record<GlassVariant, string> = {
-  default: "bg-[rgba(255,255,255,0.04)] backdrop-blur-[24px]",
-  elevated: "bg-[rgba(255,255,255,0.07)] backdrop-blur-[40px]",
-  inset: "bg-[rgba(0,0,0,0.25)] backdrop-blur-[16px]",
-  highlight: "bg-[rgba(255,255,255,0.09)] backdrop-blur-[32px]",
+  default: "bg-card",
+  elevated: "bg-card",
+  inset: "bg-card",
+  highlight: "bg-card",
 }
 
 const borderStyles: Record<GlassBorder, string> = {
   none: "border-transparent",
-  subtle: "border-[rgba(255,255,255,0.06)]",
-  default: "border-[rgba(255,255,255,0.10)]",
-  strong: "border-[rgba(255,255,255,0.18)]",
+  subtle: "border-border",
+  default: "border-border",
+  strong: "border-border-strong",
   pink: "border-[rgba(255,0,140,0.40)]",
   purple: "border-[rgba(124,58,237,0.40)]",
   cyan: "border-[rgba(0,255,208,0.35)]",
@@ -47,24 +47,24 @@ const borderStyles: Record<GlassBorder, string> = {
 
 const glowStyles: Record<GlassGlow, React.CSSProperties> = {
   none: {},
-  pink: { boxShadow: "0 0 24px rgba(255, 0, 140, 0.20), 0 4px 16px rgba(0,0,0,0.5)" },
-  purple: { boxShadow: "0 0 24px rgba(124, 58, 237, 0.20), 0 4px 16px rgba(0,0,0,0.5)" },
-  cyan: { boxShadow: "0 0 24px rgba(0, 255, 208, 0.16), 0 4px 16px rgba(0,0,0,0.5)" },
+  pink: { boxShadow: "0 0 20px rgba(255, 0, 140, 0.08)" },
+  purple: { boxShadow: "0 0 20px rgba(124, 58, 237, 0.08)" },
+  cyan: { boxShadow: "0 0 20px rgba(0, 255, 208, 0.08)" },
 }
 
 /** Stronger glow the card interpolates toward while hovered. */
 const hoverGlowStyles: Record<Exclude<GlassGlow, "none">, string> = {
-  pink: "0 0 36px rgba(255, 0, 140, 0.38), 0 14px 32px rgba(0,0,0,0.60)",
-  purple: "0 0 36px rgba(124, 58, 237, 0.42), 0 14px 32px rgba(0,0,0,0.60)",
-  cyan: "0 0 36px rgba(0, 255, 208, 0.30), 0 14px 32px rgba(0,0,0,0.60)",
+  pink: "0 0 30px rgba(255, 0, 140, 0.12)",
+  purple: "0 0 30px rgba(124, 58, 237, 0.12)",
+  cyan: "0 0 30px rgba(0, 255, 208, 0.12)",
 }
 
 const radiusStyles: Record<NonNullable<GlassCardProps["radius"]>, string> = {
-  md: "rounded-[10px]",
-  lg: "rounded-[14px]",
-  xl: "rounded-[18px]",
-  "2xl": "rounded-[24px]",
-  "3xl": "rounded-[32px]",
+  md: "rounded-md",
+  lg: "rounded-lg",
+  xl: "rounded-xl",
+  "2xl": "rounded-2xl",
+  "3xl": "rounded-3xl",
 }
 
 const paddingStyles: Record<NonNullable<GlassCardProps["padding"]>, string> = {
@@ -123,10 +123,10 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
     const baseClass = cn(
       // Layout
       "relative",
-      // Glass
+      // Glass (transparent)
       variantStyles[variant],
-      // Strong variant (higher opacity)
-      strong && "bg-[rgba(255,255,255,0.08)]",
+      // Strong variant (transparent with stronger border)
+      strong && "border-border-strong",
       // Border
       "border",
       borderStyles[border],
@@ -134,14 +134,12 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
       radiusStyles[radius],
       // Padding
       paddingStyles[padding],
-      // Saturate for richer glass
-      "[--tw-backdrop-saturate:saturate(160%)]",
       // Interactive affordance (motion handles the lift/glow interpolation)
       interactive && "cursor-pointer",
       className
     )
 
-    const baseShadow = glowStyles[glow].boxShadow ?? "0 4px 16px rgba(0,0,0,0.5)"
+    const baseShadow = glowStyles[glow].boxShadow ?? "0 0 20px rgba(0,0,0,0.08)"
 
     const mergedStyle = {
       ...glowStyles[glow],
@@ -153,15 +151,15 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
       ...(pressable ? { whileTap: pressVariants.tap } : {}),
       ...(interactive
         ? {
-            whileHover: {
-              y: -3,
-              scale: 1.005,
-              boxShadow: hoverGlow ? hoverGlowStyles[hoverGlow] : baseShadow,
-              borderColor: "rgba(255,255,255,0.22)",
-            },
-            whileTap: { scale: 0.99 },
-            transition: { type: "spring" as const, stiffness: 300, damping: 26 },
-          }
+          whileHover: {
+            y: -3,
+            scale: 1.005,
+            boxShadow: hoverGlow ? hoverGlowStyles[hoverGlow] : baseShadow,
+            borderColor: "rgba(255,255,255,0.22)",
+          },
+          whileTap: { scale: 0.99 },
+          transition: { type: "spring" as const, stiffness: 300, damping: 26 },
+        }
         : {}),
     }
 

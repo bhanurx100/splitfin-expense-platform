@@ -77,7 +77,7 @@ const config = {
         info:     "var(--info)",
         warning:  "var(--warning)",
 
-        /* Glass materials & surfaces */
+        /* Glass materials & surfaces (transparent) */
         glass: {
           DEFAULT: "var(--glass)",
           strong:  "var(--glass-strong)",
@@ -86,31 +86,38 @@ const config = {
           DEFAULT:  "var(--surface)",
           elevated: "var(--surface-elevated)",
         },
+
+        /* Border glow accents */
+        "border-glow-accounts": "var(--border-glow-accounts)",
+        "border-glow-transactions": "var(--border-glow-transactions)",
+        "border-glow-categories": "var(--border-glow-categories)",
+        "border-glow-splitpay": "var(--border-glow-splitpay)",
+        "border-glow-insights": "var(--border-glow-insights)",
+        "border-glow-settings": "var(--border-glow-settings)",
       },
 
-      /* ── Border radius — Aurora scale ───────────────────────────────── */
+      /* ── Border radius — Unified scale ───────────────────────────────── */
       borderRadius: {
-        sm:   "12px",
-        md:   "16px",
-        lg:   "20px",
-        xl:   "24px",
-        "2xl": "28px",
-        "3xl": "32px",
-        "4xl": "36px",
+        sm:   "8px",
+        md:   "12px",
+        lg:   "16px",
+        xl:   "20px",
+        "2xl": "24px",
+        "3xl": "28px",
         full: "9999px",
       },
 
       /* ── Box shadows ────────────────────────────────────────────────── */
       boxShadow: {
-        xs:    "0 1px 2px 0 rgb(0 0 0 / 0.04)",
-        sm:    "0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04)",
-        md:    "0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04)",
-        lg:    "0 10px 15px -3px rgb(0 0 0 / 0.06), 0 4px 6px -4px rgb(0 0 0 / 0.04)",
-        xl:    "0 20px 25px -5px rgb(0 0 0 / 0.06), 0 8px 10px -6px rgb(0 0 0 / 0.04)",
-        card:  "0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04)",
-        glow:  "0 0 20px rgba(124, 60, 255, 0.35)",
+        xs:    "0 1px 2px 0 rgb(0 0 0 / 0.03)",
+        sm:    "0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.03)",
+        md:    "0 4px 6px -1px rgb(0 0 0 / 0.04), 0 2px 4px -2px rgb(0 0 0 / 0.03)",
+        lg:    "0 10px 15px -3px rgb(0 0 0 / 0.04), 0 4px 6px -4px rgb(0 0 0 / 0.03)",
+        xl:    "0 20px 25px -5px rgb(0 0 0 / 0.04), 0 8px 10px -6px rgb(0 0 0 / 0.03)",
+        card:  "0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.03)",
+        glow:  "0 0 20px rgba(124, 60, 255, 0.25)",
         // Legacy — keep for compat
-        DEFAULT: "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+        DEFAULT: "0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08)",
       },
 
       /* ── Spacing — Aurora additions (size-4.5 / size-13 utilities) ──── */

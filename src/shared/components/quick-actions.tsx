@@ -29,43 +29,38 @@ const toneStyles: Record<
 > = {
   primary: {
     text: 'text-primary-bright',
-    glow: '0 6px 18px rgba(0,0,0,0.45), 0 0 12px rgba(124,60,255,0.12)',
-    glowHover:
-      '0 14px 32px rgba(0,0,0,0.55), 0 0 28px rgba(124,60,255,0.45), 0 0 56px rgba(124,60,255,0.18)',
-    tint: 'radial-gradient(circle at 50% 32%, rgba(124,60,255,0.32), rgba(124,60,255,0.06) 68%)',
-    ring: 'rgba(155,92,255,0.45)',
+    glow: '0 0 20px rgba(0,0,0,0.08)',
+    glowHover: '0 0 30px rgba(0,0,0,0.12)',
+    tint: 'transparent',
+    ring: 'rgba(124,60,255,0.15)',
   },
   positive: {
     text: 'text-positive',
-    glow: '0 6px 18px rgba(0,0,0,0.45), 0 0 12px rgba(22,230,161,0.10)',
-    glowHover:
-      '0 14px 32px rgba(0,0,0,0.55), 0 0 28px rgba(22,230,161,0.40), 0 0 56px rgba(22,230,161,0.16)',
-    tint: 'radial-gradient(circle at 50% 32%, rgba(22,230,161,0.28), rgba(22,230,161,0.05) 68%)',
-    ring: 'rgba(22,230,161,0.40)',
+    glow: '0 0 20px rgba(0,0,0,0.08)',
+    glowHover: '0 0 30px rgba(0,0,0,0.12)',
+    tint: 'transparent',
+    ring: 'rgba(22,230,161,0.15)',
   },
   negative: {
     text: 'text-negative',
-    glow: '0 6px 18px rgba(0,0,0,0.45), 0 0 12px rgba(255,45,120,0.10)',
-    glowHover:
-      '0 14px 32px rgba(0,0,0,0.55), 0 0 28px rgba(255,45,120,0.40), 0 0 56px rgba(255,45,120,0.16)',
-    tint: 'radial-gradient(circle at 50% 32%, rgba(255,45,120,0.28), rgba(255,45,120,0.05) 68%)',
-    ring: 'rgba(255,45,120,0.40)',
+    glow: '0 0 20px rgba(0,0,0,0.08)',
+    glowHover: '0 0 30px rgba(0,0,0,0.12)',
+    tint: 'transparent',
+    ring: 'rgba(255,45,120,0.15)',
   },
   info: {
     text: 'text-info',
-    glow: '0 6px 18px rgba(0,0,0,0.45), 0 0 12px rgba(20,217,255,0.10)',
-    glowHover:
-      '0 14px 32px rgba(0,0,0,0.55), 0 0 28px rgba(20,217,255,0.40), 0 0 56px rgba(20,217,255,0.16)',
-    tint: 'radial-gradient(circle at 50% 32%, rgba(20,217,255,0.28), rgba(20,217,255,0.05) 68%)',
-    ring: 'rgba(20,217,255,0.40)',
+    glow: '0 0 20px rgba(0,0,0,0.08)',
+    glowHover: '0 0 30px rgba(0,0,0,0.12)',
+    tint: 'transparent',
+    ring: 'rgba(20,217,255,0.15)',
   },
   warning: {
     text: 'text-warning',
-    glow: '0 6px 18px rgba(0,0,0,0.45), 0 0 12px rgba(255,170,43,0.10)',
-    glowHover:
-      '0 14px 32px rgba(0,0,0,0.55), 0 0 28px rgba(255,170,43,0.40), 0 0 56px rgba(255,170,43,0.16)',
-    tint: 'radial-gradient(circle at 50% 32%, rgba(255,170,43,0.28), rgba(255,170,43,0.05) 68%)',
-    ring: 'rgba(255,170,43,0.40)',
+    glow: '0 0 20px rgba(0,0,0,0.08)',
+    glowHover: '0 0 30px rgba(0,0,0,0.12)',
+    tint: 'transparent',
+    ring: 'rgba(255,170,43,0.15)',
   },
 }
 
@@ -114,29 +109,20 @@ function QuickActionButton({ action, active }: { action: QuickAction; active: bo
     >
       <motion.span
         variants={{
-          rest: { scale: 1, boxShadow: tone.glow, borderColor: 'rgba(255,255,255,0.10)' },
+          rest: { scale: 1, boxShadow: tone.glow, borderColor: 'var(--border)' },
           active: { scale: 1.05, boxShadow: tone.glowHover, borderColor: tone.ring },
           hover: { scale: 1.07, boxShadow: tone.glowHover, borderColor: tone.ring },
           press: { scale: 0.9, boxShadow: tone.glowHover, borderColor: tone.ring },
         }}
         transition={springs.snappy}
-        className="relative flex size-16 items-center justify-center overflow-visible rounded-full border bg-[rgba(255,255,255,0.05)] backdrop-blur-[24px]"
+        className="relative flex size-16 items-center justify-center overflow-visible rounded-full border bg-transparent"
         style={{ boxShadow: tone.glow }}
       >
-        {/* Inner tonal tint */}
+        {/* Inner tonal tint (transparent) */}
         <span
           aria-hidden
           className="pointer-events-none absolute inset-0 rounded-full"
-          style={{ background: tone.tint, opacity: active ? 1 : 0.55, transition: 'opacity 300ms' }}
-        />
-        {/* Top edge light */}
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-full"
-          style={{
-            background:
-              'linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.02) 34%, transparent 60%)',
-          }}
+          style={{ background: tone.tint, opacity: 0 }}
         />
         {/* Ripple layer (clipped) */}
         <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-full">

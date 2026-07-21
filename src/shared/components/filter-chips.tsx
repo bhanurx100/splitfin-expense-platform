@@ -44,17 +44,15 @@ export function FilterChips({
             whileTap={{ scale: 0.94 }}
             transition={springs.snappy}
             className={cn(
-              'relative min-h-11 shrink-0 rounded-2xl px-4 text-sm font-medium transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-ring',
-              active ? 'text-primary-foreground' : 'glass text-muted-foreground hover:text-foreground',
+              'relative min-h-11 shrink-0 rounded-2xl border px-4 text-sm font-medium transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-ring',
+              active
+                ? 'border-primary text-primary-foreground bg-transparent'
+                : 'border-white/8 text-muted-foreground hover:text-foreground bg-transparent',
             )}
+            style={{
+              boxShadow: active ? '0 0 20px rgba(124,60,255,0.15)' : 'none',
+            }}
           >
-            {active && (
-              <motion.span
-                layoutId={layoutId}
-                className="absolute inset-0 rounded-2xl bg-primary glow-primary"
-                transition={springs.pill}
-              />
-            )}
             <span className="relative flex items-center gap-1.5">
               {opt.label}
               {opt.count != null && (
@@ -63,8 +61,10 @@ export function FilterChips({
                     key={opt.count}
                     {...crossfade}
                     className={cn(
-                      'rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums leading-none',
-                      active ? 'bg-white/20 text-primary-foreground' : 'bg-white/8 text-muted-foreground',
+                      'rounded-full border px-1.5 py-0.5 text-[10px] font-semibold tabular-nums leading-none',
+                      active
+                        ? 'border-white/30 text-primary-foreground bg-transparent'
+                        : 'border-white/8 text-muted-foreground bg-transparent',
                     )}
                   >
                     {opt.count}

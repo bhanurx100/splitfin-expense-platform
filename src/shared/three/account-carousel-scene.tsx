@@ -351,7 +351,6 @@ function Platform({ cards, state }: { cards: CarouselCardData[]; state: React.Mu
 function Atmosphere({ cards, state }: { cards: CarouselCardData[]; state: React.MutableRefObject<CarouselState> }) {
   const points = useRef<THREE.Points>(null)
   const pointsMat = useRef<THREE.PointsMaterial>(null)
-  const hazeMat = useRef<THREE.MeshBasicMaterial>(null)
 
   const positions = useMemo(() => {
     const count = 90
@@ -366,31 +365,16 @@ function Atmosphere({ cards, state }: { cards: CarouselCardData[]; state: React.
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime
-    const active = Math.round(state.current.offset)
-    const theme = cards[Math.max(0, Math.min(cards.length - 1, active))]?.theme
 
     if (points.current) {
       points.current.rotation.y = t * 0.02
       points.current.position.y = Math.sin(t * 0.3) * 0.12
     }
     if (pointsMat.current) pointsMat.current.opacity = 0.35 + Math.sin(t * 0.9) * 0.15
-    if (theme && hazeMat.current) hazeMat.current.color.set(theme.base)
   })
 
   return (
     <group>
-      {/* Depth haze backdrop */}
-      <mesh position={[0, 0.4, -3.6]}>
-        <planeGeometry args={[11, 7]} />
-        <meshBasicMaterial
-          ref={hazeMat}
-          color="#3b1d9e"
-          transparent
-          opacity={0.16}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-        />
-      </mesh>
       {/* Floating particles */}
       <points ref={points}>
         <bufferGeometry>
@@ -488,7 +472,7 @@ export default function AccountCarouselScene({
   }, [requestedIndex])
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    ;(e.target as HTMLElement).setPointerCapture?.(e.pointerId)
+    ; (e.target as HTMLElement).setPointerCapture?.(e.pointerId)
     state.current.dragging = true
     drag.current = {
       startX: e.clientX,
