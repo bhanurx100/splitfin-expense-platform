@@ -38,7 +38,7 @@ export function SmartInsights({ insights }: { insights: Insight[] }) {
 
       <div
         className="glass relative overflow-hidden rounded-xl"
-        style={{ borderColor: `color-mix(in oklch, ${color} 30%, transparent)` }}
+        style={{ borderColor: 'rgba(99,102,241,0.42)', boxShadow: '0 0 16px rgba(99,102,241,0.22)' }}
       >
         <div
           aria-hidden="true"

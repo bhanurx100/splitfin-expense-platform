@@ -60,11 +60,11 @@ export function AccountCarousel3D({
   const atmosphere = typeThemes[accounts[activeIndex]?.type ?? 'bank'].atmosphere
 
   return (
-    <section aria-label="Your accounts in 3D" className="relative -mx-6 mt-3">
+    <section aria-label="Your accounts in 3D" className="relative -mx-4 mt-3 overflow-hidden border-y border-[rgba(99,102,241,0.35)] bg-[var(--carousel-stage)] shadow-[0_0_16px_rgba(99,102,241,0.20)]">
       {/* Atmosphere crossfades with the selected account type */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 transition-[background] duration-700"
+        className="pointer-events-none absolute inset-0 hidden transition-[background] duration-700"
         style={{
           background: `radial-gradient(ellipse 70% 60% at 50% 55%, ${atmosphere}, transparent)`,
         }}

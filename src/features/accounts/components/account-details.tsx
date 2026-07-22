@@ -1,6 +1,7 @@
 'use client'
 
 import { AnimatedAmount } from '@/src/shared/components/animated-number'
+import { SurfaceGroup } from '@/src/shared/components/surface-group'
 import type { AccountDetails } from '@/src/types/transaction'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -67,10 +68,10 @@ export function AccountDetailsSection({ details }: { details: AccountDetails }) 
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ type: 'spring', stiffness: 260, damping: 28 }}
-          className="glass flex flex-col gap-5 rounded-xl p-5"
+          className="flex flex-col gap-5 rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-subtle)] p-5 shadow-[0_0_20px_var(--surface-glow)]"
         >
           {/* Detail grid */}
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-4">
+          <SurfaceGroup className="grid grid-cols-2 gap-x-4 gap-y-4 p-3">
             {details.fields.map((field, i) => {
               const Icon = iconMap[field.icon] ?? Landmark
               return (
@@ -94,7 +95,7 @@ export function AccountDetailsSection({ details }: { details: AccountDetails }) 
                           : ''
                         }`}
                     >
-                      <span className="truncate">{field.value}</span>
+                      <span className="break-words leading-snug">{field.value}</span>
                       {field.copyable && (
                         <button
                           type="button"
@@ -110,7 +111,7 @@ export function AccountDetailsSection({ details }: { details: AccountDetails }) 
                 </motion.div>
               )
             })}
-          </dl>
+          </SurfaceGroup>
 
           {/* Balance block */}
           <div className="border-t border-border pt-4">

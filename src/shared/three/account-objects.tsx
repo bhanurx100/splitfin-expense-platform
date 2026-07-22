@@ -40,9 +40,9 @@ export const OBJECT_THEMES: Record<AccountType, ObjectTheme> = {
 function Gloss({
   color,
   emissive,
-  emissiveIntensity = 0.18,
-  metalness = 0.35,
-  roughness = 0.22,
+  emissiveIntensity = 0.12,
+  metalness = 0.18,
+  roughness = 0.5,
 }: {
   color: string
   emissive?: string
@@ -57,8 +57,8 @@ function Gloss({
       emissiveIntensity={emissiveIntensity}
       metalness={metalness}
       roughness={roughness}
-      clearcoat={0.8}
-      clearcoatRoughness={0.22}
+      clearcoat={0.25}
+      clearcoatRoughness={0.48}
     />
   )
 }
@@ -387,11 +387,11 @@ export function AccountObjectCanvas({
         style={{ background: 'transparent' }}
       >
         <ambientLight intensity={0.55} />
-        <pointLight position={[3, 4, 4]} intensity={14} color="#ffffff" />
-        <pointLight position={[-3.5, 1, 2.5]} intensity={7} color={theme.glow} />
-        <pointLight position={[0, -2, 3]} intensity={3} color={theme.accent} />
-        <AccountObject type={type} scale={0.92} />
-        <ContactShadows position={[0, -0.95, 0]} opacity={0.55} scale={4.5} blur={2.6} far={2.2} color="#050310" />
+        <pointLight position={[3, 4, 4]} intensity={7} color="#ffffff" />
+        <pointLight position={[-3.5, 1, 2.5]} intensity={3.5} color={theme.glow} />
+        <pointLight position={[0, -2, 3]} intensity={1.5} color={theme.accent} />
+        <AccountObject type={type} scale={0.78} />
+        <ContactShadows position={[0, -0.95, 0]} opacity={0.35} scale={4.5} blur={2.6} far={2.2} color="#050310" />
       </Canvas>
     </div>
   )
