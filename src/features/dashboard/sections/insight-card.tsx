@@ -50,7 +50,7 @@ export function InsightCard({ insights }: { insights: Insight[] }) {
           <GlassCard
             strong
             className="relative flex items-start gap-4 overflow-hidden p-5"
-            style={{ borderColor: 'var(--border)', boxShadow: '0 0 20px color-mix(in srgb, var(--info) 12%, transparent)' }}
+            style={{ borderColor: 'rgba(59,130,246,0.42)', boxShadow: '0 0 16px rgba(59,130,246,0.22)' }}
           >
             <span
               className={cn(

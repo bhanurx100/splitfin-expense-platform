@@ -1,5 +1,6 @@
 'use client'
 
+import { OverviewHeader } from '@/src/features/dashboard/components/overview-header'
 import { HeroCard } from '@/src/features/dashboard/components/hero-card'
 import { AccountsPreview } from '@/src/features/dashboard/sections/accounts-preview'
 import { CashFlowCard } from '@/src/features/dashboard/sections/cash-flow-card'
@@ -13,7 +14,6 @@ import {
   categories,
   greeting,
   insights,
-
   splitMembers,
   splitPaySummary,
 } from '@/src/lib/data'
@@ -39,9 +39,10 @@ const sectionMotion = {
 export default function OverviewPage() {
   return (
     <MobileShell>
+      <OverviewHeader greeting={greeting} />
       {/* Hero — canvas with typography and 3D bank, plus balance card */}
       <motion.div {...sectionMotion}>
-        <HeroCard summary={balanceSummary} />
+        <HeroCard summary={balanceSummary} greeting={greeting} />
       </motion.div>
       {/* Quick actions */}
       <motion.section aria-label="Quick actions" {...sectionMotion}>

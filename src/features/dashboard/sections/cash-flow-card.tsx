@@ -143,7 +143,7 @@ export function CashFlowCard({
         radius="2xl"
         padding="lg"
         className="flex flex-col gap-2"
-        style={{ borderColor: 'var(--border)', boxShadow: '0 0 20px rgba(0,0,0,0.08)' }}
+        style={{ borderColor: 'rgba(59,130,246,0.42)', boxShadow: '0 0 16px rgba(59,130,246,0.22)' }}
       >
         <h2 className="text-lg font-bold">Cash Flow</h2>
         <p className="py-6 text-center text-xs text-muted-foreground">
@@ -159,7 +159,7 @@ export function CashFlowCard({
       radius="2xl"
       padding="lg"
       className="flex flex-col gap-4"
-      style={{ borderColor: 'var(--border)', boxShadow: '0 0 20px rgba(0,0,0,0.08)' }}
+      style={{ borderColor: 'rgba(59,130,246,0.42)', boxShadow: '0 0 16px rgba(59,130,246,0.22)' }}
     >
       {/* Header: title + timeframe selector */}
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -177,14 +177,14 @@ export function CashFlowCard({
                 aria-selected={active}
                 onClick={() => setPeriod(p)}
                 className={cn(
-                  'relative min-h-8 rounded-lg px-2.5 text-xs font-medium transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-ring',
+                  'relative min-h-7 rounded-full px-2.5 text-xs font-medium transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-ring',
                   active ? 'text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
                 )}
               >
                 {active && (
                   <motion.span
                     layoutId="cashflow-period-pill"
-                    className="absolute inset-0 rounded-lg bg-info glow-primary"
+                    className="absolute inset-0 rounded-full bg-info glow-primary"
                     transition={springs.pill}
                   />
                 )}

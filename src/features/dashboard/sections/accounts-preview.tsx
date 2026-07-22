@@ -4,7 +4,6 @@ import { AnimatedAmount } from '@/src/shared/components/animated-number'
 import { GlassCard } from '@/src/shared/components/glass-card'
 // import { formatCurrency } from '@/src/shared/lib/format'
 import { springs } from '@/src/shared/lib/motion'
-import { cn } from '@/src/lib/utils'
 import type { AccountPreview } from '@/src/types/transaction'
 import { AnimatePresence, motion, useMotionValue, useSpring } from 'framer-motion'
 import {
@@ -12,7 +11,6 @@ import {
   CreditCard,
   Landmark,
   Lock,
-  TrendingDown,
   TrendingUp,
   Wallet,
   type LucideIcon,
@@ -88,7 +86,6 @@ const ObjectCanvas = dynamic(
 function AccountCard({ account, index }: { account: AccountPreview; index: number }) {
   const meta = typeMeta[account.type] ?? typeMeta.bank
   const Icon = meta.icon
-  const positive = account.monthlyChangePercent >= 0
 
   const rotateX = useMotionValue(0)
   const rotateY = useMotionValue(0)
@@ -148,9 +145,9 @@ function AccountCard({ account, index }: { account: AccountPreview; index: numbe
             borderColor: 'var(--border)',
             boxShadow: `0 0 16px color-mix(in srgb, ${meta.color} 12%, transparent)`,
           }}
-          className="group relative flex w-[135px] shrink-0 flex-col overflow-hidden rounded-[var(--radius)] border bg-transparent"
+          className="group relative flex w-[176px] shrink-0 flex-col overflow-hidden rounded-[var(--radius)] border bg-card"
         >
-          <div className="relative flex h-[5.5rem] items-end justify-center overflow-hidden">
+          <div className="relative flex h-[3.5rem] items-end justify-center overflow-hidden">
             <motion.div
               initial={{ opacity: 0, y: 8, scale: 0.92 }}
               whileInView={{ opacity: 1, y: 0, scale: 1 }}
@@ -195,25 +192,12 @@ function AccountCard({ account, index }: { account: AccountPreview; index: numbe
               {account.name}
               {account.maskedNumber ? ` · ${account.maskedNumber}` : ''}
             </p>
-            <div className="mt-0.5 flex items-end justify-between gap-1.5">
+            <div className="mt-1">
               <AnimatedAmount
                 value={account.balance}
                 currency={account.currency}
-                className="truncate text-sm font-bold leading-tight"
+                className="whitespace-nowrap text-base font-bold leading-tight"
               />
-              <span
-                className={cn(
-                  'flex shrink-0 items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-semibold',
-                  positive ? 'bg-positive/10 text-positive' : 'bg-negative/10 text-negative',
-                )}
-              >
-                {positive ? (
-                  <TrendingUp className="size-2.5" aria-hidden="true" />
-                ) : (
-                  <TrendingDown className="size-2.5" aria-hidden="true" />
-                )}
-                {Math.abs(account.monthlyChangePercent)}%
-              </span>
             </div>
           </div>
         </motion.div>
@@ -250,7 +234,7 @@ export function AccountsPreview({ accounts }: { accounts: AccountPreview[] }) {
           View all
         </Link>
       </div>
-      <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pt-1 pb-2 scrollbar-none">
+      <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto p-1 scrollbar-none">
         {accounts.map((account, i) => (
           <AccountCard key={account.id} account={account} index={i} />
         ))}
