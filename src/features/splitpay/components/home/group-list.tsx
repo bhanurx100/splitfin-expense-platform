@@ -9,6 +9,7 @@ import type { SplitGroup } from '@/src/types/transaction'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
+import { memo } from 'react'
 
 const statusMeta: Record<
   SplitGroup['status'],
@@ -19,7 +20,7 @@ const statusMeta: Record<
   settled: { label: 'Settled', chip: 'bg-muted text-muted-foreground', amountClass: 'text-primary', hoverGlow: 'purple' },
 }
 
-export function GroupList({ groups }: { groups: SplitGroup[] }) {
+export const GroupList = memo(function GroupList({ groups }: { groups: SplitGroup[] }) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   if (groups.length === 0) {
@@ -178,4 +179,4 @@ export function GroupList({ groups }: { groups: SplitGroup[] }) {
       </ul>
     </section>
   )
-}
+})

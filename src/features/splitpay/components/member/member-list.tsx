@@ -9,6 +9,7 @@ import type { SplitGroup, SplitMember } from '@/src/types/transaction'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowDownLeft, ArrowUpRight, Check } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { memo } from 'react'
 
 const directionMeta: Record<
   SplitMember['direction'],
@@ -57,7 +58,7 @@ function DirectionIcon({ direction }: { direction: SplitMember['direction'] }) {
   return <Check className="size-3.5" aria-hidden="true" />
 }
 
-export function MemberList({
+export const MemberList = memo(function MemberList({
   members,
   groups,
 }: {
@@ -225,4 +226,4 @@ export function MemberList({
       )}
     </section>
   )
-}
+})
