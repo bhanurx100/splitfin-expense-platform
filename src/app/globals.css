@@ -15,11 +15,15 @@
     color-scheme: dark;
 
     /* ── Surfaces (Dark Mode) ─────────────────────────────────────────────── */
-    --background: #0B0D10;
-    --foreground: #ffffff;
-    --surface: #12151A;
-    --surface-elevated: #171B22;
-    --card: #12151A;
+    --background: #0A0B10;
+    --foreground: #F5F6FA;
+    --surface: #13141C;
+    --surface-elevated: #13141C;
+    --surface-subtle: #1B1D28;
+    --surface-border: rgba(59, 130, 246, 0.42);
+    --surface-glow: rgba(59, 130, 246, 0.22);
+    --carousel-stage: #000000;
+    --card: #13141C;
     --card-foreground: #ffffff;
     --popover: #171B22;
     --popover-foreground: #ffffff;
@@ -31,14 +35,14 @@
     --secondary: #111418;
     --secondary-foreground: #ffffff;
     --muted: #111418;
-    --muted-foreground: #a1a1aa;
+    --muted-foreground: #9CA3B0;
     --accent: #111418;
     --accent-foreground: #ffffff;
     --destructive: #ff2d78;
 
     /* ── Lines & focus ────────────────────────────────────────────────────── */
-    --border: rgba(255, 255, 255, 0.08);
-    --border-strong: rgba(255, 255, 255, 0.15);
+    --border: #2A2C38;
+    --border-strong: #2A2C38;
     --input: rgba(255, 255, 255, 0.1);
     --ring: #9b5cff;
 
@@ -76,10 +80,14 @@
     color-scheme: light;
 
     /* ── Surfaces (Light Mode) ─────────────────────────────────────────────── */
-    --background: #F5F6F8;
-    --foreground: #09090b;
+    --background: #F4F5F9;
+    --foreground: #14151C;
     --surface: #ffffff;
     --surface-elevated: #ffffff;
+    --surface-subtle: #F1F2F7;
+    --surface-border: rgba(59, 130, 246, 0.30);
+    --surface-glow: rgba(20, 21, 28, 0.06);
+    --carousel-stage: #ffffff;
     --card: #ffffff;
     --card-foreground: #09090b;
     --popover: #ffffff;
@@ -92,14 +100,14 @@
     --secondary: #ffffff;
     --secondary-foreground: #09090b;
     --muted: #ffffff;
-    --muted-foreground: #71717a;
+    --muted-foreground: #6B7280;
     --accent: #ffffff;
     --accent-foreground: #09090b;
     --destructive: #ff2d78;
 
     /* ── Lines & focus ────────────────────────────────────────────────────── */
-    --border: rgba(0, 0, 0, 0.08);
-    --border-strong: rgba(0, 0, 0, 0.15);
+    --border: #E4E6EE;
+    --border-strong: #E4E6EE;
     --input: rgba(0, 0, 0, 0.1);
     --ring: #7c3cff;
 
@@ -216,12 +224,24 @@
 
   /* ── Glass materials (transparent fallback) ─────────────────────────────── */
   .glass {
-    background: transparent;
-    border: 1px solid var(--border);
+    background: var(--card);
+    border: 1px solid var(--surface-border);
+    box-shadow: 0 0 20px var(--surface-glow);
   }
   .glass-strong {
-    background: transparent;
-    border: 1px solid var(--border-strong);
+    background: var(--surface-elevated);
+    border: 1px solid var(--surface-border);
+    box-shadow: 0 0 24px var(--surface-glow);
+  }
+
+  .premium-surface {
+    border-color: var(--surface-border);
+    box-shadow: 0 0 16px var(--surface-glow), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+
+  .surface-group {
+    background: var(--surface-subtle);
+    border-radius: var(--radius-sm);
   }
 
   /* ════════════════ Layered lighting system ════════════════ */

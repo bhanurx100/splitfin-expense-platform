@@ -29,38 +29,38 @@ const toneStyles: Record<
 > = {
   primary: {
     text: 'text-primary-bright',
-    glow: '0 0 20px rgba(0,0,0,0.08)',
-    glowHover: '0 0 30px rgba(0,0,0,0.12)',
-    tint: 'transparent',
-    ring: 'rgba(124,60,255,0.15)',
+    glow: '0 0 18px rgba(124,60,255,0.14)',
+    glowHover: '0 0 26px rgba(124,60,255,0.22)',
+    tint: 'rgba(124,60,255,0.06)',
+    ring: 'rgba(124,60,255,0.42)',
   },
   positive: {
     text: 'text-positive',
-    glow: '0 0 20px rgba(0,0,0,0.08)',
-    glowHover: '0 0 30px rgba(0,0,0,0.12)',
-    tint: 'transparent',
-    ring: 'rgba(22,230,161,0.15)',
+    glow: '0 0 18px rgba(22,230,161,0.14)',
+    glowHover: '0 0 26px rgba(22,230,161,0.22)',
+    tint: 'rgba(22,230,161,0.06)',
+    ring: 'rgba(22,230,161,0.42)',
   },
   negative: {
     text: 'text-negative',
-    glow: '0 0 20px rgba(0,0,0,0.08)',
-    glowHover: '0 0 30px rgba(0,0,0,0.12)',
-    tint: 'transparent',
-    ring: 'rgba(255,45,120,0.15)',
+    glow: '0 0 18px rgba(255,45,120,0.14)',
+    glowHover: '0 0 26px rgba(255,45,120,0.22)',
+    tint: 'rgba(255,45,120,0.06)',
+    ring: 'rgba(255,45,120,0.42)',
   },
   info: {
     text: 'text-info',
-    glow: '0 0 20px rgba(0,0,0,0.08)',
-    glowHover: '0 0 30px rgba(0,0,0,0.12)',
-    tint: 'transparent',
-    ring: 'rgba(20,217,255,0.15)',
+    glow: '0 0 18px rgba(20,217,255,0.14)',
+    glowHover: '0 0 26px rgba(20,217,255,0.22)',
+    tint: 'rgba(20,217,255,0.06)',
+    ring: 'rgba(20,217,255,0.42)',
   },
   warning: {
     text: 'text-warning',
-    glow: '0 0 20px rgba(0,0,0,0.08)',
-    glowHover: '0 0 30px rgba(0,0,0,0.12)',
-    tint: 'transparent',
-    ring: 'rgba(255,170,43,0.15)',
+    glow: '0 0 18px rgba(255,170,43,0.14)',
+    glowHover: '0 0 26px rgba(255,170,43,0.22)',
+    tint: 'rgba(255,170,43,0.06)',
+    ring: 'rgba(255,170,43,0.42)',
   },
 }
 
@@ -115,14 +115,14 @@ function QuickActionButton({ action, active }: { action: QuickAction; active: bo
           press: { scale: 0.9, boxShadow: tone.glowHover, borderColor: tone.ring },
         }}
         transition={springs.snappy}
-        className="relative flex size-16 items-center justify-center overflow-visible rounded-full border bg-transparent"
+        className="relative flex size-11 items-center justify-center overflow-visible rounded-full border bg-transparent"
         style={{ boxShadow: tone.glow }}
       >
-        {/* Inner tonal tint (transparent) */}
+        {/* Inner tonal tint */}
         <span
           aria-hidden
           className="pointer-events-none absolute inset-0 rounded-full"
-          style={{ background: tone.tint, opacity: 0 }}
+          style={{ background: tone.tint }}
         />
         {/* Ripple layer (clipped) */}
         <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-full">
@@ -151,7 +151,7 @@ function QuickActionButton({ action, active }: { action: QuickAction; active: bo
           transition={springs.bouncy}
           className={cn('relative flex items-center justify-center', tone.text)}
         >
-          <Icon className="size-6" strokeWidth={1.9} aria-hidden="true" />
+          <Icon className="size-[22px]" strokeWidth={1.9} aria-hidden="true" />
         </motion.span>
       </motion.span>
       <span className="flex flex-col items-center gap-0.5">

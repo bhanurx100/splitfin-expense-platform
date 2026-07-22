@@ -75,7 +75,7 @@ export function SegmentedTabs({
       role="tablist"
       aria-label={ariaLabel}
       className={cn(
-        'glass flex gap-1 overflow-x-auto rounded-2xl p-1 scrollbar-none',
+        'glass flex gap-1 overflow-x-auto rounded-full p-0.5 scrollbar-none',
         className,
       )}
     >
@@ -90,14 +90,14 @@ export function SegmentedTabs({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(option.id)}
-            className="relative flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl px-3 whitespace-nowrap focus-visible:outline-2 focus-visible:outline-ring"
+            className="relative flex min-h-7 flex-1 items-center justify-center gap-1 rounded-full px-3 whitespace-nowrap focus-visible:outline-2 focus-visible:outline-ring"
           >
             {active && (
               <motion.span
                 layoutId={layoutId}
                 transition={springs.snappy}
                 aria-hidden
-                className="absolute inset-0 rounded-xl border"
+                className="absolute inset-0 rounded-full border"
                 style={{
                   backgroundColor: tone.pill,
                   borderColor: 'rgba(255,255,255,0.14)',

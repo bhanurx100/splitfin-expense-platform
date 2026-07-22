@@ -3,8 +3,8 @@ import type { ReactNode } from 'react'
 
 export function MobileShell({ children }: { children: ReactNode }) {
   return (
-    <div className="mx-auto min-h-dvh max-w-md">
-      <main className="pb-nav flex flex-col gap-8 px-6">{children}</main>
+    <div className="mx-auto min-h-dvh max-w-[480px]">
+      <main className="pb-nav flex flex-col gap-6 px-4">{children}</main>
       <BottomNav />
     </div>
   )

@@ -1,6 +1,8 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { Layers } from 'lucide-react'
+import Link from 'next/link'
 import type { ReactNode } from 'react'
 
 interface PageHeaderProps {
@@ -9,18 +11,27 @@ interface PageHeaderProps {
   actions?: ReactNode
 }
 
+/** Shared 56px product header with the page title in the header bar. */
 export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
   return (
-    <header className="flex items-start justify-between gap-4 pt-4">
+    <header aria-label={`${title} page header`}>
+      <div className="flex h-14 items-center justify-between">
+        <Link href="/" aria-label="SplitFin overview" className="flex min-h-11 items-center gap-2 focus-visible:outline-2 focus-visible:outline-ring">
+          <span className="flex size-7 items-center justify-center rounded-[10px] border border-[var(--surface-border)] text-primary">
+            <Layers className="size-4" aria-hidden="true" />
+          </span>
+          <span className="text-[1.625rem] font-semibold tracking-tight">{title}</span>
+        </Link>
+        {actions && <div className="flex shrink-0 gap-3">{actions}</div>}
+      </div>
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ type: 'spring', stiffness: 200, damping: 24 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+        className="mt-3"
       >
-        <h1 className="text-4xl font-extrabold tracking-tight text-balance">{title}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+        <p className="text-xs leading-4 text-muted-foreground">{subtitle}</p>
       </motion.div>
-      {actions && <div className="flex shrink-0 gap-2 pt-1">{actions}</div>}
     </header>
   )
 }

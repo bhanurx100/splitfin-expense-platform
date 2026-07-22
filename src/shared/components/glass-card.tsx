@@ -122,7 +122,7 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
 
     const baseClass = cn(
       // Layout
-      "relative",
+      "premium-surface relative",
       // Glass (transparent)
       variantStyles[variant],
       // Strong variant (transparent with stronger border)
@@ -155,7 +155,7 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
             y: -3,
             scale: 1.005,
             boxShadow: hoverGlow ? hoverGlowStyles[hoverGlow] : baseShadow,
-            borderColor: "rgba(255,255,255,0.22)",
+            borderColor: "var(--surface-border)",
           },
           whileTap: { scale: 0.99 },
           transition: { type: "spring" as const, stiffness: 300, damping: 26 },
@@ -198,6 +198,9 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
 )
 
 GlassCard.displayName = "GlassCard"
+
+/** Audit terminology: the shared card primitive is the app-wide glow card. */
+export const GlowCard = GlassCard
 
 // ─── GlassCardHeader ─────────────────────────────────────────────────────────
 

@@ -22,7 +22,7 @@ export function IconButton({ icon: Icon, label, onClick, badge, className }: Ico
       whileTap={{ scale: 0.94 }}
       transition={{ type: 'spring', stiffness: 400, damping: 24 }}
       className={cn(
-        'glass relative flex size-11 items-center justify-center rounded-2xl text-foreground/90 transition-shadow hover:glow-primary focus-visible:outline-2 focus-visible:outline-ring',
+        'glass relative flex size-10 items-center justify-center rounded-[10px] text-foreground/90 transition-shadow focus-visible:outline-2 focus-visible:outline-ring',
         className,
       )}
     >

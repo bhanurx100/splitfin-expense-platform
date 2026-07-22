@@ -16,6 +16,14 @@ const tabs = [
 
 export function BottomNav() {
   const pathname = usePathname()
+  const accentByPath: Record<string, string> = {
+    '/': '#3B82F6',
+    '/transactions': '#22D3EE',
+    '/splitpay': '#A855F7',
+    '/categories': '#EC4899',
+    '/accounts': '#6366F1',
+  }
+  const activeAccent = accentByPath[pathname] ?? '#3B82F6'
 
   return (
     <nav
@@ -43,11 +51,13 @@ export function BottomNav() {
                 'relative flex min-h-9 min-w-9 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl py-1 text-[10px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-ring',
                 active ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
               )}
+              style={active ? { color: activeAccent } : undefined}
             >
               {active && (
                 <motion.span
                   layoutId="nav-glow"
-                  className="absolute inset-0 rounded-2xl bg-primary/10"
+                  className="absolute inset-0 rounded-2xl"
+                  style={{ backgroundColor: `${activeAccent}18` }}
                   transition={{ type: 'spring', stiffness: 380, damping: 32 }}
                 />
               )}
@@ -56,7 +66,8 @@ export function BottomNav() {
               {active && (
                 <motion.span
                   layoutId="nav-underline"
-                  className="absolute -bottom-0.5 h-0.5 w-6 rounded-full bg-primary glow-primary"
+                  className="absolute -bottom-0.5 h-0.5 w-6 rounded-full"
+                  style={{ backgroundColor: activeAccent, boxShadow: `0 0 12px ${activeAccent}` }}
                   transition={{ type: 'spring', stiffness: 380, damping: 32 }}
                 />
               )}
