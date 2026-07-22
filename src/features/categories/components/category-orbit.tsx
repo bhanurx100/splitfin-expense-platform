@@ -5,7 +5,7 @@ import { withCategoryPalette } from "@/src/shared/lib/category-colors";
 import { formatCurrency } from "@/src/shared/lib/format";
 import type { CategorySummary, Currency } from "@/src/types/transaction";
 import { motion, useReducedMotion, useSpring } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
 interface CategoryOrbitProps {
   categories: CategorySummary[];
@@ -47,7 +47,7 @@ function orbStyle(color: string, dominant: boolean) {
   };
 }
 
-export function CategoryOrbit({ categories, currency }: CategoryOrbitProps) {
+export const CategoryOrbit = memo(function CategoryOrbit({ categories, currency }: CategoryOrbitProps) {
   const reduced = useReducedMotion();
   // Palette colors by spend rank — data carries content only; a category
   // added or removed later is colored automatically.
@@ -88,12 +88,17 @@ export function CategoryOrbit({ categories, currency }: CategoryOrbitProps) {
   const angleRef = useRef(Math.PI / 2);
   const speedRef = useRef(1);
   const hoveringRef = useRef(false);
+  const isActiveRef = useRef(true);
 
   useEffect(() => {
     if (reduced) return;
     let raf = 0;
     let last = performance.now();
     const tick = (now: number) => {
+      if (!isActiveRef.current) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
       const dt = Math.min((now - last) / 1000, 0.05);
       last = now;
       // Ease rotation speed toward target (crawl while hovering)
@@ -135,6 +140,31 @@ export function CategoryOrbit({ categories, currency }: CategoryOrbitProps) {
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [reduced, satellites.length]);
+
+  // Pause when off-screen
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isActiveRef.current = entry.isIntersecting;
+      },
+      { threshold: 0.1 }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Pause when tab is inactive
+  useEffect(() => {
+    const handleVisibility = () => {
+      isActiveRef.current = !document.hidden;
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
 
   // ── Micro parallax ──────────────────────────────────────────────────
   const parallaxX = useSpring(0, { stiffness: 60, damping: 18 });
@@ -405,4 +435,4 @@ export function CategoryOrbit({ categories, currency }: CategoryOrbitProps) {
       </motion.div>
     </div>
   );
-}
+});

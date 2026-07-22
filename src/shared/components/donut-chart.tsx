@@ -3,6 +3,7 @@
 import { crossfade, springs } from '@/src/shared/lib/motion'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useMemo, useState } from 'react'
+import { memo } from 'react'
 
 export interface DonutSegment {
   id: string
@@ -30,7 +31,7 @@ interface DonutChartProps {
   label: string
 }
 
-export function DonutChart({
+export const DonutChart = memo(function DonutChart({
   segments,
   size = 180,
   strokeWidth = 18,
@@ -155,4 +156,4 @@ export function DonutChart({
       </div>
     </motion.div>
   )
-}
+})
