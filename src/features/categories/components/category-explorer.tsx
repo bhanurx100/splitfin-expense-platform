@@ -19,7 +19,11 @@ import { CategoryOrbit } from './category-orbit'
 interface CategoryExplorerProps {
   categories: CategorySummary[]
   currency: Currency
+  period: '1M' | '3M' | '6M' | '1Y' | 'All'
+  onPeriodChange: (period: '1M' | '3M' | '6M' | '1Y' | 'All') => void
 }
+
+const periodOptions = ['1M', '3M', '6M', '1Y', 'All'] as const
 
 const groupOptions: { id: string; label: string; icon: LucideIcon; borderColor: string }[] = [
   { id: 'all', label: 'All', icon: LayoutGrid, borderColor: 'rgba(124,60,255,0.3)' },
@@ -65,7 +69,7 @@ function GroupSelector({
               }}
               transition={springs.snappy}
               className={cn(
-                'relative flex size-14 items-center justify-center rounded-full border backdrop-blur-[24px] transition-colors duration-300',
+                'relative flex size-10 items-center justify-center rounded-full border backdrop-blur-[24px] transition-colors duration-300',
                 active
                   ? 'border-primary/60 bg-primary text-primary-foreground'
                   : 'border-white/10 bg-[rgba(255,255,255,0.05)] text-foreground/75',
@@ -123,7 +127,7 @@ function GroupSelector({
   )
 }
 
-export function CategoryExplorer({ categories, currency }: CategoryExplorerProps) {
+export function CategoryExplorer({ categories, currency, period, onPeriodChange }: CategoryExplorerProps) {
   const [group, setGroup] = useState('all')
 
   const counts = useMemo(() => {
@@ -141,7 +145,26 @@ export function CategoryExplorer({ categories, currency }: CategoryExplorerProps
 
   return (
     <section aria-label="Explore categories" className="flex flex-col gap-5">
-      <h2 className="text-lg font-bold">Explore Categories</h2>
+      <div role="tablist" aria-label="Category time range" className="flex rounded-xl border border-[var(--surface-border)] bg-[var(--surface-subtle)] p-1 shadow-[0_0_16px_var(--surface-glow)]">
+        {periodOptions.map((option) => {
+          const active = period === option
+          return (
+            <button
+              key={option}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => onPeriodChange(option)}
+              className={cn(
+                'min-h-7 flex-1 rounded-full px-1 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-ring',
+                active ? 'bg-card text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {option}
+            </button>
+          )
+        })}
+      </div>
       <GroupSelector value={group} onChange={setGroup} counts={counts} />
       {filtered.length > 0 ? (
         <>

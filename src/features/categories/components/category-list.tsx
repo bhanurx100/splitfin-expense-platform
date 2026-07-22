@@ -48,7 +48,7 @@ export function CategoryList({ categories, currency }: CategoryListProps) {
             viewport={{ once: true, margin: '-30px' }}
             transition={{ type: 'spring', stiffness: 260, damping: 26, delay: i * 0.04 }}
           >
-            <GlassCard interactive className="p-4" style={{ boxShadow: '0 0 20px rgba(0,0,0,0.08)' }}>
+            <GlassCard interactive className="p-4" style={{ borderColor: 'rgba(236,72,153,0.42)', boxShadow: '0 0 16px rgba(236,72,153,0.22)' }}>
               <div className="flex items-center gap-3.5">
                 <span
                   className="flex size-11 shrink-0 items-center justify-center rounded-2xl"

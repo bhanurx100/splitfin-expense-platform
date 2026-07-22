@@ -23,7 +23,7 @@ interface CategoryOrbitProps {
 const spring = { type: "spring" as const, stiffness: 190, damping: 24 };
 
 /** Orbital geometry. The path is a TRUE CIRCLE in pixels. */
-const ORBIT_R = 0.4; // radius as a fraction of container width
+const ORBIT_R = 0.34; // keeps every satellite within the shared 16px gutters
 const CENTER_Y = 0.452; // vertical center of the orbit path (fraction of height)
 const SATELLITE_SIZE = 54; // uniform orb size — every satellite is equal
 const BASE_SPEED = 0.1; // rad/s — one revolution ≈ 63s
@@ -123,12 +123,12 @@ export function CategoryOrbit({ categories, currency }: CategoryOrbitProps) {
         const x = w / 2 + Math.cos(a) * r;
         const y = h * CENTER_Y + sin * r + bob;
         const scale = 0.82 + depth * 0.24;
-        const opacity = 0.66 + depth * 0.34;
+        const opacity = 1;
         node.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${scale})`;
         node.style.opacity = String(opacity);
         node.style.zIndex = depth > 0.55 ? "30" : "5";
         const label = labelRefs.current[i];
-        if (label) label.style.opacity = String(0.55 + depth * 0.45);
+        if (label) label.style.opacity = "1";
       }
       raf = requestAnimationFrame(tick);
     };
@@ -176,7 +176,7 @@ export function CategoryOrbit({ categories, currency }: CategoryOrbitProps) {
   return (
     <div
       ref={containerRef}
-      className="ambient-haze relative mx-auto mb-6 w-full max-w-[95vw] overflow-hidden"
+      className="relative mx-auto mb-6 w-full max-w-full overflow-hidden"
       style={
         {
           aspectRatio: ASPECT,
@@ -369,7 +369,7 @@ export function CategoryOrbit({ categories, currency }: CategoryOrbitProps) {
                 <span
                   style={{
                     color: "#ffffff",
-                    filter: `drop-shadow(0 0 6px ${cat.color})`,
+                    filter: 'none',
                   }}
                 >
                   <CategoryIcon name={cat.icon} className="size-5.5" />
@@ -386,7 +386,7 @@ export function CategoryOrbit({ categories, currency }: CategoryOrbitProps) {
                     : { opacity: 0 }
                 }
               >
-                <p className="max-w-24 truncate text-center text-xs font-bold text-foreground drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]">
+                <p className="max-w-24 truncate text-center text-xs font-bold text-foreground drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)] max-[359px]:hidden">
                   {cat.name}
                 </p>
                 <p className="text-foreground/85 text-xs font-bold tabular-nums drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]">

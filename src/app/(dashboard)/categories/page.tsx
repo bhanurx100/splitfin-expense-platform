@@ -1,32 +1,29 @@
 'use client'
 
 import { CategoryExplorer } from '@/src/features/categories/components/category-explorer'
-import { SpendHero } from '@/src/features/categories/sections/spend-hero'
 import { SpendingInsight } from '@/src/features/categories/sections/spending-insight'
 import {
   availableMonths,
   categoryInsight,
   getCategoriesForMonth,
-  getCategoryPageSummaryForMonth,
 } from '@/src/lib/data'
 import { IconButton } from '@/src/shared/components/icon-button'
 import { MobileShell } from '@/src/shared/components/mobile-shell'
 import { PageHeader } from '@/src/shared/components/page-header'
-import { Search, SlidersHorizontal } from 'lucide-react'
-import { useSearchParams } from 'next/navigation'
+import { Bell, Search } from 'lucide-react'
 import { Suspense, useMemo, useState } from 'react'
 
+type Period = '1M' | '3M' | '6M' | '1Y' | 'All'
+
 function CategoriesContent() {
-  const searchParams = useSearchParams()
   // Deep links (e.g. Overview → /categories?category=shopping) pre-select.
-  const initialCategory = searchParams.get('category')
 
   // Month switching — every month with activity is explorable. All figures
   // on the page (hero, ring, explorer) derive from the selected month.
   const [monthIndex, setMonthIndex] = useState(0)
+  const [period, setPeriod] = useState<Period>('1M')
   const month = availableMonths[Math.min(monthIndex, availableMonths.length - 1)]
   const categories = useMemo(() => getCategoriesForMonth(month.key), [month.key])
-  const summary = useMemo(() => getCategoryPageSummaryForMonth(month.key), [month.key])
 
   return (
     <MobileShell>
@@ -36,25 +33,21 @@ function CategoriesContent() {
         actions={
           <>
             <IconButton icon={Search} label="Search categories" />
-            <IconButton icon={SlidersHorizontal} label="Category filters" badge={1} />
+            <IconButton icon={Bell} label="Notifications" />
           </>
         }
       />
 
-      <SpendHero
+      <CategoryExplorer
         categories={categories}
-        totalSpent={summary.totalSpent}
-        changePercent={summary.changePercent}
-        month={summary.month}
-        currency={summary.currency}
-        initialSelectedId={initialCategory}
-        canPrevMonth={monthIndex < availableMonths.length - 1}
-        canNextMonth={monthIndex > 0}
-        onPrevMonth={() => setMonthIndex((i) => Math.min(i + 1, availableMonths.length - 1))}
-        onNextMonth={() => setMonthIndex((i) => Math.max(i - 1, 0))}
+        currency="INR"
+        period={period}
+        onPeriodChange={(next) => {
+          setPeriod(next)
+          const offsets: Record<Period, number> = { '1M': 0, '3M': 2, '6M': 5, '1Y': 11, All: availableMonths.length - 1 }
+          setMonthIndex(Math.min(offsets[next], availableMonths.length - 1))
+        }}
       />
-
-      <CategoryExplorer categories={categories} currency={summary.currency} />
 
       <SpendingInsight insight={categoryInsight} />
     </MobileShell>
