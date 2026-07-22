@@ -13,8 +13,9 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
+import { memo } from 'react'
 
-export function CategoriesPreview({ categories }: { categories: CategorySummary[] }) {
+export const CategoriesPreview = memo(function CategoriesPreview({ categories }: { categories: CategorySummary[] }) {
   const router = useRouter()
   const [activeId, setActiveId] = useState<string | null>(null)
 
@@ -153,4 +154,4 @@ export function CategoriesPreview({ categories }: { categories: CategorySummary[
       </GlassCard>
     </section>
   )
-}
+})

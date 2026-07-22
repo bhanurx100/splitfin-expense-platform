@@ -2,7 +2,7 @@
 
 import { ContactShadows, Environment, Float, RoundedBox, Sparkles } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { useMemo, useRef } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 
 /**
@@ -35,9 +35,9 @@ function stoneMat(color: string, opts?: Partial<{ metalness: number; roughness: 
   )
 }
 
-function useBreathing(ref: React.RefObject<THREE.PointLight | null>, base: number, amp: number) {
+function useBreathing(ref: React.RefObject<THREE.PointLight | null>, base: number, amp: number, isActive: boolean) {
   useFrame((state) => {
-    if (!ref.current) return
+    if (!ref.current || !isActive) return
     const t = state.clock.elapsedTime
     ref.current.intensity = base + Math.sin(t * 0.9) * amp
   })
@@ -216,16 +216,16 @@ function GableRoof({ y }: { y: number }) {
   )
 }
 
-function HolographicBank() {
+function HolographicBank({ isActive }: { isActive: boolean }) {
   const group = useRef<THREE.Group>(null)
   const keyLight = useRef<THREE.PointLight>(null)
-  useBreathing(keyLight, 15, 4)
+  useBreathing(keyLight, 15, 4, isActive)
 
   const BASE_SCALE = 0.629 // ~15% smaller than prior 0.74 base
   const BASE_ANGLE = 0 // front-facing resting pose
 
   useFrame((state, delta) => {
-    if (!group.current) return
+    if (!group.current || !isActive) return
     const t = state.clock.elapsedTime
     const spin = t * 0.08
     const parallax = state.pointer.x * 0.1
@@ -255,25 +255,55 @@ function HolographicBank() {
   )
 }
 
-export default function HeroBankScene() {
+function HeroBankSceneInner() {
+  const [isActive, setIsActive] = useState(true)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsActive(entry.isIntersecting)
+      },
+      { threshold: 0.1 }
+    )
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      setIsActive(!document.hidden)
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [])
+
   return (
-    <Canvas
-      dpr={[1, 1.75]}
-      camera={{ position: [0, 0.35, 6.2], fov: 30 }}
-      frameloop="always"
-      gl={{ antialias: true, alpha: true }}
-      style={{ background: 'transparent' }}
-      aria-hidden="true"
-    >
-      <ambientLight intensity={0.42} />
-      <Environment preset="city" background={false} environmentIntensity={0.55} />
-      <pointLight position={[-3.5, 1.8, 2.5]} intensity={7} color={STONE.accent} distance={14} decay={2} />
-      <pointLight position={[3.5, 1.2, 2.5]} intensity={5} color={STONE.light} distance={12} decay={2} />
-      <Float speed={1.1} rotationIntensity={0.04} floatIntensity={0.35} floatingRange={[-0.05, 0.05]}>
-        <HolographicBank />
-      </Float>
-      <ContactShadows position={[0, -1.28, 0]} opacity={0.5} scale={6} blur={2.6} far={2.6} color="#0a1a3d" />
-      <Sparkles count={20} scale={5.5} size={1.4} speed={0.18} color={STONE.glow} opacity={0.35} />
-    </Canvas>
+    <div ref={containerRef} className="size-full">
+      <Canvas
+        dpr={[1, 1.5]}
+        camera={{ position: [0, 0.35, 6.2], fov: 30 }}
+        frameloop={isActive ? 'always' : 'never'}
+        gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+        style={{ background: 'transparent' }}
+        aria-hidden="true"
+      >
+        <ambientLight intensity={0.42} />
+        <Environment preset="city" background={false} environmentIntensity={0.55} />
+        <pointLight position={[-3.5, 1.8, 2.5]} intensity={7} color={STONE.accent} distance={14} decay={2} />
+        <pointLight position={[3.5, 1.2, 2.5]} intensity={5} color={STONE.light} distance={12} decay={2} />
+        <Float speed={1.1} rotationIntensity={0.04} floatIntensity={0.35} floatingRange={[-0.05, 0.05]}>
+          <HolographicBank isActive={isActive} />
+        </Float>
+        <ContactShadows position={[0, -1.28, 0]} opacity={0.5} scale={6} blur={2.6} far={2.6} color="#0a1a3d" />
+        <Sparkles count={12} scale={5.5} size={1.4} speed={0.18} color={STONE.glow} opacity={0.35} />
+      </Canvas>
+    </div>
   )
 }
+
+export default memo(HeroBankSceneInner)

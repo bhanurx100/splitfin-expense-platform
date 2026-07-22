@@ -7,13 +7,14 @@ import { CreditCard, Eye, EyeOff, Landmark, TrendingUp, Wallet, Wifi, type Lucid
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { memo } from 'react'
 
 const HeroBankScene = dynamic(() => import('@/src/shared/three/hero-bank-scene'), {
   ssr: false,
   loading: () => <div className="size-full animate-pulse rounded-full bg-primary/8" aria-hidden="true" />,
 })
 
-export function HeroCard({ summary, greeting }: { summary: BalanceSummary; greeting: UserGreeting }) {
+export const HeroCard = memo(function HeroCard({ summary, greeting }: { summary: BalanceSummary; greeting: UserGreeting }) {
   const [hidden, setHidden] = useState(false)
   const [timeGreeting, setTimeGreeting] = useState('Good evening')
   const router = useRouter()
@@ -114,7 +115,7 @@ export function HeroCard({ summary, greeting }: { summary: BalanceSummary; greet
       </div>
     </section>
   )
-}
+})
 
 function AccountIcon({ icon: Icon, className }: { icon: LucideIcon; className: string }) {
   return (

@@ -18,6 +18,7 @@ import {
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRef, useState } from 'react'
+import { memo } from 'react'
 
 /** Muted type tints — preview cards sit below the hero, not compete with it. */
 const typeMeta: Record<
@@ -83,7 +84,7 @@ const ObjectCanvas = dynamic(
   },
 )
 
-function AccountCard({ account, index }: { account: AccountPreview; index: number }) {
+const AccountCard = memo(function AccountCard({ account, index }: { account: AccountPreview; index: number }) {
   const meta = typeMeta[account.type] ?? typeMeta.bank
   const Icon = meta.icon
 
@@ -204,9 +205,9 @@ function AccountCard({ account, index }: { account: AccountPreview; index: numbe
       </Link>
     </motion.div>
   )
-}
+})
 
-export function AccountsPreview({ accounts }: { accounts: AccountPreview[] }) {
+export const AccountsPreview = memo(function AccountsPreview({ accounts }: { accounts: AccountPreview[] }) {
   if (accounts.length === 0) {
     return (
       <section aria-label="Accounts preview" className="flex flex-col gap-3">
@@ -241,4 +242,4 @@ export function AccountsPreview({ accounts }: { accounts: AccountPreview[] }) {
       </div>
     </section>
   )
-}
+})

@@ -10,6 +10,7 @@ import { Info } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useMemo, useState } from 'react'
+import { memo } from 'react'
 import {
   Bar,
   BarChart,
@@ -72,7 +73,7 @@ function FlowTooltip({
   )
 }
 
-export function CashFlowCard({
+export const CashFlowCard = memo(function CashFlowCard({
   seriesByPeriod,
   currency,
 }: {
@@ -83,7 +84,7 @@ export function CashFlowCard({
   const router = useRouter()
 
   const cap = periodCap[period]
-  const rawSeries = seriesByPeriod[period] ?? []
+  const rawSeries = useMemo(() => seriesByPeriod[period] ?? [], [seriesByPeriod, period])
 
   const chartData = useMemo(
     () =>
@@ -278,4 +279,4 @@ export function CashFlowCard({
       </div>
     </GlassCard>
   )
-}
+})
