@@ -290,40 +290,6 @@ export function buildMoneySummary(transactions: Transaction[], currency: Currenc
   }
 }
 
-export function buildTransactionSummary(
-  transactions: Transaction[],
-  currency: Currency,
-): {
-  income: number
-  expense: number
-  netFlow: number
-  incomeChangePercent: number
-  expenseChangePercent: number
-  incomeBars: number[]
-  expenseBars: number[]
-  transactionCount: number
-  incomeTransactionCount: number
-  expenseTransactionCount: number
-  currency: Currency
-} {
-  const ref = currentMonthOf(transactions)
-  const current = flowTotals(monthTransactions(transactions, ref))
-  const last = flowTotals(previousMonthToDate(transactions, ref))
-  const series = dailySeries(transactions, ref)
-  return {
-    income: current.inflow,
-    expense: current.outflow,
-    netFlow: current.net,
-    incomeChangePercent: monthOverMonth(current.inflow, last.inflow),
-    expenseChangePercent: monthOverMonth(current.outflow, last.outflow),
-    incomeBars: series.map((p) => p.inflow),
-    expenseBars: series.map((p) => p.outflow),
-    transactionCount: current.transactionCount,
-    incomeTransactionCount: current.incomeCount,
-    expenseTransactionCount: current.expenseCount,
-    currency,
-  }
-}
 
 /* ── Month groups (timeline) ───────────────────────────────────────────── */
 

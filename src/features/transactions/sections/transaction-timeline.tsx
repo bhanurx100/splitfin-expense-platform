@@ -49,11 +49,15 @@ function TransactionRow({
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -16 }}
       transition={{ ...springs.soft, delay: index * 0.045 }}
-      className="group relative pl-7"
+      className="group relative min-w-0 pl-7"
       onPointerEnter={() => onHover(tx.id)}
       onPointerLeave={() => onHover(null)}
     >
-      {/* Individual transaction markers only - no spine segments (header provides continuous line) */}
+      <span
+        aria-hidden="true"
+        className={`absolute top-0 w-[2px] ${isLast ? 'h-7' : '-bottom-3'}`}
+        style={{ left: SPINE_X - 1, backgroundColor: style.color, opacity: 0.78 }}
+      />
       {/* Timeline node — hollow outlined circle with transparent center */}
       <motion.span
         aria-hidden="true"
@@ -70,10 +74,11 @@ function TransactionRow({
       <GlassCard
         interactive
         className={cn(
-          'flex min-w-0 flex-1 cursor-pointer items-start gap-3 p-3 transition-shadow duration-300',
+          'flex min-w-0 flex-1 cursor-pointer items-start gap-2.5 p-3 transition-shadow duration-300',
           expanded && 'border-white/20',
         )}
         onClick={onToggle}
+        style={{ borderColor: 'rgba(34,211,238,0.42)', boxShadow: '0 0 16px rgba(34,211,238,0.22)' }}
         role="button"
         aria-expanded={expanded}
         aria-label={`${tx.merchant} — ${formatCurrency(tx.amount, tx.currency)}. Toggle details.`}
@@ -89,8 +94,8 @@ function TransactionRow({
         >
           <CategoryIcon name={tx.icon} className="size-4.5" />
         </motion.span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-bold">{tx.merchant}</p>
+        <div className="min-w-0 flex-1 pr-1">
+          <p className="text-sm font-bold leading-tight">{tx.merchant}</p>
           <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
             {tx.account} · {tx.category}
           </p>
@@ -118,7 +123,7 @@ function TransactionRow({
             )}
           </div>
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
+        <div className="flex w-[76px] shrink-0 flex-col items-end gap-1 text-right">
           <p className="text-base font-bold tabular-nums transition-colors duration-300" style={{ color: style.color }}>
             {style.sign}
             {formatCurrency(tx.amount, tx.currency)}
@@ -281,7 +286,7 @@ export function TransactionTimeline({ groups, activeType, highlightDate, highlig
               >
                 <CalendarRange className="size-3.5" aria-hidden="true" />
               </span>
-              <GlassCard strong interactive className="flex items-center gap-3.5 p-4" style={{ boxShadow: '0 0 20px rgba(0,0,0,0.08)' }}>
+              <GlassCard strong interactive className="flex items-center gap-3.5 p-4" style={{ borderColor: 'rgba(34,211,238,0.42)', boxShadow: '0 0 16px rgba(34,211,238,0.22)' }}>
                 <div className="min-w-0 flex-1">
                   <p className="text-base font-bold">
                     {group.month} {group.year}

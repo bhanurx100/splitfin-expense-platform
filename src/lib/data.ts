@@ -20,7 +20,6 @@ import {
   buildMonthGroups,
   buildMoneySummary,
   buildSplitSummary,
-  buildTransactionSummary,
   listMonths,
   type CategoryMeta,
 } from '@/src/lib/selectors'
@@ -539,9 +538,6 @@ export const balanceSummary = buildBalanceSummary(accounts, transactions, INR)
 
 /** Overview Money In / Money Out / Net Balance cards (real sparklines). */
 export const moneySummary = buildMoneySummary(transactions, INR)
-
-/** Transactions flow summary — identical totals to moneySummary by design. */
-export const transactionSummary = buildTransactionSummary(transactions, INR)
 
 /** Cash-flow chart — one real series per period. */
 export const cashFlowByPeriod = buildCashFlowByPeriod(transactions)

@@ -1,9 +1,8 @@
 'use client'
 
 import { TransactionActions } from '@/src/features/transactions/components/transaction-actions'
-import { FlowSummary } from '@/src/features/transactions/sections/flow-summary'
 import { TransactionTimeline } from '@/src/features/transactions/sections/transaction-timeline'
-import { monthGroups, transactionSummary } from '@/src/lib/data'
+import { monthGroups } from '@/src/lib/data'
 import { IconButton } from '@/src/shared/components/icon-button'
 import { MobileShell } from '@/src/shared/components/mobile-shell'
 import { PageHeader } from '@/src/shared/components/page-header'
@@ -12,10 +11,10 @@ import {
   ArrowDownLeft,
   ArrowLeftRight,
   ArrowUpRight,
+  Bell,
   LayoutGrid,
   RotateCcw,
   Search,
-  SlidersHorizontal,
 } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useMemo, useState } from 'react'
@@ -56,12 +55,10 @@ function TransactionsContent() {
         actions={
           <>
             <IconButton icon={Search} label="Search transactions" />
-            <IconButton icon={SlidersHorizontal} label="Transaction filters" />
+            <IconButton icon={Bell} label="Notifications" />
           </>
         }
       />
-
-      <FlowSummary summary={transactionSummary} />
 
       <TransactionActions />
 

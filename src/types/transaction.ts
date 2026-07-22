@@ -130,21 +130,6 @@ export interface MonthGroup {
   transactions: Transaction[]
 }
 
-export interface TransactionSummary {
-  income: number
-  expense: number
-  netFlow: number
-  incomeChangePercent: number
-  expenseChangePercent: number
-  incomeBars: number[]
-  expenseBars: number[]
-  /** Completed transactions in the current month (excludes failed). */
-  transactionCount: number
-  incomeTransactionCount: number
-  expenseTransactionCount: number
-  currency: Currency
-}
-
 export interface SplitMember {
   id: string
   name: string
