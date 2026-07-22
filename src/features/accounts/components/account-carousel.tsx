@@ -72,11 +72,7 @@ export function AccountCarousel({ accounts }: { accounts: AccountPreview[] }) {
               className="w-64 shrink-0 snap-center"
             >
               <div
-                className="glass-strong relative flex h-full flex-col gap-4 overflow-hidden rounded-xl p-5 bg-transparent"
-                style={{
-                  borderColor: 'var(--border)',
-                  boxShadow: '0 0 20px rgba(0,0,0,0.08)',
-                }}
+                className="relative flex h-full flex-col gap-4 overflow-hidden rounded-xl border border-[rgba(59,130,246,0.42)] bg-card p-5 shadow-[0_0_16px_rgba(59,130,246,0.22)]"
               >
 
                 <div className="relative flex items-start justify-between gap-2">

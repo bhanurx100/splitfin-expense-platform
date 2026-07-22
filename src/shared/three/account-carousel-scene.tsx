@@ -15,7 +15,7 @@
 import { AccountObject } from '@/src/shared/three/account-objects'
 import { RoundedBox, Text } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { useEffect, useMemo, useRef } from 'react'
+import { memo, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import type { Group, MeshPhysicalMaterial, MeshStandardMaterial, PointLight } from 'three'
 
@@ -48,7 +48,7 @@ interface CarouselState {
 /* Card                                                                */
 /* ------------------------------------------------------------------ */
 
-function AccountCard({
+const AccountCard = memo(function AccountCard({
   card,
   index,
   state,
@@ -111,7 +111,7 @@ function AccountCard({
       <RoundedBox args={[2.3, 3.2, 0.16]} radius={0.16} smoothness={5}>
         <meshPhysicalMaterial
           ref={bodyMat}
-          color="#131120"
+          color="#2b2b32"
           emissive={card.theme.base}
           emissiveIntensity={0.3}
           metalness={0.62}
@@ -233,7 +233,7 @@ function AccountCard({
       )}
     </group>
   )
-}
+})
 
 /* ------------------------------------------------------------------ */
 /* Holographic platform — concentric energy rings + radial under-light */
@@ -281,7 +281,7 @@ function Platform({ cards, state }: { cards: CarouselCardData[]; state: React.Mu
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]}>
         <circleGeometry args={[1.2, 48]} />
         <meshPhysicalMaterial
-          color="#0c0a15"
+          color="#26262c"
           metalness={0.55}
           roughness={0.4}
           clearcoat={0.7}
@@ -348,12 +348,12 @@ function Platform({ cards, state }: { cards: CarouselCardData[]; state: React.Mu
 /* Atmosphere — drifting particles + depth haze that follows the theme */
 /* ------------------------------------------------------------------ */
 
-function Atmosphere({ cards, state }: { cards: CarouselCardData[]; state: React.MutableRefObject<CarouselState> }) {
+const Atmosphere = memo(function Atmosphere({ cards, state }: { cards: CarouselCardData[]; state: React.MutableRefObject<CarouselState> }) {
   const points = useRef<THREE.Points>(null)
   const pointsMat = useRef<THREE.PointsMaterial>(null)
 
   const positions = useMemo(() => {
-    const count = 90
+    const count = 45
     const arr = new Float32Array(count * 3)
     for (let i = 0; i < count; i++) {
       arr[i * 3] = (Math.random() - 0.5) * 8
@@ -393,13 +393,13 @@ function Atmosphere({ cards, state }: { cards: CarouselCardData[]; state: React.
       </points>
     </group>
   )
-}
+})
 
 /* ------------------------------------------------------------------ */
 /* Motion rig — heavy, luxurious spring                                */
 /* ------------------------------------------------------------------ */
 
-function Rig({
+const Rig = memo(function Rig({
   state,
   onSettled,
 }: {
@@ -429,7 +429,7 @@ function Rig({
   })
 
   return null
-}
+})
 
 /* ------------------------------------------------------------------ */
 /* Scene                                                               */
@@ -447,6 +447,12 @@ export default function AccountCarouselScene({
 }) {
   const state = useRef<CarouselState>({ offset: 0, target: 0, dragging: false, velocity: 0 })
   const drag = useRef({ startX: 0, startOffset: 0, lastX: 0, lastT: 0, pxVelocity: 0 })
+
+  // Cap DPR on smaller screens — the biggest single lever for first-paint cost.
+  const dpr = useMemo<[number, number]>(
+    () => (typeof window !== 'undefined' && window.innerWidth < 640 ? [1, 1] : [1, 1.5]),
+    [],
+  )
 
   const clampIndex = (i: number) => Math.max(0, Math.min(cards.length - 1, i))
 
@@ -482,6 +488,15 @@ export default function AccountCarouselScene({
       pxVelocity: 0,
     }
   }
+
+  // Cleanup pointer capture on unmount
+  useEffect(() => {
+    return () => {
+      if (state.current.dragging) {
+        state.current.dragging = false
+      }
+    }
+  }, [])
 
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!state.current.dragging) return
@@ -537,9 +552,9 @@ export default function AccountCarouselScene({
       onKeyDown={onKeyDown}
     >
       <Canvas
-        dpr={[1, 1.5]}
+        dpr={dpr}
         camera={{ position: [0, 0.6, 4.6], fov: 33 }}
-        gl={{ antialias: true, alpha: true }}
+        gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
         style={{ background: 'transparent' }}
         onCreated={({ camera }) => camera.lookAt(0, -0.15, 0)}
       >
@@ -554,9 +569,13 @@ export default function AccountCarouselScene({
         {/* Stage scaled so the hero card dominates without clipping */}
         <group scale={0.62} position={[0, 0.05, 0]}>
           <Platform cards={cards} state={state} />
-          {cards.map((card, i) => (
-            <AccountCard key={card.id} card={card} index={i} state={state} />
-          ))}
+          {/* Only render cards within visible range to improve performance */}
+          {cards.map((card, i) => {
+            const isVisible = Math.abs(i - state.current.offset) < 2.5
+            return isVisible ? (
+              <AccountCard key={card.id} card={card} index={i} state={state} />
+            ) : null
+          })}
         </group>
       </Canvas>
     </div>
