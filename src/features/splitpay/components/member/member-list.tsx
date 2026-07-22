@@ -137,6 +137,7 @@ export function MemberList({
                     pressable
                     hoverGlow={meta.glow}
                     className="group relative w-full cursor-pointer overflow-hidden p-4"
+                    style={{ borderColor: 'rgba(168,85,247,0.42)', boxShadow: '0 0 16px rgba(168,85,247,0.22)' }}
                     role="button"
                     aria-label={`${member.name} — ${meta.label}`}
                   >

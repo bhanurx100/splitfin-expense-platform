@@ -9,7 +9,7 @@ import { MobileShell } from '@/src/shared/components/mobile-shell'
 import { PageHeader } from '@/src/shared/components/page-header'
 import { QuickActions, type QuickAction } from '@/src/shared/components/quick-actions'
 import { motion } from 'framer-motion'
-import { BellRing, HandCoins, Plus, Receipt, Search } from 'lucide-react'
+import { Bell, BellRing, HandCoins, Plus, Receipt, Search } from 'lucide-react'
 
 const quickActions: QuickAction[] = [
   { id: 'new-split', icon: Plus, label: 'New Split', hint: 'Any bill', tone: 'primary' },
@@ -31,7 +31,7 @@ export default function SplitPayPage() {
       <PageHeader
         title="SplitPay"
         subtitle="Simplify bills, split smartly"
-        actions={<IconButton icon={Search} label="Search groups" />}
+        actions={<><IconButton icon={Search} label="Search groups" /><IconButton icon={Bell} label="Notifications" /></>}
       />
 
       {/* Hero — one connected card: 3D scene + summary trio */}

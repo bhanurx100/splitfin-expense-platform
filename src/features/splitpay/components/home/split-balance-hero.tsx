@@ -40,7 +40,7 @@ export function SplitBalanceHero({ summary }: { summary: SplitPaySummary }) {
       radius="2xl"
       padding="none"
       className="relative overflow-hidden"
-      style={{ borderColor: 'rgba(124,60,255,0.08)', boxShadow: '0 0 20px rgba(124,60,255,0.08)' }}
+      style={{ borderColor: 'rgba(168,85,247,0.42)', boxShadow: '0 0 16px rgba(168,85,247,0.22)' }}
     >
 
       <motion.div
@@ -86,7 +86,7 @@ export function SplitBalanceHero({ summary }: { summary: SplitPaySummary }) {
             value={summary.netBalance}
             currency={summary.currency}
             signed
-            className={cn('w-full truncate text-lg font-extrabold leading-tight sm:text-xl', toneText[tone])}
+            className={cn('w-full truncate text-[28px] font-bold leading-none', toneText[tone])}
           />
         </motion.div>
 

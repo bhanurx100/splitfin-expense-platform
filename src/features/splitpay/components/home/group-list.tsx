@@ -75,7 +75,7 @@ export function GroupList({ groups }: { groups: SplitGroup[] }) {
                 role="button"
                 aria-expanded={expanded}
                 aria-label={`${group.name} — ${meta.label} ${formatCurrency(group.amount, group.currency)}. Toggle details.`}
-                style={{ boxShadow: '0 0 20px rgba(0,0,0,0.08)' }}
+                style={{ borderColor: 'rgba(168,85,247,0.42)', boxShadow: '0 0 16px rgba(168,85,247,0.22)' }}
               >
                 <motion.span
                   whileHover={{ scale: 1.1, rotate: -4 }}
